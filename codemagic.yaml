@@ -66,3 +66,72 @@ workflows:
       - build/*.dmg
       - build/*.xcarchive
       - build/**/*.log
+
+  woa-release-standard:
+    name: WOA - Release Standard
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      xcode: latest
+      vars:
+        XCODE_PROJECT: "src/WOA.xcodeproj"
+        XCODE_SCHEME: "WOA"
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+
+    scripts:
+      - name: Resolve Swift Package dependencies
+        script: |
+          xcodebuild -resolvePackageDependencies \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME"
+
+      - name: Create build directories
+        script: |
+          mkdir -p build/archive
+          mkdir -p build/export
+          mkdir -p build/dmg
+
+      - name: Archive application
+        script: |
+          xcodebuild archive \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination "platform=macOS" \
+            -archivePath build/archive/WOA.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Extract app from archive
+        script: |
+          cp -R \
+            build/archive/WOA.xcarchive/Products/Applications/*.app \
+            build/export/
+
+      - name: Create DMG
+        script: |
+          APP_NAME=$(basename build/export/*.app .app)
+
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder build/export \
+            -ov \
+            -format UDZO \
+            build/dmg/${APP_NAME}.dmg
+
+      - name: Show generated artifacts
+        script: |
+          echo "=== Generated files ==="
+          find build -type f
+
+    artifacts:
+      - build/archive/**/*.xcarchive
+      - build/export/**/*.app
+      - build/dmg/**/*.dmg
+      - build/**/*.log
