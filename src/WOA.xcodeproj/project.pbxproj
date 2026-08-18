@@ -1,0 +1,385 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		83DD24CB5076FA763507A02C /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BE1399DE8EF7E36603D099 /* AppPaths.swift */; };
+		D9541321ECD55B507735E530 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D16E0614E8990F046ED322E /* AppLogger.swift */; };
+		390A4A75FC367BC506B58587 /* DatabaseURLProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */; };
+		FE82FE566DA80BFB9937C385 /* DatabaseValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */; };
+		179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */; };
+		C66D91E3CDAD66EC6B88C2FD /* DatabaseInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */; };
+		9F811D53E20904ED24296741 /* SQLiteConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */; };
+		A1405971480FBD7EC5E17001 /* DatabaseConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */; };
+		E45709F0BE5A8666BB5B6105 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8810C7A02BA28A9C1525CAB /* AppSettings.swift */; };
+		57A0C2211082BD2CE12EFA80 /* TableInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC15800193813A517BDC67EE /* TableInfo.swift */; };
+		749E7601AAE198F951F0E593 /* ConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */; };
+		A05D281816CFF7D5E0A63372 /* TableRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E0A4BC115F3429CA90AB58 /* TableRepository.swift */; };
+		14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B549519CFC9343E163188 /* SettingsViewModel.swift */; };
+		F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */; };
+		9F43EDFD0024598194AA014B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */; };
+		C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */; };
+		AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */; };
+		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
+		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		13BE1399DE8EF7E36603D099 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		6D16E0614E8990F046ED322E /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseURLProvider.swift; sourceTree = "<group>"; };
+		C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseValidator.swift; sourceTree = "<group>"; };
+		366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrator.swift; sourceTree = "<group>"; };
+		EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInstaller.swift; sourceTree = "<group>"; };
+		15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteConnection.swift; sourceTree = "<group>"; };
+		6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseConnection.swift; sourceTree = "<group>"; };
+		E8810C7A02BA28A9C1525CAB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		CC15800193813A517BDC67EE /* TableInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableInfo.swift; sourceTree = "<group>"; };
+		131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationService.swift; sourceTree = "<group>"; };
+		19E0A4BC115F3429CA90AB58 /* TableRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableRepository.swift; sourceTree = "<group>"; };
+		CB5B549519CFC9343E163188 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorViewModel.swift; sourceTree = "<group>"; };
+		B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableStatusView.swift; sourceTree = "<group>"; };
+		7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorView.swift; sourceTree = "<group>"; };
+		841E2099FACAFAD0EADBCE07 /* WOA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WOA.swift; sourceTree = "<group>"; };
+		D95FA83BAAA928615472A6D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CAA83F52316EFEEE760B83B4 /* WOA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WOA.entitlements; sourceTree = "<group>"; };
+		1DE01B2893F4F25F8E093943 /* WOA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WOA.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		841E2099FACAFAD0EADBCE08 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0F3332EFD009FD3B5CCA49F1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1DE01B2893F4F25F8E093943 /* WOA.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		19169D3E58E7A4F58C5F3C12 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B3881F9FD56BD5BCF6265C15 = {
+			isa = PBXGroup;
+			children = (
+				7E16784D0833ACC7E50A389D /* WOA */,
+				0F3332EFD009FD3B5CCA49F1 /* Products */,
+				19169D3E58E7A4F58C5F3C12 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		7E16784D0833ACC7E50A389D /* WOA */ = {
+			isa = PBXGroup;
+			children = (
+				841E2099FACAFAD0EADBCE07 /* WOA.swift */,
+				572DBB1F6037B9A2232570A0 /* Models */,
+				66A6CF0333FEC5FF7999C4F8 /* ViewModels */,
+				361A96287B469014303ADA68 /* Views */,
+				E8C529F41B4987AF3B611E97 /* Services */,
+				011BB6DBE231C444B4E050DA /* Repositories */,
+				BC92EE4195E9ABB3D51AB189 /* Utils */,
+				A0D77648BEA47C0A11EDD63D /* Resources */,
+			);
+			path = WOA;
+			sourceTree = "<group>";
+		};
+		572DBB1F6037B9A2232570A0 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */,
+				E8810C7A02BA28A9C1525CAB /* AppSettings.swift */,
+				CC15800193813A517BDC67EE /* TableInfo.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		66A6CF0333FEC5FF7999C4F8 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				CB5B549519CFC9343E163188 /* SettingsViewModel.swift */,
+				D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		361A96287B469014303ADA68 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */,
+				1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */,
+				7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E8C529F41B4987AF3B611E97 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		011BB6DBE231C444B4E050DA /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				19E0A4BC115F3429CA90AB58 /* TableRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		BC92EE4195E9ABB3D51AB189 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				13BE1399DE8EF7E36603D099 /* AppPaths.swift */,
+				6D16E0614E8990F046ED322E /* AppLogger.swift */,
+				9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */,
+				C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */,
+				366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */,
+				EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */,
+				15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		A0D77648BEA47C0A11EDD63D /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D95FA83BAAA928615472A6D1 /* Info.plist */,
+				CAA83F52316EFEEE760B83B4 /* WOA.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		782910788779A45DDEF93A79 /* WOA */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1B0986A911E91F052A604AC8 /* Build configuration list for PBXNativeTarget "WOA" */;
+			buildPhases = (
+				72919FB0D70A4356F589B1D0 /* Sources */,
+				841E2099FACAFAD0EADBCE08 /* Frameworks */,
+				D93141A3106F764FBA875629 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WOA;
+			productName = WOA;
+			productReference = 1DE01B2893F4F25F8E093943 /* WOA.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5E9E5FD09D70E715E56E6038 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					782910788779A45DDEF93A79 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A3F8CE4C6727FE79849E1DBF /* Build configuration list for PBXProject "WOA" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B3881F9FD56BD5BCF6265C15;
+			productRefGroup = 0F3332EFD009FD3B5CCA49F1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				782910788779A45DDEF93A79 /* WOA */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D93141A3106F764FBA875629 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		72919FB0D70A4356F589B1D0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				83DD24CB5076FA763507A02C /* AppPaths.swift in Sources */,
+				D9541321ECD55B507735E530 /* AppLogger.swift in Sources */,
+				390A4A75FC367BC506B58587 /* DatabaseURLProvider.swift in Sources */,
+				FE82FE566DA80BFB9937C385 /* DatabaseValidator.swift in Sources */,
+				179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */,
+				C66D91E3CDAD66EC6B88C2FD /* DatabaseInstaller.swift in Sources */,
+				9F811D53E20904ED24296741 /* SQLiteConnection.swift in Sources */,
+				A1405971480FBD7EC5E17001 /* DatabaseConnection.swift in Sources */,
+				E45709F0BE5A8666BB5B6105 /* AppSettings.swift in Sources */,
+				57A0C2211082BD2CE12EFA80 /* TableInfo.swift in Sources */,
+				749E7601AAE198F951F0E593 /* ConfigurationService.swift in Sources */,
+				A05D281816CFF7D5E0A63372 /* TableRepository.swift in Sources */,
+				14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */,
+				F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */,
+				9F43EDFD0024598194AA014B /* SettingsView.swift in Sources */,
+				C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */,
+				AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */,
+				A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BB2BE60C1B80234BD4F02078 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		86D58CE9F1D602329857A99D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		9AD005322E5B47FC2F732629 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = WOA/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		50BB0C2A66182E3C9C7CB6CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = WOA/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A3F8CE4C6727FE79849E1DBF /* Build configuration list for PBXProject "WOA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB2BE60C1B80234BD4F02078 /* Debug */,
+				86D58CE9F1D602329857A99D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1B0986A911E91F052A604AC8 /* Build configuration list for PBXNativeTarget "WOA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9AD005322E5B47FC2F732629 /* Debug */,
+				50BB0C2A66182E3C9C7CB6CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5E9E5FD09D70E715E56E6038 /* Project object */;
+}
