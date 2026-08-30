@@ -33,8 +33,8 @@ enum PatientRepository {
             parameters: [pattern, pattern]
         ) { statement in
             let id = Int(sqlite3_column_int64(statement, 0))
-            let nome = String(cString: sqlite3_column_text(statement, 1) ?? "")
-            let cognome = String(cString: sqlite3_column_text(statement, 2) ?? "")
+            let nome = Self.stringValue(from: statement, columnIndex: 1) ?? ""
+            let cognome = Self.stringValue(from: statement, columnIndex: 2) ?? ""
             let birthDate = Self.parseDate(from: statement, columnIndex: 3)
             let indirizzo = Self.stringValue(from: statement, columnIndex: 4)
             let citta = Self.stringValue(from: statement, columnIndex: 5)

@@ -70,10 +70,13 @@ final class SQLiteConnection {
         }
         defer { sqlite3_finalize(statement) }
 
+        let sqliteTransient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
         for (index, value) in parameters.enumerated() {
             let parameterIndex = Int32(index + 1)
-            let valueUTF8 = value.utf8CString
-            let result = sqlite3_bind_text(statement, parameterIndex, valueUTF8, -1, SQLITE_TRANSIENT)
+            let result = value.withCString { cString in
+                sqlite3_bind_text(statement, parameterIndex, cString, -1, sqliteTransient)
+            }
             guard result == SQLITE_OK else {
                 let message = String(cString: sqlite3_errmsg(handle))
                 throw SQLiteConnectionError.queryFailed(message: message)
