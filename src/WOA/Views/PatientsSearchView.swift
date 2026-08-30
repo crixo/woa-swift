@@ -6,6 +6,7 @@ struct PatientsSearchView: View {
     let databasePath: String
 
     @StateObject private var viewModel: PatientsSearchViewModel
+    @State private var showAddPatientSheet: Bool = false
 
     init(databasePath: String) {
         self.databasePath = databasePath
@@ -14,9 +15,18 @@ struct PatientsSearchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Patients Search")
-                .font(.title2)
-                .bold()
+            HStack {
+                Text("Patients Search")
+                    .font(.title2)
+                    .bold()
+                
+                Spacer()
+                
+                Button(action: { showAddPatientSheet = true }) {
+                    Label("Add Patient", systemImage: "person.badge.plus")
+                }
+                .buttonStyle(.bordered)
+            }
 
             TextField("Search by name", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
@@ -85,6 +95,9 @@ struct PatientsSearchView: View {
         .frame(minWidth: 520, minHeight: 420)
         .sheet(item: $viewModel.selectedPatient) { patient in
             PatientDetailsSheet(patient: patient)
+        }
+        .sheet(isPresented: $showAddPatientSheet) {
+            AddPatientView(databaseFileURL: URL(fileURLWithPath: databasePath))
         }
     }
 }

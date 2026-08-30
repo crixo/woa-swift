@@ -96,4 +96,81 @@ enum PatientRepository {
 
         return nil
     }
+
+    /// Fetches all provinces from the lkp_provincia lookup table.
+    /// Returns a sorted array of LookupProvince models (109 Italian provinces + EE for STATO ESTERO).
+    /// Results are cached in the ViewModel.
+    static func fetchProvinces(databaseFileURL: URL) throws -> [LookupProvince] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        
+        var provinces: [LookupProvince] = []
+        try connection.query(
+            """
+            SELECT sigla, descrizione FROM lkp_provincia
+            ORDER BY descrizione COLLATE NOCASE
+            """
+        ) { statement in
+            let sigla = Self.stringValue(from: statement, columnIndex: 0) ?? ""
+            let descrizione = Self.stringValue(from: statement, columnIndex: 1) ?? ""
+            
+            if !sigla.isEmpty && !descrizione.isEmpty {
+                provinces.append(LookupProvince(sigla: sigla, descrizione: descrizione))
+            }
+        }
+        
+        AppLogger.info("✅ Loaded \(provinces.count) provinces from lkp_provincia")
+        return provinces
+    }
+
+    /// Creates a new patient record in the database.
+    /// Returns the ID of the inserted patient on success.
+    /// Throws SQLiteConnectionError if the insert fails.
+    static func createPatient(
+        _ request: PatientCreateRequest,
+        databaseFileURL: URL
+    ) throws -> Int {
+        AppLogger.info("Adding patient: \(request.nome) \(request.cognome)")
+        
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        
+        // Format date_nascita if provided
+        var dateString: String? = nil
+        if let date = request.data_nascita {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyy-MM-dd"
+            dateString = formatter.string(from: date)
+        }
+        
+        try connection.execute(
+            """
+            INSERT INTO paziente (
+                cognome, nome, professione, indirizzo, citta, 
+                telefono, cellulare, prov, cap, email, data_nascita
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            parameters: [
+                request.cognome,
+                request.nome,
+                request.professione ?? NSNull(),
+                request.indirizzo ?? NSNull(),
+                request.citta ?? NSNull(),
+                request.telefono ?? NSNull(),
+                request.cellulare ?? NSNull(),
+                request.prov ?? NSNull(),
+                request.cap ?? NSNull(),
+                request.email ?? NSNull(),
+                dateString ?? NSNull()
+            ]
+        )
+        
+        // Get the ID of the inserted row
+        var lastID: Int = 0
+        try connection.query("SELECT last_insert_rowid()") { statement in
+            lastID = Int(sqlite3_column_int64(statement, 0))
+        }
+        
+        AppLogger.info("✅ Patient created successfully: ID=\(lastID)")
+        return lastID
+    }
 }
