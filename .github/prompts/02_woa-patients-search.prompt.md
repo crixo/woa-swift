@@ -4,9 +4,6 @@ description: Use it to scaffold a view that allows the user to search for patien
 ---
 
 
-## Context
-The WOA Application must comply with the rules and guidelines defined at ./00_woa-architecture.prompt.md. That file also includes the main database schema of the application.
-
 ## Request
 Allow the user to search for patients in the database and display their details.
 
@@ -26,20 +23,4 @@ The search criteria are the following:
 - A view that allows the user to input a search query and displays the search results in a list. Each result displays the `nome`, `cognome`, age, and address of the patient. The view also includes a counter that shows the number of search results found.
 
 
-## Constraints
-Constraints:
-- Maintain consistency with the architecture, naming conventions, and structure of the prompt file 00_woa-architecture.prompt.md
-- Update only the necessary files
-- Preserve the existing functionality of the application.
-- If new models are needed, update the data model and migrations
-- If new views are needed, maintain the existing style
-
-## Required Output:
-- Complete code for each file, no TODO placeholders.
-- DB migrations (if necessary)
-- All the generated code must be compatible with Xcode and the SwiftUI framework, and should be stored into the src directory at the root of the repository. 
-- Note: propose changes to the prompt file if needed to support the new features.
-
-## Current stack
-SwiftUI, Swift, Vapor, Fluent, SQLite
 

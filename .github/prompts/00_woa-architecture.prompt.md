@@ -15,6 +15,33 @@ The application features will be addressed using multiple prompt files one per e
 `data/woa-schema.sql` contains the SQL schema for the SQLite database in use by WOA project, which defines the structure of the database and the relationships between entities. This schema will be the reference for future data models aimed to represent entities and their relationships. Use the SQL schema to build the data models and ensure that the scaffold reflects the structure defined in the SQL schema.
 The WOA project will be a SwiftUI application targeted to desktop platforms that provides a user-friendly interface for a physical therapist to manage the database described within the SQL schema. The upcoming feature prompt file will link this architecture prompt and this schema will be the reference for any specific feature development. In case a feature requires to extend this schema, the related prompt file will provide the required additional schema.
 
+## Shared Rules for All Feature Prompt Files
+Any feature-specific prompt in this repository must inherit these rules unless a feature prompt explicitly overrides them.
+
+### Shared Context and Compliance Rules
+- The WOA Application must comply with the rules and guidelines defined in this architecture prompt.
+- This prompt also defines the main database schema of the application.
+- Feature prompts should be scoped to one feature only and should build on the architecture defined here.
+
+### Shared Constraints
+- Maintain consistency with the architecture, naming conventions, and structure of this architecture prompt.
+- Update only the necessary files.
+- Preserve the existing functionality of the application.
+- Never validate, query, or migrate the user-selected source database in its original folder; always validate the copied file stored inside the Application Support sandbox.
+- Ensure imported databases are normalized before validation: stale WAL sidecars and journal mode problems must be cleaned up on the copied sandbox database before table metadata is read.
+- If new models are needed, update the data model and migrations.
+- If new views are needed, maintain the existing style.
+- Keep database initialization and import logic outside Views. Views may trigger the onboarding workflow but should not implement validation, import, migration, or persistence logic.
+- Keep SQL queries in the repository layer and domain logic in the service/viewmodel layer.
+
+### Shared Output Contract
+- Complete code for each file, with no TODO placeholders.
+- DB migrations if necessary.
+- All generated code must be compatible with Xcode and the SwiftUI framework and should be stored into the `src` directory at the repository root.
+- Note: propose changes to the prompt file if needed to support the new features.
+
+### Current Stack
+SwiftUI, Swift, SQLite, macOS desktop focus.
 
 ### Final Validation Checklist (Required in Output)
 Before concluding, include this checklist and mark each item pass/fail:

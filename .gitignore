@@ -5,13 +5,19 @@ build/
 DerivedData/
 *.build/
 
-## Xcode user data
-*.xcodeproj/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
-*.xcworkspace/xcuserdata/
+# Xcode user data (always ignore)
+src/WOA.xcodeproj/xcuserdata/
+src/WOA.xcodeproj/project.xcworkspace/xcuserdata/
+src/WOA.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
+# Xcode UI state
 *.xcuserstate
+
+# Xcode SCM metadata
 *.xcscmblueprint
 *.xccheckout
+
+# Legacy Xcode files
 *.pbxuser
 *.mode1v3
 *.mode2v3
