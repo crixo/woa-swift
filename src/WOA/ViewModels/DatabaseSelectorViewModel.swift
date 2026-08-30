@@ -55,6 +55,7 @@ final class DatabaseSelectorViewModel: ObservableObject {
                 importedTables = tables
                 connectionStatus = "Connected"
                 didImportSuccessfully = true
+                AppLogger.info("✅ Database import completed successfully: \(destinationURL.path)")
             } catch {
                 AppLogger.error("❌ \(error.localizedDescription)")
                 validationError = error.localizedDescription

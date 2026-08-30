@@ -32,6 +32,15 @@ enum DatabaseValidator {
 
     /// Validates the SQLite file at `url`, throwing if it does not look like a WOA database.
     static func validate(fileURL: URL) throws {
+        let accessed = fileURL.startAccessingSecurityScopedResource()
+        defer {
+            if accessed {
+                fileURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        removeStaleJournalFiles(for: fileURL)
+
         let connection: SQLiteConnection
         do {
             connection = try SQLiteConnection(fileURL: fileURL, readOnly: true)
@@ -53,6 +62,21 @@ enum DatabaseValidator {
         let missing = coreTables.filter { !foundTables.contains($0) }
         guard missing.isEmpty else {
             throw DatabaseValidationError.missingTables(missing)
+        }
+    }
+
+    private static func removeStaleJournalFiles(for fileURL: URL) {
+        let walURL = fileURL.deletingPathExtension().appendingPathExtension("db-wal")
+        let shmURL = fileURL.deletingPathExtension().appendingPathExtension("db-shm")
+
+        let manager = FileManager.default
+        for url in [walURL, shmURL] {
+            guard manager.fileExists(atPath: url.path) else { continue }
+            do {
+                try manager.removeItem(at: url)
+            } catch {
+                AppLogger.warning("Unable to remove stale SQLite journal at \(url.path): \(error.localizedDescription)")
+            }
         }
     }
 }

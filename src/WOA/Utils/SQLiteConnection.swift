@@ -39,6 +39,25 @@ final class SQLiteConnection {
         }
     }
 
+    /// Executes a SQL statement with no result rows.
+    func execute(_ sql: String) throws {
+        guard let handle else {
+            throw SQLiteConnectionError.queryFailed(message: "connection closed")
+        }
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(handle, sql, -1, &statement, nil) == SQLITE_OK, let statement else {
+            let message = String(cString: sqlite3_errmsg(handle))
+            throw SQLiteConnectionError.queryFailed(message: message)
+        }
+        defer { sqlite3_finalize(statement) }
+
+        let step = sqlite3_step(statement)
+        guard step == SQLITE_DONE || step == SQLITE_ROW else {
+            let message = String(cString: sqlite3_errmsg(handle))
+            throw SQLiteConnectionError.queryFailed(message: message)
+        }
+    }
+
     /// Executes a query with no bound parameters, invoking `rowHandler` for each result row.
     func query(_ sql: String, rowHandler: (OpaquePointer) throws -> Void) throws {
         guard let handle else {
