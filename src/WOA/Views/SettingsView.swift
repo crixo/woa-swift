@@ -5,6 +5,7 @@ struct SettingsView: View {
 
     @StateObject private var settingsViewModel = SettingsViewModel()
     @StateObject private var selectorViewModel = DatabaseSelectorViewModel()
+    @State private var showPatientSearch = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -57,9 +58,18 @@ struct SettingsView: View {
                 }
             }
 
-            Button("Re-select Database") {
-                settingsViewModel.resetConfiguration()
+            HStack(spacing: 12) {
+                Button("Patients Search") {
+                    showPatientSearch = true
+                }
+
+                Button("Re-select Database") {
+                    settingsViewModel.resetConfiguration()
+                }
             }
+        }
+        .sheet(isPresented: $showPatientSearch) {
+            PatientsSearchView(databasePath: settingsViewModel.allSettings.databaseConnection.path)
         }
     }
 }
