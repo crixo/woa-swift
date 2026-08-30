@@ -1,0 +1,36 @@
+# Xcode / Swift / macOS
+
+## Build products
+build/
+DerivedData/
+*.build/
+
+## Xcode user data
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+## IDE cache / state
+.idea/
+.vscode/
+*.swp
+*.swo
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Swift Package Manager
+.swiftpm/
+Package.resolved
+
+## Local logs / runtime artifacts
+*.log
