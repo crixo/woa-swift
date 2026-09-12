@@ -1,5 +1,9 @@
 # macOS Application Architecture
 
+> Platform constraint (macOS-only, forbidden iOS APIs) and its enforcement
+> now live in `AGENTS.md` at the repo root — always loaded, no need to
+> restate here. This file remains the canonical source for the rules below.
+
 ## Technology Stack
 
 - Swift
@@ -24,6 +28,36 @@ Rules:
 - Services contain business logic
 - Repositories contain persistence logic
 - Storage services manage files and directories
+
+## Navigation
+
+The application is a **single main-window experience**. Feature views are
+never presented as separate windows, sheets, or popups — they load inline
+inside the main view that opens at launch.
+
+Rules:
+
+- Do not open a feature view via `.sheet(isPresented:)`, `.popover(isPresented:)`,
+  a new `WindowGroup`, `openWindow`, or a per-feature `NSWindowController`.
+- Feature views render inside the main view's content/detail area — prefer a
+  single `NavigationSplitView` or `NavigationStack` whose detail pane swaps
+  as the user navigates, rather than spawning independent view hierarchies.
+- Reserve `.sheet` / `.popover` only for short-lived, transient interactions
+  that are not full features: confirmations, alerts, quick single-field
+  edits, or system pickers (`NSOpenPanel`, `NSSavePanel`). Never use them to
+  host a feature's primary view.
+- The main view must always expose, regardless of which feature view is
+  currently loaded:
+  - A **Home** link/button, always reachable, that returns to the main
+    landing view.
+  - A **Back / previous view** link that returns to whatever view the user
+    navigated from.
+  - Links to other **key or related views** relevant to the current
+    context (e.g. a patient's detail view links to their treatment plans,
+    appointments, or other associated entities).
+- Keep this navigation chrome (Home, Back, related-view links) in a
+  persistent location — sidebar or toolbar — owned by the main view, not
+  re-implemented per feature view.
 
 ## Planning Driven Development
 
