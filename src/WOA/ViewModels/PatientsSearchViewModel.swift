@@ -1,6 +1,6 @@
 import Foundation
 
-/// Coordinates patient name searches and handles the selected details popup state.
+/// Coordinates patient name searches and exposes the selected route payload without managing a modal sheet.
 @MainActor
 final class PatientsSearchViewModel: ObservableObject {
 

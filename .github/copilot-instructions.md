@@ -33,7 +33,7 @@ Rules:
 
 The application is a **single main-window experience**. Feature views are
 never presented as separate windows, sheets, or popups — they load inline
-inside the main view that opens at launch.
+inside the main view that opens at launch unless explicitly requested by the user or by a given prompt. Follow the same criteria for the rules below.
 
 Rules:
 

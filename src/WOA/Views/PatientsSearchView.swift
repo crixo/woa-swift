@@ -1,15 +1,18 @@
 import SwiftUI
 
-/// Search and browse patients by name; results can display a details popup.
+/// Search and browse patients by name; details and add patient are rendered inline by the root navigation stack.
 struct PatientsSearchView: View {
 
     let databasePath: String
+    let onAddPatient: () -> Void
+    let onOpenDetails: (PatientSearchResult) -> Void
 
     @StateObject private var viewModel: PatientsSearchViewModel
-    @State private var showAddPatientSheet: Bool = false
 
-    init(databasePath: String) {
+    init(databasePath: String, onAddPatient: @escaping () -> Void = {}, onOpenDetails: @escaping (PatientSearchResult) -> Void = { _ in }) {
         self.databasePath = databasePath
+        self.onAddPatient = onAddPatient
+        self.onOpenDetails = onOpenDetails
         _viewModel = StateObject(wrappedValue: PatientsSearchViewModel(databasePath: databasePath))
     }
 
@@ -19,10 +22,10 @@ struct PatientsSearchView: View {
                 Text("Patients Search")
                     .font(.title2)
                     .bold()
-                
+
                 Spacer()
-                
-                Button(action: { showAddPatientSheet = true }) {
+
+                Button(action: onAddPatient) {
                     Label("Add Patient", systemImage: "person.badge.plus")
                 }
                 .buttonStyle(.bordered)
@@ -82,6 +85,7 @@ struct PatientsSearchView: View {
 
                             Button("View details") {
                                 viewModel.openDetails(patient)
+                                onOpenDetails(patient)
                             }
                             .buttonStyle(.link)
                         }
@@ -93,33 +97,5 @@ struct PatientsSearchView: View {
         }
         .padding()
         .frame(minWidth: 520, minHeight: 420)
-        .sheet(item: $viewModel.selectedPatient) { patient in
-            PatientDetailsSheet(patient: patient)
-        }
-        .sheet(isPresented: $showAddPatientSheet) {
-            AddPatientView(databaseFileURL: URL(fileURLWithPath: databasePath))
-        }
-    }
-}
-
-private struct PatientDetailsSheet: View {
-
-    let patient: PatientSearchResult
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Patient Details")
-                .font(.title2)
-                .bold()
-
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(patient.details, id: \ .self) { detail in
-                    Text(detail)
-                        .font(.body)
-                }
-            }
-        }
-        .padding()
-        .frame(width: 360, alignment: .leading)
     }
 }
