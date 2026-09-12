@@ -16,6 +16,7 @@ struct SettingsView: View {
     @StateObject private var settingsViewModel = SettingsViewModel()
     @StateObject private var selectorViewModel = DatabaseSelectorViewModel()
     @State private var navigationPath: [NavigationRoute] = []
+    @State private var patientDetailRefreshToken = UUID()
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -52,6 +53,7 @@ struct SettingsView: View {
                         PatientDetailView(
                             patientID: patientID,
                             databaseFileURL: databaseURL,
+                            refreshToken: patientDetailRefreshToken,
                             onOpenConsultation: { consultationID in
                                 navigationPath.append(.consultationDetail(consultationID: consultationID, databaseURL: databaseURL))
                             },
@@ -75,7 +77,10 @@ struct SettingsView: View {
                             patientID: patientID,
                             databaseFileURL: databaseURL,
                             onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
-                            onSuccess: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                            onSuccess: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                                patientDetailRefreshToken = UUID()
+                            }
                         )
                     case .historyDetail(let historyID, let databaseURL):
                         PatientHistoryDetailView(historyID: historyID, databaseFileURL: databaseURL)
@@ -84,7 +89,10 @@ struct SettingsView: View {
                             patientID: patientID,
                             databaseFileURL: databaseURL,
                             onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
-                            onSuccess: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                            onSuccess: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                                patientDetailRefreshToken = UUID()
+                            }
                         )
                     }
                 }

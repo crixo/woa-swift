@@ -4,14 +4,16 @@ struct PatientDetailView: View {
     let databaseFileURL: URL
     let onOpenConsultation: (Int) -> Void
     let onAddConsultation: () -> Void
+    let refreshToken: UUID
     let onOpenHistory: (Int) -> Void
     let onAddHistory: () -> Void
     let onDeleted: () -> Void
 
     @StateObject private var viewModel: PatientDetailViewModel
 
-    init(patientID: Int, databaseFileURL: URL, onOpenConsultation: @escaping (Int) -> Void, onAddConsultation: @escaping () -> Void, onOpenHistory: @escaping (Int) -> Void, onAddHistory: @escaping () -> Void, onDeleted: @escaping () -> Void) {
+    init(patientID: Int, databaseFileURL: URL, refreshToken: UUID, onOpenConsultation: @escaping (Int) -> Void, onAddConsultation: @escaping () -> Void, onOpenHistory: @escaping (Int) -> Void, onAddHistory: @escaping () -> Void, onDeleted: @escaping () -> Void) {
         self.databaseFileURL = databaseFileURL
+        self.refreshToken = refreshToken
         self.onOpenConsultation = onOpenConsultation
         self.onAddConsultation = onAddConsultation
         self.onOpenHistory = onOpenHistory
@@ -46,7 +48,12 @@ struct PatientDetailView: View {
             }
         }
         .navigationTitle("Patient Details")
-        .task { await viewModel.load() }
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+        .onChange(of: refreshToken) { _ in
+            Task { await viewModel.load() }
+        }
         .confirmationDialog("Delete this patient?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete Patient", role: .destructive) {
                 Task {
