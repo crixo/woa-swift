@@ -59,3 +59,23 @@ Before returning generated or edited Swift code under `src/`, scan every
 `import` statement and every type/modifier used against the forbidden list
 above. If any match is found, remove it and substitute the macOS-native
 equivalent before responding.
+
+## SwiftUI navigation guardrails
+
+When using `NavigationStack`, `navigationDestination(for:)`, or a typed route
+path:
+
+- Define a concrete route enum with explicit cases, not an implicit or
+  loosely-typed payload.
+- Ensure the route enum conforms to `Hashable`.
+- Ensure each associated value type also conforms to `Hashable` when used as
+  a destination payload (for example `URL`, `String`, `Int`, or a hashable
+  model value).
+- Prefer a typed stack such as `@State private var path: [Route] = []` with
+  `NavigationStack(path: $path)`.
+- Do not use ambiguous `NavigationPath` patterns when a concrete enum route is
+  required for state changes and destination resolution.
+- Before finalizing navigation code, check for compiler errors like:
+  - `Type 'Decodable' has no member ...`
+  - `does not conform to protocol 'Hashable'`
+  - `NavigationPath` dynamic member access errors

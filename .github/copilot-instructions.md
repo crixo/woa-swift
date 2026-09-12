@@ -59,6 +59,15 @@ Rules:
   persistent location — sidebar or toolbar — owned by the main view, not
   re-implemented per feature view.
 
+### SwiftUI Navigation Safety
+
+- Define a concrete, typed route enum for any `NavigationStack` feature flow.
+- Ensure the route enum and any associated value payloads conform to `Hashable`.
+- Prefer `@State private var path: [Route] = []` with `NavigationStack(path: $path)`
+  over ambiguous `NavigationPath` patterns when a feature needs routed detail views.
+- Re-check route payload types before finalizing navigation code; avoid compile-time
+  errors such as `Type 'Decodable' has no member ...` or `does not conform to protocol 'Hashable'`.
+
 ## Planning Driven Development
 
 The repository contains a `/plans` folder.

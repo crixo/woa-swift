@@ -11,7 +11,7 @@ struct SettingsView: View {
 
     @StateObject private var settingsViewModel = SettingsViewModel()
     @StateObject private var selectorViewModel = DatabaseSelectorViewModel()
-    @State private var navigationPath = NavigationPath()
+    @State private var navigationPath: [NavigationRoute] = []
 
     var body: some View {
         NavigationStack(path: $navigationPath) {

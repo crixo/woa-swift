@@ -1,7 +1,7 @@
 import Foundation
 
 /// Lightweight patient model used for search results and details popups.
-struct PatientSearchResult: Identifiable, Equatable {
+struct PatientSearchResult: Identifiable, Equatable, Hashable {
     let id: Int
     let nome: String
     let cognome: String
