@@ -33,6 +33,9 @@
 		A5AE86B82384923CB29493F2 /* PatientsSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */; };
 		3C7B8E9F2D0A5E1F6B9C4D7E /* AddPatientView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */; };
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
+		1CF715648142F644A915620A /* PatientDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */; };
+		42C4BC0D631BF5AF6480D4FB /* PatientDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */; };
+		119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */; };
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +66,9 @@
 		7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientsSearchView.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPatientView.swift; sourceTree = "<group>"; };
 		841E2099FACAFAD0EADBCE07 /* WOA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WOA.swift; sourceTree = "<group>"; };
+		6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetail.swift; sourceTree = "<group>"; };
+		D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetailViewModel.swift; sourceTree = "<group>"; };
+		3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetailView.swift; sourceTree = "<group>"; };
 		D95FA83BAAA928615472A6D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CAA83F52316EFEEE760B83B4 /* WOA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WOA.entitlements; sourceTree = "<group>"; };
 		1DE01B2893F4F25F8E093943 /* WOA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WOA.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -130,6 +136,7 @@
 				6EE4A06DA7FCE2E7700759BE /* PatientSearchResult.swift */,
 				4F5E6D7C8B9A0E1F2D3C4B5A /* PatientCreateRequest.swift */,
 				9C8B7A6F5E4D3C2B1A0F9E8D /* LookupProvince.swift */,
+				6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -141,6 +148,7 @@
 				D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */,
 				33CBF9C0D9FBAFD0E9C2A70F /* PatientsSearchViewModel.swift */,
 				2E4D5C6B7A8F9E0D1C2B3A4F /* AddPatientViewModel.swift */,
+				D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -153,6 +161,7 @@
 				7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */,
 				7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */,
 				1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */,
+				3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -290,6 +299,9 @@
 				AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */,
 				A5AE86B82384923CB29493F2 /* PatientsSearchView.swift in Sources */,
 				3C7B8E9F2D0A5E1F6B9C4D7E /* AddPatientView.swift in Sources */,
+				1CF715648142F644A915620A /* PatientDetail.swift in Sources */,
+				42C4BC0D631BF5AF6480D4FB /* PatientDetailViewModel.swift in Sources */,
+				119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */,
 				A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

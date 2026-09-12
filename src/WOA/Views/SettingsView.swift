@@ -6,7 +6,11 @@ struct SettingsView: View {
     private enum NavigationRoute: Hashable {
         case patientsSearch
         case addPatient(databaseURL: URL)
-        case patientDetails(PatientSearchResult)
+        case patientDetails(patientID: Int, databaseURL: URL)
+        case consultationDetail(consultationID: Int, databaseURL: URL)
+        case addConsultation(patientID: Int, databaseURL: URL)
+        case historyDetail(historyID: Int, databaseURL: URL)
+        case addHistory(patientID: Int, databaseURL: URL)
     }
 
     @StateObject private var settingsViewModel = SettingsViewModel()
@@ -26,7 +30,8 @@ struct SettingsView: View {
                                 navigationPath.append(.addPatient(databaseURL: url))
                             },
                             onOpenDetails: { patient in
-                                navigationPath.append(.patientDetails(patient))
+                                let url = URL(fileURLWithPath: settingsViewModel.allSettings.databaseConnection.path)
+                                navigationPath.append(.patientDetails(patientID: patient.id, databaseURL: url))
                             }
                         )
                     case .addPatient(let databaseURL):
@@ -43,8 +48,44 @@ struct SettingsView: View {
                                 }
                             }
                         )
-                    case .patientDetails(let patient):
-                        PatientDetailsView(patient: patient)
+                    case .patientDetails(let patientID, let databaseURL):
+                        PatientDetailView(
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            onOpenConsultation: { consultationID in
+                                navigationPath.append(.consultationDetail(consultationID: consultationID, databaseURL: databaseURL))
+                            },
+                            onAddConsultation: {
+                                navigationPath.append(.addConsultation(patientID: patientID, databaseURL: databaseURL))
+                            },
+                            onOpenHistory: { historyID in
+                                navigationPath.append(.historyDetail(historyID: historyID, databaseURL: databaseURL))
+                            },
+                            onAddHistory: {
+                                navigationPath.append(.addHistory(patientID: patientID, databaseURL: databaseURL))
+                            },
+                            onDeleted: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                            }
+                        )
+                    case .consultationDetail(let consultationID, let databaseURL):
+                        PatientAppointmentDetailView(consultationID: consultationID, databaseFileURL: databaseURL)
+                    case .addConsultation(let patientID, let databaseURL):
+                        AddConsultationView(
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
+                            onSuccess: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                        )
+                    case .historyDetail(let historyID, let databaseURL):
+                        PatientHistoryDetailView(historyID: historyID, databaseFileURL: databaseURL)
+                    case .addHistory(let patientID, let databaseURL):
+                        AddRemoteHistoryView(
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
+                            onSuccess: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                        )
                     }
                 }
         }
@@ -142,26 +183,5 @@ struct SettingsView: View {
                 }
             }
         }
-    }
-}
-
-private struct PatientDetailsView: View {
-    let patient: PatientSearchResult
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Patient Details")
-                .font(.title2)
-                .bold()
-
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(patient.details, id: \ .self) { detail in
-                    Text(detail)
-                        .font(.body)
-                }
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

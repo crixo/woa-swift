@@ -149,46 +149,22 @@ enum PatientRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
-        let params: [Any] = [
-            request.cognome,
-            request.nome,
-            request.professione ?? NSNull(),
-            request.indirizzo ?? NSNull(),
-            request.citta ?? NSNull(),
-            request.telefono ?? NSNull(),
-            request.cellulare ?? NSNull(),
-            request.prov ?? NSNull(),
-            request.cap ?? NSNull(),
-            request.email ?? NSNull(),
-            dateString ?? NSNull()
-        ]
-
-        let finalSQL = buildSQL(insertSQL, params: params)
-        try connection.execute(finalSQL)
-
-
-        
-//        try connection.execute(
-//            """
-//            INSERT INTO paziente (
-//                cognome, nome, professione, indirizzo, citta, 
-//                telefono, cellulare, prov, cap, email, data_nascita
-//            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-//            """,
-//            parameters: [
-//                request.cognome,
-//                request.nome,
-//                request.professione ?? NSNull(),
-//                request.indirizzo ?? NSNull(),
-//                request.citta ?? NSNull(),
-//                request.telefono ?? NSNull(),
-//                request.cellulare ?? NSNull(),
-//                request.prov ?? NSNull(),
-//                request.cap ?? NSNull(),
-//                request.email ?? NSNull(),
-//                dateString ?? NSNull()
-//            ]
-//        )
+        try connection.execute(
+            insertSQL,
+            parameters: [
+                .text(request.cognome),
+                .text(request.nome),
+                Self.value(request.professione),
+                Self.value(request.indirizzo),
+                Self.value(request.citta),
+                Self.value(request.telefono),
+                Self.value(request.cellulare),
+                Self.value(request.prov),
+                Self.value(request.cap),
+                Self.value(request.email),
+                Self.value(dateString)
+            ]
+        )
         
         // Get the ID of the inserted row
         var lastID: Int = 0
@@ -199,45 +175,200 @@ enum PatientRepository {
         AppLogger.info("✅ Patient created successfully: ID=\(lastID)")
         return lastID
     }
-    
-    /// Builds a final SQL string by replacing `?` placeholders with values from `params`.
-    static func buildSQL(_ template: String, params: [Any?]) -> String {
-        
-        func sqlLiteral(_ value: Any?) -> String {
-            guard let value = value else { return "NULL" }
-            
-            if value is NSNull { return "NULL" }
-            
-            switch value {
-            case let s as String:
-                let escaped = s.replacingOccurrences(of: "'", with: "''")
-                return "'\(escaped)'"
-                
-            case let i as Int:
-                return "\(i)"
-                
-            case let d as Double:
-                return "\(d)"
-                
-            case let b as Bool:
-                return b ? "1" : "0"
-                
-            default:
-                // Fallback: convert to string and escape
-                let s = String(describing: value)
-                let escaped = s.replacingOccurrences(of: "'", with: "''")
-                return "'\(escaped)'"
-            }
+
+    static func fetchPatient(by id: Int, databaseFileURL: URL) throws -> PatientDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var patient: PatientDetail?
+        try connection.query(
+            """
+            SELECT p.ID, p.cognome, p.nome, p.professione, p.indirizzo, p.citta,
+                   p.telefono, p.cellulare, p.prov, p.cap, p.email, p.data_nascita,
+                   COALESCE(lp.descrizione, p.prov)
+            FROM paziente p
+            LEFT JOIN lkp_provincia lp ON LOWER(lp.sigla) = LOWER(p.prov)
+            WHERE p.ID = ?
+            LIMIT 1
+            """,
+            parameters: [String(id)]
+        ) { statement in
+            patient = PatientDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                cognome: Self.stringValue(from: statement, columnIndex: 1) ?? "",
+                nome: Self.stringValue(from: statement, columnIndex: 2) ?? "",
+                professione: Self.stringValue(from: statement, columnIndex: 3),
+                indirizzo: Self.stringValue(from: statement, columnIndex: 4),
+                citta: Self.stringValue(from: statement, columnIndex: 5),
+                telefono: Self.stringValue(from: statement, columnIndex: 6),
+                cellulare: Self.stringValue(from: statement, columnIndex: 7),
+                prov: Self.stringValue(from: statement, columnIndex: 8),
+                cap: Self.stringValue(from: statement, columnIndex: 9),
+                email: Self.stringValue(from: statement, columnIndex: 10),
+                dataNascita: Self.parseDate(from: statement, columnIndex: 11),
+                provincia: Self.stringValue(from: statement, columnIndex: 12)
+            )
         }
-        
-        var finalSQL = template
-        for param in params {
-            if let range = finalSQL.range(of: "?") {
-                finalSQL.replaceSubrange(range, with: sqlLiteral(param))
-            }
-        }
-        
-        return finalSQL
+        return patient
     }
 
+    static func fetchConsultations(for patientID: Int, databaseFileURL: URL) throws -> [ConsultationSummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [ConsultationSummary] = []
+        try connection.query(
+            "SELECT ID, data, problema_iniziale FROM consulto WHERE ID_paziente = ? ORDER BY data DESC, ID DESC",
+            parameters: [String(patientID)]
+        ) { statement in
+            results.append(ConsultationSummary(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                date: Self.parseDate(from: statement, columnIndex: 1),
+                initialProblem: Self.stringValue(from: statement, columnIndex: 2)
+            ))
+        }
+        return results
+    }
+
+    static func fetchRemoteHistory(for patientID: Int, databaseFileURL: URL) throws -> [RemoteHistorySummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [RemoteHistorySummary] = []
+        try connection.query(
+            """
+            SELECT h.ID, h.data, h.tipo, COALESCE(l.descrizione, ''), h.descrizione
+            FROM anamnesi_remota h
+            LEFT JOIN lkp_anamnesi l ON l.ID = h.tipo
+            WHERE h.ID_paziente = ?
+            ORDER BY h.data DESC, h.ID DESC
+            """,
+            parameters: [String(patientID)]
+        ) { statement in
+            results.append(RemoteHistorySummary(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                date: Self.parseDate(from: statement, columnIndex: 1),
+                typeID: Int(sqlite3_column_int64(statement, 2)),
+                typeName: Self.stringValue(from: statement, columnIndex: 3),
+                description: Self.stringValue(from: statement, columnIndex: 4)
+            ))
+        }
+        return results
+    }
+
+    static func fetchConsultation(by id: Int, databaseFileURL: URL) throws -> ConsultationDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var result: ConsultationDetail?
+        try connection.query(
+            "SELECT ID, ID_paziente, data, problema_iniziale FROM consulto WHERE ID = ? LIMIT 1",
+            parameters: [String(id)]
+        ) { statement in
+            result = ConsultationDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                patientID: Int(sqlite3_column_int64(statement, 1)),
+                date: Self.parseDate(from: statement, columnIndex: 2),
+                initialProblem: Self.stringValue(from: statement, columnIndex: 3)
+            )
+        }
+        return result
+    }
+
+    static func fetchRemoteHistoryItem(by id: Int, databaseFileURL: URL) throws -> RemoteHistoryDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var result: RemoteHistoryDetail?
+        try connection.query(
+            """
+            SELECT h.ID, h.ID_paziente, h.data, h.tipo, COALESCE(l.descrizione, ''), h.descrizione
+            FROM anamnesi_remota h
+            LEFT JOIN lkp_anamnesi l ON l.ID = h.tipo
+            WHERE h.ID = ?
+            LIMIT 1
+            """,
+            parameters: [String(id)]
+        ) { statement in
+            result = RemoteHistoryDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                patientID: Int(sqlite3_column_int64(statement, 1)),
+                date: Self.parseDate(from: statement, columnIndex: 2),
+                typeID: Int(sqlite3_column_int64(statement, 3)),
+                typeName: Self.stringValue(from: statement, columnIndex: 4),
+                description: Self.stringValue(from: statement, columnIndex: 5)
+            )
+        }
+        return result
+    }
+
+    static func fetchAnamnesisTypes(databaseFileURL: URL) throws -> [AnamnesisType] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [AnamnesisType] = []
+        try connection.query("SELECT ID, descrizione FROM lkp_anamnesi ORDER BY ID") { statement in
+            results.append(AnamnesisType(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                name: Self.stringValue(from: statement, columnIndex: 1) ?? "Not available"
+            ))
+        }
+        return results
+    }
+
+    static func createConsultation(_ request: ConsultationCreateRequest, databaseFileURL: URL) throws -> Int {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute(
+            "INSERT INTO consulto (ID_paziente, data, problema_iniziale) VALUES (?, ?, ?)",
+            parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .text(request.initialProblem)]
+        )
+        return try lastInsertedID(from: connection)
+    }
+
+    static func createRemoteHistory(_ request: RemoteHistoryCreateRequest, databaseFileURL: URL) throws -> Int {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute(
+            "INSERT INTO anamnesi_remota (ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?)",
+            parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .integer(request.typeID), Self.value(request.description)]
+        )
+        return try lastInsertedID(from: connection)
+    }
+
+    static func updatePatient(_ request: PatientCreateRequest, patientID: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE paziente SET cognome = ?, nome = ?, professione = ?, indirizzo = ?, citta = ?,
+            telefono = ?, cellulare = ?, prov = ?, cap = ?, email = ?, data_nascita = ?
+        WHERE ID = ?
+        """
+        let dateString = request.data_nascita.map(Self.databaseDate)
+        let changes = try connection.execute(sql, parameters: [
+            .text(request.cognome), .text(request.nome), Self.value(request.professione),
+            Self.value(request.indirizzo), Self.value(request.citta), Self.value(request.telefono),
+            Self.value(request.cellulare), Self.value(request.prov), Self.value(request.cap),
+            Self.value(request.email), Self.value(dateString), .integer(patientID)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Patient ID \(patientID) was not updated")
+        }
+    }
+
+    static func deletePatient(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM paziente WHERE ID = ?", parameters: [.integer(id)])
+    }
+
+    private static func value(_ value: String?) -> SQLiteValue {
+        value.map(SQLiteValue.text) ?? .null
+    }
+
+    private static func databaseDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
+    private static func databaseDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter.string(from: date)
+    }
+
+    private static func lastInsertedID(from connection: SQLiteConnection) throws -> Int {
+        var lastID = 0
+        try connection.query("SELECT last_insert_rowid()") { statement in
+            lastID = Int(sqlite3_column_int64(statement, 0))
+        }
+        return lastID
+    }
 }
