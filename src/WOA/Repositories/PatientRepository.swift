@@ -142,27 +142,53 @@ enum PatientRepository {
             dateString = formatter.string(from: date)
         }
         
-        try connection.execute(
-            """
-            INSERT INTO paziente (
-                cognome, nome, professione, indirizzo, citta, 
-                telefono, cellulare, prov, cap, email, data_nascita
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            parameters: [
-                request.cognome,
-                request.nome,
-                request.professione ?? NSNull(),
-                request.indirizzo ?? NSNull(),
-                request.citta ?? NSNull(),
-                request.telefono ?? NSNull(),
-                request.cellulare ?? NSNull(),
-                request.prov ?? NSNull(),
-                request.cap ?? NSNull(),
-                request.email ?? NSNull(),
-                dateString ?? NSNull()
-            ]
-        )
+        let insertSQL = """
+        INSERT INTO paziente (
+            cognome, nome, professione, indirizzo, citta,
+            telefono, cellulare, prov, cap, email, data_nascita
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        let params: [Any] = [
+            request.cognome,
+            request.nome,
+            request.professione ?? NSNull(),
+            request.indirizzo ?? NSNull(),
+            request.citta ?? NSNull(),
+            request.telefono ?? NSNull(),
+            request.cellulare ?? NSNull(),
+            request.prov ?? NSNull(),
+            request.cap ?? NSNull(),
+            request.email ?? NSNull(),
+            dateString ?? NSNull()
+        ]
+
+        let finalSQL = buildSQL(insertSQL, params: params)
+        try connection.execute(finalSQL)
+
+
+        
+//        try connection.execute(
+//            """
+//            INSERT INTO paziente (
+//                cognome, nome, professione, indirizzo, citta, 
+//                telefono, cellulare, prov, cap, email, data_nascita
+//            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//            """,
+//            parameters: [
+//                request.cognome,
+//                request.nome,
+//                request.professione ?? NSNull(),
+//                request.indirizzo ?? NSNull(),
+//                request.citta ?? NSNull(),
+//                request.telefono ?? NSNull(),
+//                request.cellulare ?? NSNull(),
+//                request.prov ?? NSNull(),
+//                request.cap ?? NSNull(),
+//                request.email ?? NSNull(),
+//                dateString ?? NSNull()
+//            ]
+//        )
         
         // Get the ID of the inserted row
         var lastID: Int = 0
@@ -173,4 +199,45 @@ enum PatientRepository {
         AppLogger.info("✅ Patient created successfully: ID=\(lastID)")
         return lastID
     }
+    
+    /// Builds a final SQL string by replacing `?` placeholders with values from `params`.
+    static func buildSQL(_ template: String, params: [Any?]) -> String {
+        
+        func sqlLiteral(_ value: Any?) -> String {
+            guard let value = value else { return "NULL" }
+            
+            if value is NSNull { return "NULL" }
+            
+            switch value {
+            case let s as String:
+                let escaped = s.replacingOccurrences(of: "'", with: "''")
+                return "'\(escaped)'"
+                
+            case let i as Int:
+                return "\(i)"
+                
+            case let d as Double:
+                return "\(d)"
+                
+            case let b as Bool:
+                return b ? "1" : "0"
+                
+            default:
+                // Fallback: convert to string and escape
+                let s = String(describing: value)
+                let escaped = s.replacingOccurrences(of: "'", with: "''")
+                return "'\(escaped)'"
+            }
+        }
+        
+        var finalSQL = template
+        for param in params {
+            if let range = finalSQL.range(of: "?") {
+                finalSQL.replaceSubrange(range, with: sqlLiteral(param))
+            }
+        }
+        
+        return finalSQL
+    }
+
 }

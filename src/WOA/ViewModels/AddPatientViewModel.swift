@@ -9,6 +9,10 @@ import Foundation
     @Published var selectedProvince: LookupProvince?
     @Published var allProvinces: [LookupProvince] = []
     @Published var isSubmitting: Bool = false
+    var hasRealValidationErrors: Bool {
+        let res = validationErrors.values.contains { !$0.isEmpty }
+        return res
+    }
     @Published var validationErrors: [String: String] = [:]
     @Published var globalErrorMessage: String?
     @Published var didSubmitSuccessfully: Bool = false
@@ -90,16 +94,18 @@ import Foundation
         }
         
         // Validate prov (required for submission)
-        if formData.prov == nil || formData.prov?.isEmpty ?? true {
-            validationErrors["prov"] = "Province is required"
-        }
+//        if formData.prov == nil || formData.prov?.isEmpty ?? true {
+//            validationErrors["prov"] = "Province is required"
+//        }
         
         // Validate data_nascita
         if let error = validateField("data_nascita") {
             validationErrors["data_nascita"] = error
         }
         
-        return validationErrors.isEmpty
+        let errors = validationErrors.isEmpty
+        
+        return errors
     }
     
     // MARK: - Submission

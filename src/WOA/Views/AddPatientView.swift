@@ -138,7 +138,6 @@ struct AddPatientView: View {
                 }
             }
             .navigationTitle("Add New Patient")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -151,7 +150,7 @@ struct AddPatientView: View {
                             await viewModel.submitForm()
                         }
                     }
-                    .disabled(viewModel.isSubmitting || !viewModel.validationErrors.isEmpty)
+                    .disabled(viewModel.isSubmitting || viewModel.hasRealValidationErrors) // || !viewModel.validationErrors.isEmpty
                 }
             }
         }

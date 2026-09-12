@@ -56,11 +56,73 @@ Add new files to the folder matching their architectural layer (View, ViewModel,
 
 ## Building for Release
 
+### Commnand line
+
 ```bash
 ./build-release.sh
 ```
 
 This builds the `WOA` scheme in the `Release` configuration and writes output to `build-release.log`.
+
+### Xcode
+Here’s a **minimal, clean Markdown documentation** you can drop into your repo.  
+It covers only the essential steps: **build Release** and **locate the `.app` bundle**.
+
+---
+
+#### 1. Switch Scheme to Release
+To ensure Xcode builds your app in **Release** mode:
+
+1. Open **Product → Scheme → Edit Scheme…**  
+2. Select **Run** in the left sidebar  
+3. Set **Build Configuration = Release**  
+4. Close the window
+
+---
+
+#### 2. Build the App
+Run a Release build:
+
+- **Product → Build**
+
+Xcode now produces a Release `.app` bundle.
+
+---
+
+#### 3. Locate the Release Build Folder
+Use Xcode’s built‑in navigation:
+
+1. Open **Product → Show Build Folder**  
+2. Finder opens inside your project’s build directory  
+3. Navigate to:
+
+```
+Build/Products/Release/
+```
+
+Inside this folder you will find:
+
+```
+YourAppName.app
+```
+
+This is the distributable macOS application bundle.
+
+---
+
+#### 4. Full Path (for reference)
+Xcode stores build products inside DerivedData:
+
+```
+~/Library/Developer/Xcode/DerivedData/<ProjectName>-<Hash>/Build/Products/Release/YourAppName.app
+```
+
+You can open the DerivedData root via:
+
+- **Xcode → Settings → Locations → Derived Data → arrow icon**
+
+---
+
 
 ## Troubleshooting
 
