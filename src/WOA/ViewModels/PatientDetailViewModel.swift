@@ -3,6 +3,7 @@ import Foundation
 @MainActor final class PatientDetailViewModel: ObservableObject {
     let patientID: Int
     let databaseFileURL: URL
+    let dataChangeCoordinator: DataChangeCoordinator
 
     @Published private(set) var patient: PatientDetail?
     @Published private(set) var consultations: [ConsultationSummary] = []
@@ -19,10 +20,29 @@ import Foundation
     @Published var isAttributesExpanded = true
     @Published var isConsultationsExpanded = true
     @Published var isHistoryExpanded = true
+    
+    private var changeEventTask: Task<Void, Never>?
 
-    init(patientID: Int, databaseFileURL: URL) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
         self.patientID = patientID
         self.databaseFileURL = databaseFileURL
+        self.dataChangeCoordinator = dataChangeCoordinator
+        
+        // Subscribe to patient change events
+        subscribeToChanges()
+    }
+    
+    deinit {
+        changeEventTask?.cancel()
+    }
+    
+    private func subscribeToChanges() {
+        changeEventTask?.cancel()
+        changeEventTask = Task {
+            for await _ in dataChangeCoordinator.subscribeToPatientChanges(patientID: patientID, databaseURL: databaseFileURL) {
+                await load()
+            }
+        }
     }
 
     func load() async {
@@ -79,6 +99,7 @@ import Foundation
         do {
             try PatientRepository.updatePatient(editForm, patientID: patientID, databaseFileURL: databaseFileURL)
             isEditing = false
+            dataChangeCoordinator.publishChange(.patientUpdated(patientID: patientID, databaseURL: databaseFileURL))
             await load()
         } catch {
             errorMessage = error.localizedDescription
@@ -91,6 +112,7 @@ import Foundation
         errorMessage = nil
         do {
             try PatientRepository.deletePatient(id: patientID, databaseFileURL: databaseFileURL)
+            dataChangeCoordinator.publishChange(.patientDeleted(patientID: patientID, databaseURL: databaseFileURL))
             isDeleting = false
             return true
         } catch {
@@ -148,13 +170,17 @@ import Foundation
 }
 
 @MainActor final class ConsultationCreateViewModel: ObservableObject {
+    let patientID: Int
     let databaseFileURL: URL
+    let dataChangeCoordinator: DataChangeCoordinator
     @Published var request: ConsultationCreateRequest
     @Published var errorMessage: String?
     @Published var isSubmitting = false
 
-    init(patientID: Int, databaseFileURL: URL) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
+        self.patientID = patientID
         self.databaseFileURL = databaseFileURL
+        self.dataChangeCoordinator = dataChangeCoordinator
         request = ConsultationCreateRequest(patientID: patientID)
     }
 
@@ -165,7 +191,8 @@ import Foundation
         }
         isSubmitting = true
         do {
-            _ = try PatientRepository.createConsultation(request, databaseFileURL: databaseFileURL)
+            let consultationID = try PatientRepository.createConsultation(request, databaseFileURL: databaseFileURL)
+            dataChangeCoordinator.publishChange(.consultationCreated(consultationID: consultationID, patientID: patientID, databaseURL: databaseFileURL))
             isSubmitting = false
             return true
         } catch {
@@ -177,14 +204,18 @@ import Foundation
 }
 
 @MainActor final class RemoteHistoryCreateViewModel: ObservableObject {
+    let patientID: Int
     let databaseFileURL: URL
+    let dataChangeCoordinator: DataChangeCoordinator
     @Published var request: RemoteHistoryCreateRequest
     @Published var types: [AnamnesisType] = []
     @Published var errorMessage: String?
     @Published var isSubmitting = false
 
-    init(patientID: Int, databaseFileURL: URL) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
+        self.patientID = patientID
         self.databaseFileURL = databaseFileURL
+        self.dataChangeCoordinator = dataChangeCoordinator
         request = RemoteHistoryCreateRequest(patientID: patientID)
         do {
             types = try PatientRepository.fetchAnamnesisTypes(databaseFileURL: databaseFileURL)
@@ -196,7 +227,8 @@ import Foundation
     func submit() async -> Bool {
         isSubmitting = true
         do {
-            _ = try PatientRepository.createRemoteHistory(request, databaseFileURL: databaseFileURL)
+            let historyID = try PatientRepository.createRemoteHistory(request, databaseFileURL: databaseFileURL)
+            dataChangeCoordinator.publishChange(.remoteHistoryCreated(historyID: historyID, patientID: patientID, databaseURL: databaseFileURL))
             isSubmitting = false
             return true
         } catch {

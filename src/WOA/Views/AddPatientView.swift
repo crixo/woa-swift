@@ -9,10 +9,10 @@ struct AddPatientView: View {
 
     @State private var manualDateText: String = ""
 
-    init(databaseFileURL: URL, onCancel: @escaping () -> Void = {}, onSuccess: @escaping () -> Void = {}) {
+    init(databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void = {}, onSuccess: @escaping () -> Void = {}) {
         self.onCancel = onCancel
         self.onSuccess = onSuccess
-        _viewModel = StateObject(wrappedValue: AddPatientViewModel(databaseFileURL: databaseFileURL))
+        _viewModel = StateObject(wrappedValue: AddPatientViewModel(databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
     }
 
     var body: some View {

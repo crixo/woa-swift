@@ -41,6 +41,8 @@ For each file reviewed, report:
 - **Suggested fix**: one sentence describing the change needed — do not
   write the replacement code yourself
 
+Instead of free text, have the agent emit structured data as YAML unless explicitly instructed otherwise.
+
 If a file has no violations, say so briefly rather than staying silent —
 silence is ambiguous between "compliant" and "not checked."
 

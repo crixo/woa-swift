@@ -15,8 +15,8 @@ struct SettingsView: View {
 
     @StateObject private var settingsViewModel = SettingsViewModel()
     @StateObject private var selectorViewModel = DatabaseSelectorViewModel()
+    @StateObject private var dataChangeCoordinator = DataChangeCoordinator()
     @State private var navigationPath: [NavigationRoute] = []
-    @State private var patientDetailRefreshToken = UUID()
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -38,6 +38,7 @@ struct SettingsView: View {
                     case .addPatient(let databaseURL):
                         AddPatientView(
                             databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
                             onCancel: {
                                 if !navigationPath.isEmpty {
                                     navigationPath.removeLast()
@@ -53,7 +54,7 @@ struct SettingsView: View {
                         PatientDetailView(
                             patientID: patientID,
                             databaseFileURL: databaseURL,
-                            refreshToken: patientDetailRefreshToken,
+                            dataChangeCoordinator: dataChangeCoordinator,
                             onOpenConsultation: { consultationID in
                                 navigationPath.append(.consultationDetail(consultationID: consultationID, databaseURL: databaseURL))
                             },
@@ -76,10 +77,10 @@ struct SettingsView: View {
                         AddConsultationView(
                             patientID: patientID,
                             databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
                             onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
                             onSuccess: {
                                 if !navigationPath.isEmpty { navigationPath.removeLast() }
-                                patientDetailRefreshToken = UUID()
                             }
                         )
                     case .historyDetail(let historyID, let databaseURL):
@@ -88,10 +89,10 @@ struct SettingsView: View {
                         AddRemoteHistoryView(
                             patientID: patientID,
                             databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
                             onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
                             onSuccess: {
                                 if !navigationPath.isEmpty { navigationPath.removeLast() }
-                                patientDetailRefreshToken = UUID()
                             }
                         )
                     }

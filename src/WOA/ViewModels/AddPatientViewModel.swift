@@ -4,6 +4,7 @@ import Foundation
 /// Handles real-time validation as user types and orchestrates the patient creation flow.
 @MainActor final class AddPatientViewModel: ObservableObject {
     let databaseFileURL: URL
+    let dataChangeCoordinator: DataChangeCoordinator
     
     @Published var formData: PatientCreateRequest = .init()
     @Published var selectedProvince: LookupProvince?
@@ -17,8 +18,9 @@ import Foundation
     @Published var globalErrorMessage: String?
     @Published var didSubmitSuccessfully: Bool = false
     
-    init(databaseFileURL: URL) {
+    init(databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
         self.databaseFileURL = databaseFileURL
+        self.dataChangeCoordinator = dataChangeCoordinator
         Task {
             await loadProvinces()
         }
@@ -123,7 +125,8 @@ import Foundation
         globalErrorMessage = nil
         
         do {
-            _ = try PatientRepository.createPatient(formData, databaseFileURL: databaseFileURL)
+            let patientID = try PatientRepository.createPatient(formData, databaseFileURL: databaseFileURL)
+            dataChangeCoordinator.publishChange(.patientCreated(patientID: patientID, databaseURL: databaseFileURL))
             didSubmitSuccessfully = true
         } catch {
             AppLogger.error("❌ Failed to add patient: \(error.localizedDescription)")

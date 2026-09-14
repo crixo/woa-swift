@@ -2,24 +2,24 @@ import SwiftUI
 
 struct PatientDetailView: View {
     let databaseFileURL: URL
+    let dataChangeCoordinator: DataChangeCoordinator
     let onOpenConsultation: (Int) -> Void
     let onAddConsultation: () -> Void
-    let refreshToken: UUID
     let onOpenHistory: (Int) -> Void
     let onAddHistory: () -> Void
     let onDeleted: () -> Void
 
     @StateObject private var viewModel: PatientDetailViewModel
 
-    init(patientID: Int, databaseFileURL: URL, refreshToken: UUID, onOpenConsultation: @escaping (Int) -> Void, onAddConsultation: @escaping () -> Void, onOpenHistory: @escaping (Int) -> Void, onAddHistory: @escaping () -> Void, onDeleted: @escaping () -> Void) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onOpenConsultation: @escaping (Int) -> Void, onAddConsultation: @escaping () -> Void, onOpenHistory: @escaping (Int) -> Void, onAddHistory: @escaping () -> Void, onDeleted: @escaping () -> Void) {
         self.databaseFileURL = databaseFileURL
-        self.refreshToken = refreshToken
+        self.dataChangeCoordinator = dataChangeCoordinator
         self.onOpenConsultation = onOpenConsultation
         self.onAddConsultation = onAddConsultation
         self.onOpenHistory = onOpenHistory
         self.onAddHistory = onAddHistory
         self.onDeleted = onDeleted
-        _viewModel = StateObject(wrappedValue: PatientDetailViewModel(patientID: patientID, databaseFileURL: databaseFileURL))
+        _viewModel = StateObject(wrappedValue: PatientDetailViewModel(patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
     }
 
     var body: some View {
@@ -49,9 +49,6 @@ struct PatientDetailView: View {
         }
         .navigationTitle("Patient Details")
         .onAppear {
-            Task { await viewModel.load() }
-        }
-        .onChange(of: refreshToken) { _ in
             Task { await viewModel.load() }
         }
         .confirmationDialog("Delete this patient?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
@@ -258,10 +255,10 @@ struct AddConsultationView: View {
     let onSuccess: () -> Void
     @StateObject private var viewModel: ConsultationCreateViewModel
 
-    init(patientID: Int, databaseFileURL: URL, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
         self.onCancel = onCancel
         self.onSuccess = onSuccess
-        _viewModel = StateObject(wrappedValue: ConsultationCreateViewModel(patientID: patientID, databaseFileURL: databaseFileURL))
+        _viewModel = StateObject(wrappedValue: ConsultationCreateViewModel(patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
     }
 
     var body: some View {
@@ -287,10 +284,10 @@ struct AddRemoteHistoryView: View {
     let onSuccess: () -> Void
     @StateObject private var viewModel: RemoteHistoryCreateViewModel
 
-    init(patientID: Int, databaseFileURL: URL, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
         self.onCancel = onCancel
         self.onSuccess = onSuccess
-        _viewModel = StateObject(wrappedValue: RemoteHistoryCreateViewModel(patientID: patientID, databaseFileURL: databaseFileURL))
+        _viewModel = StateObject(wrappedValue: RemoteHistoryCreateViewModel(patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
     }
 
     var body: some View {
