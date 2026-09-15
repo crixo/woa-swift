@@ -11,3 +11,5 @@
 - Refactoring for state management was successful in most parts, the only manual adjustments required were in the `Add Patient` view commenting out the PreviewProvider section to avoid build errors.
 
 - `Manage consulto` required manual intervention to fix the sql statement composition and the list refresh after updates and additions. Two fixes but few effort and easy to resolve by GHCP.
+
+- `Manage anamnesi remota`. No issue just an extra curly bracket that has been removed after Xcode build.

@@ -565,7 +565,7 @@ import Foundation
     }
 }
 
-}
+
 
 @MainActor final class ConsultationCreateViewModel: ObservableObject {
     let patientID: Int
