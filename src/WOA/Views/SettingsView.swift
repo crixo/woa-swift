@@ -170,7 +170,12 @@ struct SettingsView: View {
                             onBackToConsulto: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
                         )
                     case .historyDetail(let historyID, let databaseURL):
-                        PatientHistoryDetailView(historyID: historyID, databaseFileURL: databaseURL)
+                        PatientHistoryDetailView(
+                            historyID: historyID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onBackToPatient: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                        )
                     case .addHistory(let patientID, let databaseURL):
                         AddRemoteHistoryView(
                             patientID: patientID,

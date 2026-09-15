@@ -8,6 +8,7 @@ description: Use it to scaffold a view that allows the user to edit an existing 
 Allow the user to view details of an existing anamnesi remota in the database. The view should display the anamnesi remota's attributes. The view should also allow the user to edit the anamnesi remota's details and delete the anamnesi remota from the database.
 
 The request's criteria are the following:
+1. User should be able to access the anamnesi remota detail view from the `PatientDetailView` of the main view of the application.
 2. User should browse all available information for the selected anamnesi remota.
 3. User should be able to edit the anamnesi remota's details and save the changes to the database.
 4. User should be able to delete the anamnesi remota from the database, with a confirmation prompt before deletion.
@@ -19,4 +20,4 @@ The request's criteria are the following:
 - A delete icon `🗑️` should be present in the anamnesi remota detail view. When the user clicks the delete icon, a confirmation prompt should appear to confirm the deletion. If the user confirms, the anamnesi remota should be deleted from the database.
 
 ## Required Views
-- A view that allows the user to display the details of an existing anamnesi remota in the database, including the anamnesi remota's attributes. The same view allows also the user to edit the anamnesi remota's details and delete the anamnesi remota from the database.
+- A view that allows the user to display the details of an existing anamnesi remota in the database, including the anamnesi remota's attributes. The same view allows also the user to edit the anamnesi remota's details and delete the anamnesi remota from the database. This view lives into its own file, separate from the `PatientDetailView`, following the 1:1 View/file rule.

@@ -565,27 +565,6 @@ import Foundation
     }
 }
 
-@MainActor final class RemoteHistoryDetailViewModel: ObservableObject {
-    let historyID: Int
-    let databaseFileURL: URL
-    @Published private(set) var history: RemoteHistoryDetail?
-    @Published var errorMessage: String?
-    @Published var isLoading = false
-
-    init(historyID: Int, databaseFileURL: URL) {
-        self.historyID = historyID
-        self.databaseFileURL = databaseFileURL
-    }
-
-    func load() async {
-        isLoading = true
-        do {
-            history = try PatientRepository.fetchRemoteHistoryItem(by: historyID, databaseFileURL: databaseFileURL)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isLoading = false
-    }
 }
 
 @MainActor final class ConsultationCreateViewModel: ObservableObject {

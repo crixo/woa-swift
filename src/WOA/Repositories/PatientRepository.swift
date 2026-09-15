@@ -370,6 +370,31 @@ enum PatientRepository {
         _ = try connection.execute("DELETE FROM consulto WHERE ID = ?", parameters: [.integer(id)])
     }
 
+    // MARK: - Remote History Update/Delete
+    
+    static func updateRemoteHistory(_ request: RemoteHistoryCreateRequest, id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE anamnesi_remota SET ID_paziente = ?, data = ?, tipo = ?, descrizione = ?
+        WHERE ID = ?
+        """
+        let changes = try connection.execute(sql, parameters: [
+            .integer(request.patientID),
+            .text(Self.databaseDateTime(request.date)),
+            .integer(request.typeID),
+            Self.value(request.description),
+            .integer(id)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Remote history ID \(id) was not updated")
+        }
+    }
+
+    static func deleteRemoteHistory(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM anamnesi_remota WHERE ID = ?", parameters: [.integer(id)])
+    }
+
     // MARK: - Treatment CRUD
     
     static func fetchTreatments(for consultoID: Int, databaseFileURL: URL) throws -> [TreatmentSummary] {

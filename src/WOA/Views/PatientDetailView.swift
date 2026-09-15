@@ -374,37 +374,6 @@ struct ConsultoPatientDetailView: View {
     }
 }
 
-struct PatientHistoryDetailView: View {
-    @StateObject private var viewModel: RemoteHistoryDetailViewModel
-
-    init(historyID: Int, databaseFileURL: URL) {
-        _viewModel = StateObject(wrappedValue: RemoteHistoryDetailViewModel(historyID: historyID, databaseFileURL: databaseFileURL))
-    }
-
-    var body: some View {
-        Group {
-            if let history = viewModel.history {
-                Form {
-                    LabeledContent("History ID", value: String(history.id))
-                    LabeledContent("Date", value: history.date?.formatted(date: .long, time: .omitted) ?? "Not available")
-                    LabeledContent("Type", value: history.typeName ?? "Not available")
-                    LabeledContent("Description", value: history.description ?? "Not available")
-                }
-                .frame(maxWidth: 560)
-            } else if viewModel.isLoading {
-                ProgressView("Loading health history...")
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "heart.text.square")
-                    Text("Health history not found")
-                }
-            }
-        }
-        .navigationTitle("Remote Health History")
-        .task { await viewModel.load() }
-    }
-}
-
 struct AddConsultationView: View {
     let onCancel: () -> Void
     let onSuccess: () -> Void
