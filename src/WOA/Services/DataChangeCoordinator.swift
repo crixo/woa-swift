@@ -12,6 +12,15 @@ enum DataChangeEvent: Equatable, Sendable {
     case remoteHistoryCreated(historyID: Int, patientID: Int, databaseURL: URL)
     case remoteHistoryUpdated(historyID: Int, patientID: Int, databaseURL: URL)
     case remoteHistoryDeleted(historyID: Int, patientID: Int, databaseURL: URL)
+    case treatmentCreated(treatmentID: Int, consultoID: Int, databaseURL: URL)
+    case treatmentUpdated(treatmentID: Int, consultoID: Int, databaseURL: URL)
+    case treatmentDeleted(treatmentID: Int, consultoID: Int, databaseURL: URL)
+    case evaluationCreated(evaluationID: Int, consultoID: Int, databaseURL: URL)
+    case evaluationUpdated(evaluationID: Int, consultoID: Int, databaseURL: URL)
+    case evaluationDeleted(evaluationID: Int, consultoID: Int, databaseURL: URL)
+    case examCreated(examID: Int, consultoID: Int, databaseURL: URL)
+    case examUpdated(examID: Int, consultoID: Int, databaseURL: URL)
+    case examDeleted(examID: Int, consultoID: Int, databaseURL: URL)
     
     /// Extracts the database URL from any event for identity checking.
     var databaseURL: URL {
@@ -24,7 +33,16 @@ enum DataChangeEvent: Equatable, Sendable {
              .consultationDeleted(_, _, let url),
              .remoteHistoryCreated(_, _, let url),
              .remoteHistoryUpdated(_, _, let url),
-             .remoteHistoryDeleted(_, _, let url):
+             .remoteHistoryDeleted(_, _, let url),
+             .treatmentCreated(_, _, let url),
+             .treatmentUpdated(_, _, let url),
+             .treatmentDeleted(_, _, let url),
+             .evaluationCreated(_, _, let url),
+             .evaluationUpdated(_, _, let url),
+             .evaluationDeleted(_, _, let url),
+             .examCreated(_, _, let url),
+             .examUpdated(_, _, let url),
+             .examDeleted(_, _, let url):
             return url
         }
     }
@@ -74,6 +92,24 @@ enum DataChangeEvent: Equatable, Sendable {
             case .consultationCreated(_, let pid, _), .consultationUpdated(_, let pid, _), .consultationDeleted(_, let pid, _),
                  .remoteHistoryCreated(_, let pid, _), .remoteHistoryUpdated(_, let pid, _), .remoteHistoryDeleted(_, let pid, _):
                 return pid == patientID
+            default:
+                return false
+            }
+        }
+    }
+    
+    /// Convenience subscription for consulto-scoped changes (consulto detail view).
+    /// Reloads when the specified consulto or any related record (treatment/evaluation/exam) is affected.
+    func subscribeToConsultoChanges(consultoID: Int, databaseURL: URL) -> AsyncStream<DataChangeEvent> {
+        subscribe { event in
+            guard event.databaseURL == databaseURL else { return false }
+            switch event {
+            case .consultationUpdated(let cid, _, _), .consultationDeleted(let cid, _, _):
+                return cid == consultoID
+            case .treatmentCreated(_, let cid, _), .treatmentUpdated(_, let cid, _), .treatmentDeleted(_, let cid, _),
+                 .evaluationCreated(_, let cid, _), .evaluationUpdated(_, let cid, _), .evaluationDeleted(_, let cid, _),
+                 .examCreated(_, let cid, _), .examUpdated(_, let cid, _), .examDeleted(_, let cid, _):
+                return cid == consultoID
             default:
                 return false
             }

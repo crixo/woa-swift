@@ -189,33 +189,188 @@ struct PatientDetailView: View {
     }
 }
 
-struct PatientAppointmentDetailView: View {
-    @StateObject private var viewModel: ConsultationDetailViewModel
+struct ConsultoPatientDetailView: View {
+    let onOpenTreatment: (Int) -> Void
+    let onAddTreatment: () -> Void
+    let onOpenEvaluation: (Int) -> Void
+    let onAddEvaluation: () -> Void
+    let onOpenExam: (Int) -> Void
+    let onAddExam: () -> Void
+    let onDeleted: () -> Void
+    
+    @StateObject private var viewModel: ConsultoDetailViewModel
 
-    init(consultationID: Int, databaseFileURL: URL) {
-        _viewModel = StateObject(wrappedValue: ConsultationDetailViewModel(consultationID: consultationID, databaseFileURL: databaseFileURL))
+    init(consultoID: Int, patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onOpenTreatment: @escaping (Int) -> Void, onAddTreatment: @escaping () -> Void, onOpenEvaluation: @escaping (Int) -> Void, onAddEvaluation: @escaping () -> Void, onOpenExam: @escaping (Int) -> Void, onAddExam: @escaping () -> Void, onDeleted: @escaping () -> Void) {
+        self.onOpenTreatment = onOpenTreatment
+        self.onAddTreatment = onAddTreatment
+        self.onOpenEvaluation = onOpenEvaluation
+        self.onAddEvaluation = onAddEvaluation
+        self.onOpenExam = onOpenExam
+        self.onAddExam = onAddExam
+        self.onDeleted = onDeleted
+        _viewModel = StateObject(wrappedValue: ConsultoDetailViewModel(consultoID: consultoID, patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
     }
 
     var body: some View {
         Group {
-            if let consultation = viewModel.consultation {
-                Form {
-                    LabeledContent("Appointment ID", value: String(consultation.id))
-                    LabeledContent("Date", value: consultation.date?.formatted(date: .long, time: .omitted) ?? "Not available")
-                    LabeledContent("Reason", value: consultation.initialProblem ?? "Not available")
+            if viewModel.isLoading && viewModel.consultation == nil {
+                ProgressView("Loading consultation...")
+            } else if let consultation = viewModel.consultation {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        header(consultation)
+                        if let errorMessage = viewModel.errorMessage {
+                            Text(errorMessage).foregroundStyle(.red)
+                        }
+                        if !viewModel.isEditing {
+                            treatmentsSection
+                            evaluationsSection
+                            examsSection
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: 760, alignment: .leading)
                 }
-                .frame(maxWidth: 560)
-            } else if viewModel.isLoading {
-                ProgressView("Loading appointment...")
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "calendar.badge.exclamationmark")
-                    Text("Appointment not found")
+                    Text("Consultation not found")
                 }
             }
         }
-        .navigationTitle("Appointment")
-        .task { await viewModel.load() }
+        .navigationTitle("Consultation Details")
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+        .confirmationDialog("Delete this consultation?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete Consultation", role: .destructive) {
+                Task {
+                    if await viewModel.delete() { onDeleted() }
+                }
+            }
+        } message: {
+            Text("This action removes the consultation record. Related records are not automatically deleted.")
+        }
+    }
+
+    private func header(_ consultation: ConsultationDetail) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("ID \(consultation.id)").font(.headline).bold()
+                Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
+                Text(consultation.initialProblem ?? "No problem recorded").font(.subheadline)
+            }
+            Spacer()
+            if viewModel.isEditing {
+                Button("Cancel") { viewModel.cancelEditing() }
+                Button("Save") { Task { await viewModel.save() } }
+                    .disabled(viewModel.isSaving)
+            } else {
+                Button("✏️") { viewModel.beginEditing() }
+                Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                    .disabled(viewModel.isDeleting)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var treatmentsSection: some View {
+        DisclosureGroup("Treatments (\(viewModel.treatments.count))", isExpanded: $viewModel.isTreatmentsExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                if viewModel.treatments.isEmpty {
+                    Text("No treatments recorded").foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.treatments) { treatment in
+                        Button(action: { onOpenTreatment(treatment.id) }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(treatment.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                    Text(treatment.description ?? "No description")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                Button(action: onAddTreatment) {
+                    Label("Add Treatment", systemImage: "plus.circle")
+                }.buttonStyle(.bordered)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var evaluationsSection: some View {
+        DisclosureGroup("Evaluations (\(viewModel.evaluations.count))", isExpanded: $viewModel.isEvaluationsExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                if viewModel.evaluations.isEmpty {
+                    Text("No evaluations recorded").foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.evaluations) { evaluation in
+                        Button(action: { onOpenEvaluation(evaluation.id) }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(evaluation.structural ?? "-").font(.caption).lineLimit(1)
+                                    Text((evaluation.cranioSacral ?? "-") + " • " + (evaluation.akOrthodontic ?? "-"))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                Button(action: onAddEvaluation) {
+                    Label("Add Evaluation", systemImage: "plus.circle")
+                }.buttonStyle(.bordered)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var examsSection: some View {
+        DisclosureGroup("Exams (\(viewModel.exams.count))", isExpanded: $viewModel.isExamsExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                if viewModel.exams.isEmpty {
+                    Text("No exams recorded").foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.exams) { exam in
+                        Button(action: { onOpenExam(exam.id) }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(exam.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                    Text((exam.typeName ?? "No type") + " • " + (exam.description ?? "No description"))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                Button(action: onAddExam) {
+                    Label("Add Exam", systemImage: "plus.circle")
+                }.buttonStyle(.bordered)
+            }
+        }
     }
 }
 
@@ -310,5 +465,397 @@ struct AddRemoteHistoryView: View {
         .padding()
         .frame(maxWidth: 560)
         .navigationTitle("Add Health Issue")
+    }
+}
+
+// MARK: - Treatment Views
+
+struct AddTreatmentView: View {
+    let onCancel: () -> Void
+    let onSuccess: () -> Void
+    @StateObject private var viewModel: TreatmentCreateViewModel
+
+    init(consultoID: Int, patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+        self.onCancel = onCancel
+        self.onSuccess = onSuccess
+        _viewModel = StateObject(wrappedValue: TreatmentCreateViewModel(consultoID: consultoID, patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Form {
+            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+            TextField("Description", text: $viewModel.request.description, axis: .vertical)
+            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+            HStack {
+                Button("Cancel", action: onCancel)
+                Spacer()
+                Button("Add Treatment") { Task { if await viewModel.submit() { onSuccess() } } }
+                    .disabled(viewModel.isSubmitting)
+            }
+        }
+        .padding()
+        .frame(maxWidth: 560)
+        .navigationTitle("Add Treatment")
+    }
+}
+
+struct TreatmentDetailEditView: View {
+    let onBackToConsulto: () -> Void
+    @StateObject private var viewModel: TreatmentEditViewModel
+    @State private var isEditMode = false
+
+    init(treatmentID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onBackToConsulto: @escaping () -> Void) {
+        self.onBackToConsulto = onBackToConsulto
+        _viewModel = StateObject(wrappedValue: TreatmentEditViewModel(treatmentID: treatmentID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.isLoading && viewModel.treatment == nil {
+                ProgressView("Loading treatment...")
+            } else if let treatment = viewModel.treatment {
+                if let saveSucceeded = viewModel.saveSucceeded {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 12) {
+                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundStyle(saveSucceeded ? .green : .red)
+                                .font(.title2)
+                            Text(saveSucceeded ? "Treatment saved successfully" : "Failed to save treatment")
+                                .font(.body)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        
+                        Spacer()
+                        
+                        Button(action: onBackToConsulto) {
+                            Text("Back to Consultation")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .padding()
+                    }
+                    .padding()
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if isEditMode {
+                                Form {
+                                    DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                    TextField("Description", text: $viewModel.request.description, axis: .vertical)
+                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+                                    HStack {
+                                        Button("Cancel") { isEditMode = false }
+                                        Spacer()
+                                        Button("Save") { Task { await viewModel.save() } }
+                                            .disabled(viewModel.isSaving)
+                                    }
+                                }
+                            } else {
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("ID \(treatment.id)").font(.headline).bold()
+                                        Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
+                                        Text(treatment.description ?? "No description")
+                                    }
+                                    Spacer()
+                                    Button("✏️") { isEditMode = true }
+                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                        .disabled(viewModel.isDeleting)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: 560, alignment: .leading)
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.circle")
+                    Text("Treatment not found")
+                }
+            }
+        }
+        .navigationTitle("Treatment")
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+        .confirmationDialog("Delete this treatment?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    if await viewModel.delete() { onBackToConsulto() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Evaluation Views
+
+struct AddEvaluationView: View {
+    let onCancel: () -> Void
+    let onSuccess: () -> Void
+    @StateObject private var viewModel: EvaluationCreateViewModel
+
+    init(consultoID: Int, patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+        self.onCancel = onCancel
+        self.onSuccess = onSuccess
+        _viewModel = StateObject(wrappedValue: EvaluationCreateViewModel(consultoID: consultoID, patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Form {
+            TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
+            TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
+            TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
+            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+            HStack {
+                Button("Cancel", action: onCancel)
+                Spacer()
+                Button("Add Evaluation") { Task { if await viewModel.submit() { onSuccess() } } }
+                    .disabled(viewModel.isSubmitting)
+            }
+        }
+        .padding()
+        .frame(maxWidth: 560)
+        .navigationTitle("Add Evaluation")
+    }
+}
+
+struct EvaluationDetailEditView: View {
+    let onBackToConsulto: () -> Void
+    @StateObject private var viewModel: EvaluationEditViewModel
+    @State private var isEditMode = false
+
+    init(evaluationID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onBackToConsulto: @escaping () -> Void) {
+        self.onBackToConsulto = onBackToConsulto
+        _viewModel = StateObject(wrappedValue: EvaluationEditViewModel(evaluationID: evaluationID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.isLoading && viewModel.evaluation == nil {
+                ProgressView("Loading evaluation...")
+            } else if let evaluation = viewModel.evaluation {
+                if let saveSucceeded = viewModel.saveSucceeded {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 12) {
+                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundStyle(saveSucceeded ? .green : .red)
+                                .font(.title2)
+                            Text(saveSucceeded ? "Evaluation saved successfully" : "Failed to save evaluation")
+                                .font(.body)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        
+                        Spacer()
+                        
+                        Button(action: onBackToConsulto) {
+                            Text("Back to Consultation")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .padding()
+                    }
+                    .padding()
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if isEditMode {
+                                Form {
+                                    TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
+                                    TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
+                                    TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
+                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+                                    HStack {
+                                        Button("Cancel") { isEditMode = false }
+                                        Spacer()
+                                        Button("Save") { Task { await viewModel.save() } }
+                                            .disabled(viewModel.isSaving)
+                                    }
+                                }
+                            } else {
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("ID \(evaluation.id)").font(.headline).bold()
+                                        Text("Structural: \(evaluation.structural ?? "-")").foregroundStyle(.secondary)
+                                        Text("Cranio-Sacral: \(evaluation.cranioSacral ?? "-")").foregroundStyle(.secondary)
+                                        Text("AK Orthodontic: \(evaluation.akOrthodontic ?? "-")").foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Button("✏️") { isEditMode = true }
+                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                        .disabled(viewModel.isDeleting)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: 560, alignment: .leading)
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.circle")
+                    Text("Evaluation not found")
+                }
+            }
+        }
+        .navigationTitle("Evaluation")
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+        .confirmationDialog("Delete this evaluation?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    if await viewModel.delete() { onBackToConsulto() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Exam Views
+
+struct AddExamView: View {
+    let onCancel: () -> Void
+    let onSuccess: () -> Void
+    @StateObject private var viewModel: ExamCreateViewModel
+
+    init(consultoID: Int, patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void, onSuccess: @escaping () -> Void) {
+        self.onCancel = onCancel
+        self.onSuccess = onSuccess
+        _viewModel = StateObject(wrappedValue: ExamCreateViewModel(consultoID: consultoID, patientID: patientID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Form {
+            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+            Picker("Type", selection: $viewModel.request.typeID) {
+                ForEach(viewModel.types) { type in
+                    Text(type.name).tag(type.id)
+                }
+            }
+            TextField("Description", text: $viewModel.request.description, axis: .vertical)
+            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+            HStack {
+                Button("Cancel", action: onCancel)
+                Spacer()
+                Button("Add Exam") { Task { if await viewModel.submit() { onSuccess() } } }
+                    .disabled(viewModel.isSubmitting)
+            }
+        }
+        .padding()
+        .frame(maxWidth: 560)
+        .navigationTitle("Add Exam")
+    }
+}
+
+struct ExamDetailEditView: View {
+    let onBackToConsulto: () -> Void
+    @StateObject private var viewModel: ExamEditViewModel
+    @State private var isEditMode = false
+
+    init(examID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onBackToConsulto: @escaping () -> Void) {
+        self.onBackToConsulto = onBackToConsulto
+        _viewModel = StateObject(wrappedValue: ExamEditViewModel(examID: examID, databaseFileURL: databaseFileURL, dataChangeCoordinator: dataChangeCoordinator))
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.isLoading && viewModel.exam == nil {
+                ProgressView("Loading exam...")
+            } else if let exam = viewModel.exam {
+                if let saveSucceeded = viewModel.saveSucceeded {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 12) {
+                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundStyle(saveSucceeded ? .green : .red)
+                                .font(.title2)
+                            Text(saveSucceeded ? "Exam saved successfully" : "Failed to save exam")
+                                .font(.body)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        
+                        Spacer()
+                        
+                        Button(action: onBackToConsulto) {
+                            Text("Back to Consultation")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .padding()
+                    }
+                    .padding()
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if isEditMode {
+                                Form {
+                                    DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                    Picker("Type", selection: $viewModel.request.typeID) {
+                                        ForEach(viewModel.types) { type in
+                                            Text(type.name).tag(type.id)
+                                        }
+                                    }
+                                    TextField("Description", text: $viewModel.request.description, axis: .vertical)
+                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
+                                    HStack {
+                                        Button("Cancel") { isEditMode = false }
+                                        Spacer()
+                                        Button("Save") { Task { await viewModel.save() } }
+                                            .disabled(viewModel.isSaving)
+                                    }
+                                }
+                            } else {
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("ID \(exam.id)").font(.headline).bold()
+                                        Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
+                                        Text("Type: \(exam.typeName ?? "Not available")").foregroundStyle(.secondary)
+                                        Text(exam.description ?? "No description")
+                                    }
+                                    Spacer()
+                                    Button("✏️") { isEditMode = true }
+                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                        .disabled(viewModel.isDeleting)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: 560, alignment: .leading)
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.circle")
+                    Text("Exam not found")
+                }
+            }
+        }
+        .navigationTitle("Exam")
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+        .confirmationDialog("Delete this exam?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    if await viewModel.delete() { onBackToConsulto() }
+                }
+            }
+        }
     }
 }

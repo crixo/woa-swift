@@ -1,53 +1,56 @@
 ---
-description: Documentation st***ards
+description: Documentation standards
 applyTo: "**/*.md"
 ---
 
-# D***mentation Rules
+# Documentation Rules
 
-## Storage Docu***tation
+## Storage Documentation
 
 Always explain:
 
-- UserD***ults = preferences
-- Application***pport = application data
-- SQLit*** Application Support
-- Bookmarks***external user-selected resources***# Sandbox Documentation
+- UserDefaults = preferences
+- Application Support = application data
+- SQLite in Application Support
+- Bookmarks for external user-selected resources
 
-Do not ***ommend:
+## Sandbox Documentation
+
+Do not recommend:
 
 ```text
 /Users/<user>
-~***cuments
+~/Documents
 ~/Downloads
 ```
 
-for app***ation-owned data.
+for application-owned data.
 
-Preferred exp***ation:
+Preferred explanation:
 
-- Application Support fo***nternal data
-- NSOpenPanel for e***rnal files
-- NSSavePanel for exp***s
-- Security Scoped Bookmarks fo***ersistent external access
+- Application Support for internal data
+- NSOpenPanel for external files
+- NSSavePanel for exports
+- Security Scoped Bookmarks for persistent external access
 
-## Co***Samples
+## Code Samples
 
 Prefer:
 
 ```swift
 URL
-`***
+```
+
 over string paths.
 
 Avoid:
 
-```***ft
+```swift
 try!
 ```
 
 Avoid:
 
 ```swift
-fa***Error()
+fatalError()
 ```

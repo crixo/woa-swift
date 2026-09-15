@@ -7,8 +7,14 @@ struct SettingsView: View {
         case patientsSearch
         case addPatient(databaseURL: URL)
         case patientDetails(patientID: Int, databaseURL: URL)
-        case consultationDetail(consultationID: Int, databaseURL: URL)
+        case consultoDetail(consultoID: Int, patientID: Int, databaseURL: URL)
         case addConsultation(patientID: Int, databaseURL: URL)
+        case addTreatment(consultoID: Int, patientID: Int, databaseURL: URL)
+        case treatmentDetail(treatmentID: Int, databaseURL: URL)
+        case addEvaluation(consultoID: Int, patientID: Int, databaseURL: URL)
+        case evaluationDetail(evaluationID: Int, databaseURL: URL)
+        case addExam(consultoID: Int, patientID: Int, databaseURL: URL)
+        case examDetail(examID: Int, databaseURL: URL)
         case historyDetail(historyID: Int, databaseURL: URL)
         case addHistory(patientID: Int, databaseURL: URL)
     }
@@ -56,7 +62,7 @@ struct SettingsView: View {
                             databaseFileURL: databaseURL,
                             dataChangeCoordinator: dataChangeCoordinator,
                             onOpenConsultation: { consultationID in
-                                navigationPath.append(.consultationDetail(consultationID: consultationID, databaseURL: databaseURL))
+                                navigationPath.append(.consultoDetail(consultoID: consultationID, patientID: patientID, databaseURL: databaseURL))
                             },
                             onAddConsultation: {
                                 navigationPath.append(.addConsultation(patientID: patientID, databaseURL: databaseURL))
@@ -71,8 +77,34 @@ struct SettingsView: View {
                                 if !navigationPath.isEmpty { navigationPath.removeLast() }
                             }
                         )
-                    case .consultationDetail(let consultationID, let databaseURL):
-                        PatientAppointmentDetailView(consultationID: consultationID, databaseFileURL: databaseURL)
+                    case .consultoDetail(let consultoID, let patientID, let databaseURL):
+                        ConsultoPatientDetailView(
+                            consultoID: consultoID,
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onOpenTreatment: { treatmentID in
+                                navigationPath.append(.treatmentDetail(treatmentID: treatmentID, databaseURL: databaseURL))
+                            },
+                            onAddTreatment: {
+                                navigationPath.append(.addTreatment(consultoID: consultoID, patientID: patientID, databaseURL: databaseURL))
+                            },
+                            onOpenEvaluation: { evaluationID in
+                                navigationPath.append(.evaluationDetail(evaluationID: evaluationID, databaseURL: databaseURL))
+                            },
+                            onAddEvaluation: {
+                                navigationPath.append(.addEvaluation(consultoID: consultoID, patientID: patientID, databaseURL: databaseURL))
+                            },
+                            onOpenExam: { examID in
+                                navigationPath.append(.examDetail(examID: examID, databaseURL: databaseURL))
+                            },
+                            onAddExam: {
+                                navigationPath.append(.addExam(consultoID: consultoID, patientID: patientID, databaseURL: databaseURL))
+                            },
+                            onDeleted: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                            }
+                        )
                     case .addConsultation(let patientID, let databaseURL):
                         AddConsultationView(
                             patientID: patientID,
@@ -82,6 +114,60 @@ struct SettingsView: View {
                             onSuccess: {
                                 if !navigationPath.isEmpty { navigationPath.removeLast() }
                             }
+                        )
+                    case .addTreatment(let consultoID, let patientID, let databaseURL):
+                        AddTreatmentView(
+                            consultoID: consultoID,
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
+                            onSuccess: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                            }
+                        )
+                    case .treatmentDetail(let treatmentID, let databaseURL):
+                        TreatmentDetailEditView(
+                            treatmentID: treatmentID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onBackToConsulto: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                        )
+                    case .addEvaluation(let consultoID, let patientID, let databaseURL):
+                        AddEvaluationView(
+                            consultoID: consultoID,
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
+                            onSuccess: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                            }
+                        )
+                    case .evaluationDetail(let evaluationID, let databaseURL):
+                        EvaluationDetailEditView(
+                            evaluationID: evaluationID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onBackToConsulto: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
+                        )
+                    case .addExam(let consultoID, let patientID, let databaseURL):
+                        AddExamView(
+                            consultoID: consultoID,
+                            patientID: patientID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onCancel: { if !navigationPath.isEmpty { navigationPath.removeLast() } },
+                            onSuccess: {
+                                if !navigationPath.isEmpty { navigationPath.removeLast() }
+                            }
+                        )
+                    case .examDetail(let examID, let databaseURL):
+                        ExamDetailEditView(
+                            examID: examID,
+                            databaseFileURL: databaseURL,
+                            dataChangeCoordinator: dataChangeCoordinator,
+                            onBackToConsulto: { if !navigationPath.isEmpty { navigationPath.removeLast() } }
                         )
                     case .historyDetail(let historyID, let databaseURL):
                         PatientHistoryDetailView(historyID: historyID, databaseFileURL: databaseURL)

@@ -89,3 +89,78 @@ struct RemoteHistoryCreateRequest: Hashable {
     var typeID: Int = 1
     var description: String = ""
 }
+
+struct TreatmentSummary: Identifiable, Hashable {
+    let id: Int
+    let date: Date?
+    let description: String?
+}
+
+struct TreatmentDetail: Identifiable, Hashable {
+    let id: Int
+    let consultoID: Int
+    let patientID: Int
+    var date: Date?
+    var description: String?
+}
+
+struct TreatmentCreateRequest: Hashable {
+    var consultoID: Int
+    var patientID: Int
+    var date: Date = Date()
+    var description: String = ""
+}
+
+struct EvaluationSummary: Identifiable, Hashable {
+    let id: Int
+    let structural: String?
+    let cranioSacral: String?
+    let akOrthodontic: String?
+}
+
+struct EvaluationDetail: Identifiable, Hashable {
+    let id: Int
+    let consultoID: Int
+    let patientID: Int
+    var structural: String?
+    var cranioSacral: String?
+    var akOrthodontic: String?
+}
+
+struct EvaluationCreateRequest: Hashable {
+    var consultoID: Int
+    var patientID: Int
+    var structural: String = ""
+    var cranioSacral: String = ""
+    var akOrthodontic: String = ""
+}
+
+struct ExamType: Identifiable, Hashable {
+    let id: Int
+    let name: String
+}
+
+struct ExamSummary: Identifiable, Hashable {
+    let id: Int
+    let date: Date?
+    let typeName: String?
+    let description: String?
+}
+
+struct ExamDetail: Identifiable, Hashable {
+    let id: Int
+    let consultoID: Int
+    let patientID: Int
+    var date: Date?
+    var typeID: Int
+    var typeName: String?
+    var description: String?
+}
+
+struct ExamCreateRequest: Hashable {
+    var consultoID: Int
+    var patientID: Int
+    var date: Date = Date()
+    var typeID: Int = 1
+    var description: String = ""
+}

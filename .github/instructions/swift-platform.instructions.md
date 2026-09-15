@@ -3,6 +3,9 @@ description: "macOS-only platform enforcement for all Swift source files"
 applyTo: "src/**/*.swift"
 ---
 
+Whenever working on Swift code, begin your answer with:
+[SWIFT_RULE_ACTIVE]
+
 # Swift Platform Rules (macOS only)
 
 This file loads automatically whenever Copilot reads or writes a `.swift`

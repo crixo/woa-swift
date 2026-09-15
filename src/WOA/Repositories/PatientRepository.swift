@@ -346,6 +346,282 @@ enum PatientRepository {
         _ = try connection.execute("DELETE FROM paziente WHERE ID = ?", parameters: [.integer(id)])
     }
 
+    // MARK: - Consultation Update/Delete
+    
+    static func updateConsultation(_ request: ConsultationCreateRequest, consultationID: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE consulto SET ID_paziente = ?, data = ?, problema_iniziale = ?
+        WHERE ID = ?
+        """
+        let changes = try connection.execute(sql, parameters: [
+            .integer(request.patientID),
+            .text(Self.databaseDateTime(request.date)),
+            .text(request.initialProblem),
+            .integer(consultationID)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Consultation ID \(consultationID) was not updated")
+        }
+    }
+
+    static func deleteConsultation(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM consulto WHERE ID = ?", parameters: [.integer(id)])
+    }
+
+    // MARK: - Treatment CRUD
+    
+    static func fetchTreatments(for consultoID: Int, databaseFileURL: URL) throws -> [TreatmentSummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [TreatmentSummary] = []
+        try connection.query(
+            "SELECT ID, data, descrizione FROM trattamento WHERE ID_consulto = ? ORDER BY data DESC, ID DESC",
+            parameters: [.integer(consultoID)]
+        ) { statement in
+            results.append(TreatmentSummary(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                date: Self.parseDate(from: statement, columnIndex: 1),
+                description: Self.stringValue(from: statement, columnIndex: 2)
+            ))
+        }
+        return results
+    }
+
+    static func fetchTreatment(by id: Int, databaseFileURL: URL) throws -> TreatmentDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var result: TreatmentDetail?
+        try connection.query(
+            "SELECT ID, ID_consulto, ID_paziente, data, descrizione FROM trattamento WHERE ID = ? LIMIT 1",
+            parameters: [.integer(id)]
+        ) { statement in
+            result = TreatmentDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                consultoID: Int(sqlite3_column_int64(statement, 1)),
+                patientID: Int(sqlite3_column_int64(statement, 2)),
+                date: Self.parseDate(from: statement, columnIndex: 3),
+                description: Self.stringValue(from: statement, columnIndex: 4)
+            )
+        }
+        return result
+    }
+
+    static func createTreatment(_ request: TreatmentCreateRequest, databaseFileURL: URL) throws -> Int {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute(
+            "INSERT INTO trattamento (ID_consulto, ID_paziente, data, descrizione) VALUES (?, ?, ?, ?)",
+            parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .text(request.description)
+            ]
+        )
+        return try lastInsertedID(from: connection)
+    }
+
+    static func updateTreatment(_ request: TreatmentCreateRequest, id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE trattamento SET ID_consulto = ?, ID_paziente = ?, data = ?, descrizione = ?
+        WHERE ID = ?
+        """
+        let changes = try connection.execute(sql, parameters: [
+            .integer(request.consultoID),
+            .integer(request.patientID),
+            .text(Self.databaseDateTime(request.date)),
+            .text(request.description),
+            .integer(id)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Treatment ID \(id) was not updated")
+        }
+    }
+
+    static func deleteTreatment(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM trattamento WHERE ID = ?", parameters: [.integer(id)])
+    }
+
+    // MARK: - Evaluation CRUD
+    
+    static func fetchEvaluations(for consultoID: Int, databaseFileURL: URL) throws -> [EvaluationSummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [EvaluationSummary] = []
+        try connection.query(
+            "SELECT ID, strutturale, cranio_sacrale, ak_ortodontica FROM valutazione WHERE ID_consulto = ? ORDER BY ID DESC",
+            parameters: [.integer(consultoID)]
+        ) { statement in
+            results.append(EvaluationSummary(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                structural: Self.stringValue(from: statement, columnIndex: 1),
+                cranioSacral: Self.stringValue(from: statement, columnIndex: 2),
+                akOrthodontic: Self.stringValue(from: statement, columnIndex: 3)
+            ))
+        }
+        return results
+    }
+
+    static func fetchEvaluation(by id: Int, databaseFileURL: URL) throws -> EvaluationDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var result: EvaluationDetail?
+        try connection.query(
+            "SELECT ID, ID_consulto, ID_paziente, strutturale, cranio_sacrale, ak_ortodontica FROM valutazione WHERE ID = ? LIMIT 1",
+            parameters: [.integer(id)]
+        ) { statement in
+            result = EvaluationDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                consultoID: Int(sqlite3_column_int64(statement, 1)),
+                patientID: Int(sqlite3_column_int64(statement, 2)),
+                structural: Self.stringValue(from: statement, columnIndex: 3),
+                cranioSacral: Self.stringValue(from: statement, columnIndex: 4),
+                akOrthodontic: Self.stringValue(from: statement, columnIndex: 5)
+            )
+        }
+        return result
+    }
+
+    static func createEvaluation(_ request: EvaluationCreateRequest, databaseFileURL: URL) throws -> Int {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute(
+            "INSERT INTO valutazione (ID_consulto, ID_paziente, strutturale, cranio_sacrale, ak_ortodontica) VALUES (?, ?, ?, ?, ?)",
+            parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(request.structural),
+                .text(request.cranioSacral),
+                .text(request.akOrthodontic)
+            ]
+        )
+        return try lastInsertedID(from: connection)
+    }
+
+    static func updateEvaluation(_ request: EvaluationCreateRequest, id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE valutazione SET ID_consulto = ?, ID_paziente = ?, strutturale = ?, cranio_sacrale = ?, ak_ortodontica = ?
+        WHERE ID = ?
+        """
+        let changes = try connection.execute(sql, parameters: [
+            .integer(request.consultoID),
+            .integer(request.patientID),
+            .text(request.structural),
+            .text(request.cranioSacral),
+            .text(request.akOrthodontic),
+            .integer(id)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Evaluation ID \(id) was not updated")
+        }
+    }
+
+    static func deleteEvaluation(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM valutazione WHERE ID = ?", parameters: [.integer(id)])
+    }
+
+    // MARK: - Exam CRUD
+    
+    static func fetchExams(for consultoID: Int, databaseFileURL: URL) throws -> [ExamSummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [ExamSummary] = []
+        try connection.query(
+            """
+            SELECT e.ID, e.data, COALESCE(l.descrizione, ''), e.descrizione
+            FROM esame e
+            LEFT JOIN lkp_esame l ON l.ID = e.tipo
+            WHERE e.ID_consulto = ?
+            ORDER BY e.data DESC, e.ID DESC
+            """,
+            parameters: [.integer(consultoID)]
+        ) { statement in
+            results.append(ExamSummary(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                date: Self.parseDate(from: statement, columnIndex: 1),
+                typeName: Self.stringValue(from: statement, columnIndex: 2),
+                description: Self.stringValue(from: statement, columnIndex: 3)
+            ))
+        }
+        return results
+    }
+
+    static func fetchExam(by id: Int, databaseFileURL: URL) throws -> ExamDetail? {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var result: ExamDetail?
+        try connection.query(
+            """
+            SELECT e.ID, e.ID_consulto, e.ID_paziente, e.data, e.tipo, COALESCE(l.descrizione, ''), e.descrizione
+            FROM esame e
+            LEFT JOIN lkp_esame l ON l.ID = e.tipo
+            WHERE e.ID = ?
+            LIMIT 1
+            """,
+            parameters: [.integer(id)]
+        ) { statement in
+            result = ExamDetail(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                consultoID: Int(sqlite3_column_int64(statement, 1)),
+                patientID: Int(sqlite3_column_int64(statement, 2)),
+                date: Self.parseDate(from: statement, columnIndex: 3),
+                typeID: Int(sqlite3_column_int64(statement, 4)),
+                typeName: Self.stringValue(from: statement, columnIndex: 5),
+                description: Self.stringValue(from: statement, columnIndex: 6)
+            )
+        }
+        return result
+    }
+
+    static func fetchExamTypes(databaseFileURL: URL) throws -> [ExamType] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        var results: [ExamType] = []
+        try connection.query("SELECT ID, descrizione FROM lkp_esame ORDER BY ID") { statement in
+            results.append(ExamType(
+                id: Int(sqlite3_column_int64(statement, 0)),
+                name: Self.stringValue(from: statement, columnIndex: 1) ?? "Not available"
+            ))
+        }
+        return results
+    }
+
+    static func createExam(_ request: ExamCreateRequest, databaseFileURL: URL) throws -> Int {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute(
+            "INSERT INTO esame (ID_consulto, ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?, ?)",
+            parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .integer(request.typeID),
+                .text(request.description)
+            ]
+        )
+        return try lastInsertedID(from: connection)
+    }
+
+    static func updateExam(_ request: ExamCreateRequest, id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        let sql = """
+        UPDATE esame SET ID_consulto = ?, ID_paziente = ?, data = ?, tipo = ?, descrizione = ?
+        WHERE ID = ?
+        """
+        let changes = try connection.execute(sql, parameters: [
+            .integer(request.consultoID),
+            .integer(request.patientID),
+            .text(Self.databaseDateTime(request.date)),
+            .integer(request.typeID),
+            .text(request.description),
+            .integer(id)
+        ])
+        guard changes == 1 else {
+            throw SQLiteConnectionError.queryFailed(message: "Exam ID \(id) was not updated")
+        }
+    }
+
+    static func deleteExam(id: Int, databaseFileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        _ = try connection.execute("DELETE FROM esame WHERE ID = ?", parameters: [.integer(id)])
+    }
+
     private static func value(_ value: String?) -> SQLiteValue {
         value.map(SQLiteValue.text) ?? .null
     }
