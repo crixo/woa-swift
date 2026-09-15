@@ -52,14 +52,18 @@ enum DataChangeEvent: Equatable, Sendable {
 /// Mutation view models publish events after successful database operations.
 /// Detail and list view models subscribe to events and reload only when affected by a change.
 @MainActor final class DataChangeCoordinator: ObservableObject {
-    private let (eventStream, eventContinuation) = AsyncStream.makeStream(of: DataChangeEvent.self)
+    // AsyncStream only delivers each element to a single consumer, so a per-subscriber
+    // continuation registry is used to broadcast every event to all active subscriptions.
+    private var subscriberHandlers: [UUID: (DataChangeEvent) -> Void] = [:]
     
     init() {}
     
     /// Publishes a data change event after a successful mutation.
     /// Call only after repository operations succeed.
     func publishChange(_ event: DataChangeEvent) {
-        eventContinuation.yield(event)
+        for handler in subscriberHandlers.values {
+            handler(event)
+        }
     }
     
     /// Subscribes to data change events with a filter predicate.
@@ -67,16 +71,17 @@ enum DataChangeEvent: Equatable, Sendable {
     func subscribe(
         where predicate: @escaping (DataChangeEvent) -> Bool
     ) -> AsyncStream<DataChangeEvent> {
-        AsyncStream { continuation in
-            let task = Task {
-                for await event in eventStream {
-                    if predicate(event) {
-                        continuation.yield(event)
-                    }
+        let subscriberID = UUID()
+        return AsyncStream { continuation in
+            subscriberHandlers[subscriberID] = { event in
+                if predicate(event) {
+                    continuation.yield(event)
                 }
             }
-            continuation.onTermination = { _ in
-                task.cancel()
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor in
+                    self?.subscriberHandlers.removeValue(forKey: subscriberID)
+                }
             }
         }
     }

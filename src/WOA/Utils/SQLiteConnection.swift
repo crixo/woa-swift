@@ -74,8 +74,8 @@ final class SQLiteConnection {
         return Int(sqlite3_changes(handle))
     }
 
-    /// Executes a query, optionally binding a set of string parameters before each row iteration.
-    func query(_ sql: String, parameters: [String] = [], rowHandler: (OpaquePointer) throws -> Void) throws {
+    /// Executes a query, optionally binding a set of typed parameters before each row iteration.
+    func query(_ sql: String, parameters: [SQLiteValue] = [], rowHandler: (OpaquePointer) throws -> Void) throws {
         guard let handle else {
             throw SQLiteConnectionError.queryFailed(message: "connection closed")
         }
@@ -86,7 +86,7 @@ final class SQLiteConnection {
         }
         defer { sqlite3_finalize(statement) }
 
-        try bind(parameters.map(SQLiteValue.text), to: statement, handle: handle)
+        try bind(parameters, to: statement, handle: handle)
 
         while true {
             let step = sqlite3_step(statement)

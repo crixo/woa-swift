@@ -30,7 +30,7 @@ enum PatientRepository {
             ORDER BY p.cognome COLLATE NOCASE, p.nome COLLATE NOCASE
             LIMIT 200
             """,
-            parameters: [pattern, pattern]
+            parameters: [.text(pattern), .text(pattern)]
         ) { statement in
             let id = Int(sqlite3_column_int64(statement, 0))
             let nome = Self.stringValue(from: statement, columnIndex: 1) ?? ""
@@ -189,7 +189,7 @@ enum PatientRepository {
             WHERE p.ID = ?
             LIMIT 1
             """,
-            parameters: [String(id)]
+            parameters: [.integer(id)]
         ) { statement in
             patient = PatientDetail(
                 id: Int(sqlite3_column_int64(statement, 0)),
@@ -215,7 +215,7 @@ enum PatientRepository {
         var results: [ConsultationSummary] = []
         try connection.query(
             "SELECT ID, data, problema_iniziale FROM consulto WHERE ID_paziente = ? ORDER BY data DESC, ID DESC",
-            parameters: [String(patientID)]
+            parameters: [.integer(patientID)]
         ) { statement in
             results.append(ConsultationSummary(
                 id: Int(sqlite3_column_int64(statement, 0)),
@@ -237,7 +237,7 @@ enum PatientRepository {
             WHERE h.ID_paziente = ?
             ORDER BY h.data DESC, h.ID DESC
             """,
-            parameters: [String(patientID)]
+            parameters: [.integer(patientID)]
         ) { statement in
             results.append(RemoteHistorySummary(
                 id: Int(sqlite3_column_int64(statement, 0)),
@@ -255,7 +255,7 @@ enum PatientRepository {
         var result: ConsultationDetail?
         try connection.query(
             "SELECT ID, ID_paziente, data, problema_iniziale FROM consulto WHERE ID = ? LIMIT 1",
-            parameters: [String(id)]
+            parameters: [.integer(id)]
         ) { statement in
             result = ConsultationDetail(
                 id: Int(sqlite3_column_int64(statement, 0)),
@@ -278,7 +278,7 @@ enum PatientRepository {
             WHERE h.ID = ?
             LIMIT 1
             """,
-            parameters: [String(id)]
+            parameters: [.integer(id)]
         ) { statement in
             result = RemoteHistoryDetail(
                 id: Int(sqlite3_column_int64(statement, 0)),

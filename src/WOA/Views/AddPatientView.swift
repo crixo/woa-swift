@@ -191,6 +191,6 @@ struct AddPatientView: View {
     }
 }
 
-#Preview {
-    AddPatientView(databaseFileURL: URL(fileURLWithPath: "/tmp/test.db"))
-}
+// #Preview {
+//     AddPatientView(databaseFileURL: URL(fileURLWithPath: "/tmp/test.db"))
+// }
