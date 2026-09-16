@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// Layout constants specific to the patients search screen.
+private enum LayoutMetrics {
+    static let contentSpacing: CGFloat = 16
+    static let searchFieldMinWidth: CGFloat = 200
+    static let searchFieldMaxWidth: CGFloat = 320
+    static let headerSpacing: CGFloat = 8
+    static let rowSpacing: CGFloat = 6
+}
+
 /// Search and browse patients by name; details and add patient are rendered inline by the root navigation stack.
 struct PatientsSearchView: View {
 
@@ -17,23 +26,15 @@ struct PatientsSearchView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Patients Search")
-                    .font(.title2)
-                    .bold()
-
-                Spacer()
-
-                Button(action: onAddPatient) {
-                    Label("Add Patient", systemImage: "person.badge.plus")
-                }
-                .buttonStyle(.bordered)
+        VStack(alignment: .leading, spacing: LayoutMetrics.contentSpacing) {
+            ViewThatFits(in: .horizontal) {
+                wideHeader
+                compactHeader
             }
 
             TextField("Search by name", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
-                .frame(width: 320)
+                .frame(minWidth: LayoutMetrics.searchFieldMinWidth, maxWidth: LayoutMetrics.searchFieldMaxWidth, alignment: .leading)
                 .onChange(of: viewModel.searchText) { _ in
                     viewModel.triggerSearchIfReady()
                 }
@@ -72,30 +73,108 @@ struct PatientsSearchView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(viewModel.results) { patient in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(patient.fullName)
-                                .font(.headline)
-
-                            Text("Age: \(patient.ageText)")
-                                .font(.subheadline)
-
-                            Text("Address: \(patient.address.isEmpty ? "Not available" : patient.address)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                            Button("View details") {
-                                viewModel.openDetails(patient)
-                                onOpenDetails(patient)
-                            }
-                            .buttonStyle(.link)
-                        }
-                        .padding(.vertical, 4)
+                        resultRow(patient)
                     }
                 }
             }
-            .frame(maxHeight: 280)
+            .frame(maxHeight: .infinity)
         }
         .padding()
-        .frame(minWidth: 520, minHeight: 420)
+        .frame(minWidth: 520, minHeight: 420, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+
+    private var wideHeader: some View {
+        HStack {
+            Text("Patients Search")
+                .font(.title2)
+                .bold()
+
+            Spacer()
+
+            addPatientButton
+        }
+    }
+
+    private var compactHeader: some View {
+        VStack(alignment: .leading, spacing: LayoutMetrics.headerSpacing) {
+            Text("Patients Search")
+                .font(.title2)
+                .bold()
+
+            addPatientButton
+        }
+    }
+
+    private var addPatientButton: some View {
+        Button(action: onAddPatient) {
+            Label("Add Patient", systemImage: "person.badge.plus")
+        }
+        .buttonStyle(.bordered)
+    }
+
+    @ViewBuilder
+    private func resultRow(_ patient: PatientSearchResult) -> some View {
+        ViewThatFits(in: .horizontal) {
+            wideResultRow(patient)
+            compactResultRow(patient)
+        }
+    }
+
+    private func wideResultRow(_ patient: PatientSearchResult) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: LayoutMetrics.contentSpacing) {
+            Text(patient.fullName)
+                .font(.headline)
+
+            Text("Age: \(patient.ageText)")
+                .font(.subheadline)
+
+            Text("Address: \(patient.address.isEmpty ? "Not available" : patient.address)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button("View details") { openDetails(patient) }
+                .buttonStyle(.link)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func compactResultRow(_ patient: PatientSearchResult) -> some View {
+        VStack(alignment: .leading, spacing: LayoutMetrics.rowSpacing) {
+            Text(patient.fullName)
+                .font(.headline)
+
+            Text("Age: \(patient.ageText)")
+                .font(.subheadline)
+
+            Text("Address: \(patient.address.isEmpty ? "Not available" : patient.address)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Button("View details") { openDetails(patient) }
+                .buttonStyle(.link)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func openDetails(_ patient: PatientSearchResult) {
+        viewModel.openDetails(patient)
+        onOpenDetails(patient)
+    }
+}
+
+#Preview("Compact") {
+    PatientsSearchView(databasePath: "/tmp/preview.db")
+        .frame(width: 420, height: 500)
+}
+
+#Preview("Standard") {
+    PatientsSearchView(databasePath: "/tmp/preview.db")
+        .frame(width: 700, height: 600)
+}
+
+#Preview("Wide") {
+    PatientsSearchView(databasePath: "/tmp/preview.db")
+        .frame(width: 1100, height: 700)
 }

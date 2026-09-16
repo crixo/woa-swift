@@ -280,6 +280,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(settingsViewModel.tableStats) { table in
                     Text("- \(table.name) (\(table.recordCount))")
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }

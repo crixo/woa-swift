@@ -20,6 +20,7 @@ struct TableStatusView: View {
                 ForEach(tables) { table in
                     Text("- \(table.name) (\(table.recordCount))")
                         .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 

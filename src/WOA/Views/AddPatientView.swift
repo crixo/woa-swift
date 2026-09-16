@@ -28,6 +28,7 @@ struct AddPatientView: View {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 // Cognome
@@ -39,6 +40,7 @@ struct AddPatientView: View {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -96,6 +98,7 @@ struct AddPatientView: View {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -125,6 +128,7 @@ struct AddPatientView: View {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 

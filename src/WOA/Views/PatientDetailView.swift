@@ -1,5 +1,60 @@
 import SwiftUI
 
+/// Layout constants shared by the patient/consultation/treatment/evaluation/exam detail views in this file.
+private enum LayoutMetrics {
+    static let readableContentMaxWidth: CGFloat = 760
+    static let formMaxWidth: CGFloat = 560
+    static let dateColumnMinWidth: CGFloat = 100
+}
+
+/// Wide: info leading, actions trailing. Compact: info above, actions below.
+@ViewBuilder
+private func responsiveHeader<Info: View, Actions: View>(
+    @ViewBuilder info: () -> Info,
+    @ViewBuilder actions: () -> Actions
+) -> some View {
+    ViewThatFits(in: .horizontal) {
+        HStack(alignment: .top) {
+            info()
+            Spacer()
+            actions()
+        }
+        VStack(alignment: .leading, spacing: 8) {
+            info()
+            HStack {
+                actions()
+            }
+        }
+    }
+}
+
+/// Reusable save-result confirmation card used by the treatment/evaluation/exam edit views.
+private func saveResultCard(succeeded: Bool, successMessage: String, failureMessage: String, backLabel: String, onBack: @escaping () -> Void) -> some View {
+    VStack(spacing: 16) {
+        HStack(spacing: 12) {
+            Image(systemName: succeeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundStyle(succeeded ? .green : .red)
+                .font(.title2)
+            Text(succeeded ? successMessage : failureMessage)
+                .font(.body)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(succeeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+        .cornerRadius(8)
+
+        Spacer()
+
+        Button(action: onBack) {
+            Text(backLabel)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .padding()
+    }
+    .padding()
+}
+
 struct PatientDetailView: View {
     let databaseFileURL: URL
     let dataChangeCoordinator: DataChangeCoordinator
@@ -38,7 +93,7 @@ struct PatientDetailView: View {
                         historySection
                     }
                     .padding()
-                    .frame(maxWidth: 760, alignment: .leading)
+                    .frame(maxWidth: LayoutMetrics.readableContentMaxWidth, alignment: .leading)
                 }
             } else {
                 VStack(spacing: 8) {
@@ -63,13 +118,13 @@ struct PatientDetailView: View {
     }
 
     private func header(_ patient: PatientDetail) -> some View {
-        HStack(alignment: .top) {
+        responsiveHeader {
             VStack(alignment: .leading, spacing: 5) {
                 Text(patient.fullName).font(.title).bold()
                 Text("ID \(patient.id) • Age \(patient.ageText) • \(patient.professione ?? "Profession not available")")
                     .foregroundStyle(.secondary)
             }
-            Spacer()
+        } actions: {
             if viewModel.isEditing {
                 Button("Cancel") { viewModel.cancelEditing() }
                 Button("Save") { Task { await viewModel.save() } }
@@ -174,12 +229,23 @@ struct PatientDetailView: View {
     }
 
     private func summaryRow(_ date: Date?, _ text: String) -> some View {
-        HStack {
-            Text(date?.formatted(date: .abbreviated, time: .omitted) ?? "Date not available")
-                .frame(width: 130, alignment: .leading)
-            Text(text).foregroundStyle(.primary)
-            Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(.secondary)
+        let dateText = date?.formatted(date: .abbreviated, time: .omitted) ?? "Date not available"
+        return ViewThatFits(in: .horizontal) {
+            HStack {
+                Text(dateText)
+                    .frame(minWidth: LayoutMetrics.dateColumnMinWidth, alignment: .leading)
+                Text(text).foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(.secondary)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(dateText).font(.subheadline).foregroundStyle(.secondary)
+                HStack {
+                    Text(text).foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                }
+            }
         }
         .padding(.vertical, 5)
     }
@@ -187,6 +253,36 @@ struct PatientDetailView: View {
     private func optionalBinding(_ keyPath: WritableKeyPath<PatientCreateRequest, String?>) -> Binding<String> {
         Binding(get: { viewModel.editForm[keyPath: keyPath] ?? "" }, set: { viewModel.editForm[keyPath: keyPath] = $0.isEmpty ? nil : $0 })
     }
+}
+
+#Preview("Compact") {
+    PatientDetailView(
+        patientID: 1,
+        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}
+    )
+    .frame(width: 380, height: 600)
+}
+
+#Preview("Standard") {
+    PatientDetailView(
+        patientID: 1,
+        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}
+    )
+    .frame(width: 700, height: 700)
+}
+
+#Preview("Wide") {
+    PatientDetailView(
+        patientID: 1,
+        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}
+    )
+    .frame(width: 1100, height: 800)
 }
 
 struct ConsultoPatientDetailView: View {
@@ -229,7 +325,7 @@ struct ConsultoPatientDetailView: View {
                         }
                     }
                     .padding()
-                    .frame(maxWidth: 760, alignment: .leading)
+                    .frame(maxWidth: LayoutMetrics.readableContentMaxWidth, alignment: .leading)
                 }
             } else {
                 VStack(spacing: 8) {
@@ -254,13 +350,13 @@ struct ConsultoPatientDetailView: View {
     }
 
     private func header(_ consultation: ConsultationDetail) -> some View {
-        HStack(alignment: .top) {
+        responsiveHeader {
             VStack(alignment: .leading, spacing: 5) {
                 Text("ID \(consultation.id)").font(.headline).bold()
                 Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
                 Text(consultation.initialProblem ?? "No problem recorded").font(.subheadline)
             }
-            Spacer()
+        } actions: {
             if viewModel.isEditing {
                 Button("Cancel") { viewModel.cancelEditing() }
                 Button("Save") { Task { await viewModel.save() } }
@@ -398,7 +494,7 @@ struct AddConsultationView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 560)
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .navigationTitle("Add Appointment")
     }
 }
@@ -432,7 +528,7 @@ struct AddRemoteHistoryView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 560)
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .navigationTitle("Add Health Issue")
     }
 }
@@ -463,7 +559,7 @@ struct AddTreatmentView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 560)
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .navigationTitle("Add Treatment")
     }
 }
@@ -484,29 +580,13 @@ struct TreatmentDetailEditView: View {
                 ProgressView("Loading treatment...")
             } else if let treatment = viewModel.treatment {
                 if let saveSucceeded = viewModel.saveSucceeded {
-                    VStack(spacing: 16) {
-                        HStack(spacing: 12) {
-                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(saveSucceeded ? .green : .red)
-                                .font(.title2)
-                            Text(saveSucceeded ? "Treatment saved successfully" : "Failed to save treatment")
-                                .font(.body)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        
-                        Spacer()
-                        
-                        Button(action: onBackToConsulto) {
-                            Text("Back to Consultation")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .padding()
-                    }
-                    .padding()
+                    saveResultCard(
+                        succeeded: saveSucceeded,
+                        successMessage: "Treatment saved successfully",
+                        failureMessage: "Failed to save treatment",
+                        backLabel: "Back to Consultation",
+                        onBack: onBackToConsulto
+                    )
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -523,13 +603,13 @@ struct TreatmentDetailEditView: View {
                                     }
                                 }
                             } else {
-                                HStack(alignment: .top) {
+                                responsiveHeader {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("ID \(treatment.id)").font(.headline).bold()
                                         Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
                                         Text(treatment.description ?? "No description")
                                     }
-                                    Spacer()
+                                } actions: {
                                     Button("✏️") { isEditMode = true }
                                     Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
                                         .disabled(viewModel.isDeleting)
@@ -539,7 +619,7 @@ struct TreatmentDetailEditView: View {
                             }
                         }
                         .padding()
-                        .frame(maxWidth: 560, alignment: .leading)
+                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                     }
                 }
             } else {
@@ -590,7 +670,7 @@ struct AddEvaluationView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 560)
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .navigationTitle("Add Evaluation")
     }
 }
@@ -611,29 +691,13 @@ struct EvaluationDetailEditView: View {
                 ProgressView("Loading evaluation...")
             } else if let evaluation = viewModel.evaluation {
                 if let saveSucceeded = viewModel.saveSucceeded {
-                    VStack(spacing: 16) {
-                        HStack(spacing: 12) {
-                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(saveSucceeded ? .green : .red)
-                                .font(.title2)
-                            Text(saveSucceeded ? "Evaluation saved successfully" : "Failed to save evaluation")
-                                .font(.body)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        
-                        Spacer()
-                        
-                        Button(action: onBackToConsulto) {
-                            Text("Back to Consultation")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .padding()
-                    }
-                    .padding()
+                    saveResultCard(
+                        succeeded: saveSucceeded,
+                        successMessage: "Evaluation saved successfully",
+                        failureMessage: "Failed to save evaluation",
+                        backLabel: "Back to Consultation",
+                        onBack: onBackToConsulto
+                    )
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -651,14 +715,14 @@ struct EvaluationDetailEditView: View {
                                     }
                                 }
                             } else {
-                                HStack(alignment: .top) {
+                                responsiveHeader {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("ID \(evaluation.id)").font(.headline).bold()
                                         Text("Structural: \(evaluation.structural ?? "-")").foregroundStyle(.secondary)
                                         Text("Cranio-Sacral: \(evaluation.cranioSacral ?? "-")").foregroundStyle(.secondary)
                                         Text("AK Orthodontic: \(evaluation.akOrthodontic ?? "-")").foregroundStyle(.secondary)
                                     }
-                                    Spacer()
+                                } actions: {
                                     Button("✏️") { isEditMode = true }
                                     Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
                                         .disabled(viewModel.isDeleting)
@@ -668,7 +732,7 @@ struct EvaluationDetailEditView: View {
                             }
                         }
                         .padding()
-                        .frame(maxWidth: 560, alignment: .leading)
+                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                     }
                 }
             } else {
@@ -723,7 +787,7 @@ struct AddExamView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 560)
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .navigationTitle("Add Exam")
     }
 }
@@ -744,29 +808,13 @@ struct ExamDetailEditView: View {
                 ProgressView("Loading exam...")
             } else if let exam = viewModel.exam {
                 if let saveSucceeded = viewModel.saveSucceeded {
-                    VStack(spacing: 16) {
-                        HStack(spacing: 12) {
-                            Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(saveSucceeded ? .green : .red)
-                                .font(.title2)
-                            Text(saveSucceeded ? "Exam saved successfully" : "Failed to save exam")
-                                .font(.body)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        
-                        Spacer()
-                        
-                        Button(action: onBackToConsulto) {
-                            Text("Back to Consultation")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .padding()
-                    }
-                    .padding()
+                    saveResultCard(
+                        succeeded: saveSucceeded,
+                        successMessage: "Exam saved successfully",
+                        failureMessage: "Failed to save exam",
+                        backLabel: "Back to Consultation",
+                        onBack: onBackToConsulto
+                    )
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -788,14 +836,14 @@ struct ExamDetailEditView: View {
                                     }
                                 }
                             } else {
-                                HStack(alignment: .top) {
+                                responsiveHeader {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("ID \(exam.id)").font(.headline).bold()
                                         Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
                                         Text("Type: \(exam.typeName ?? "Not available")").foregroundStyle(.secondary)
                                         Text(exam.description ?? "No description")
                                     }
-                                    Spacer()
+                                } actions: {
                                     Button("✏️") { isEditMode = true }
                                     Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
                                         .disabled(viewModel.isDeleting)
@@ -805,7 +853,7 @@ struct ExamDetailEditView: View {
                             }
                         }
                         .padding()
-                        .frame(maxWidth: 560, alignment: .leading)
+                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                     }
                 }
             } else {

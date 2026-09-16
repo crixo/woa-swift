@@ -1,5 +1,31 @@
 import SwiftUI
 
+/// Layout constants for this view.
+private enum LayoutMetrics {
+    static let formMaxWidth: CGFloat = 560
+}
+
+/// Wide: info leading, actions trailing. Compact: info above, actions below.
+@ViewBuilder
+private func responsiveHeader<Info: View, Actions: View>(
+    @ViewBuilder info: () -> Info,
+    @ViewBuilder actions: () -> Actions
+) -> some View {
+    ViewThatFits(in: .horizontal) {
+        HStack(alignment: .top) {
+            info()
+            Spacer()
+            actions()
+        }
+        VStack(alignment: .leading, spacing: 8) {
+            info()
+            HStack {
+                actions()
+            }
+        }
+    }
+}
+
 struct PatientHistoryDetailView: View {
     let onBackToPatient: () -> Void
     @StateObject private var viewModel: RemoteHistoryDetailViewModel
@@ -60,14 +86,14 @@ struct PatientHistoryDetailView: View {
                                     }
                                 }
                             } else {
-                                HStack(alignment: .top) {
+                                responsiveHeader {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("ID \(history.id)").font(.headline).bold()
                                         Text(history.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
                                         Text("Type: \(history.typeName ?? "Not available")").foregroundStyle(.secondary)
                                         Text(history.description ?? "No description")
                                     }
-                                    Spacer()
+                                } actions: {
                                     Button("✏️") { isEditMode = true }
                                     Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
                                         .disabled(viewModel.isDeleting)
@@ -77,7 +103,7 @@ struct PatientHistoryDetailView: View {
                             }
                         }
                         .padding()
-                        .frame(maxWidth: 560, alignment: .leading)
+                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                     }
                 }
             } else {
@@ -99,4 +125,24 @@ struct PatientHistoryDetailView: View {
             }
         }
     }
+}
+
+#Preview("Compact") {
+    PatientHistoryDetailView(
+        historyID: 1,
+        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onBackToPatient: {}
+    )
+    .frame(width: 380, height: 500)
+}
+
+#Preview("Wide") {
+    PatientHistoryDetailView(
+        historyID: 1,
+        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onBackToPatient: {}
+    )
+    .frame(width: 1000, height: 600)
 }
