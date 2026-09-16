@@ -241,6 +241,8 @@ Example:
             )
     }
 
+Parameters order matters for the `.frame` modifier, the correct sequence is `minWidth`, `idealWidth`, `maxWidth`, `minHeight`, `idealHeight`, `maxHeight`, `alignment`.
+
 ## Accessibility
 
 Preserve:

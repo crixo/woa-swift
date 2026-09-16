@@ -495,6 +495,7 @@ struct AddConsultationView: View {
         }
         .padding()
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add Appointment")
     }
 }
@@ -529,6 +530,7 @@ struct AddRemoteHistoryView: View {
         }
         .padding()
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add Health Issue")
     }
 }
@@ -560,6 +562,7 @@ struct AddTreatmentView: View {
         }
         .padding()
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add Treatment")
     }
 }
@@ -671,6 +674,7 @@ struct AddEvaluationView: View {
         }
         .padding()
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add Evaluation")
     }
 }
@@ -788,6 +792,7 @@ struct AddExamView: View {
         }
         .padding()
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add Exam")
     }
 }

@@ -7,6 +7,7 @@ private enum LayoutMetrics {
     static let searchFieldMaxWidth: CGFloat = 320
     static let headerSpacing: CGFloat = 8
     static let rowSpacing: CGFloat = 6
+    static let contentMaxWidth: CGFloat = 760
 }
 
 /// Search and browse patients by name; details and add patient are rendered inline by the root navigation stack.
@@ -26,61 +27,61 @@ struct PatientsSearchView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: LayoutMetrics.contentSpacing) {
-            ViewThatFits(in: .horizontal) {
-                wideHeader
-                compactHeader
-            }
-
-            TextField("Search by name", text: $viewModel.searchText)
-                .textFieldStyle(.roundedBorder)
-                .frame(minWidth: LayoutMetrics.searchFieldMinWidth, maxWidth: LayoutMetrics.searchFieldMaxWidth, alignment: .leading)
-                .onChange(of: viewModel.searchText) { _ in
-                    viewModel.triggerSearchIfReady()
-                }
-                .onSubmit {
-                    viewModel.search()
+        ScrollView {
+            VStack(alignment: .leading, spacing: LayoutMetrics.contentSpacing) {
+                ViewThatFits(in: .horizontal) {
+                    wideHeader
+                    compactHeader
                 }
 
-            if !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-                viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count < 3 {
-                Text("Type at least 3 characters to search.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+                TextField("Search by name", text: $viewModel.searchText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(minWidth: LayoutMetrics.searchFieldMinWidth, maxWidth: LayoutMetrics.searchFieldMaxWidth, alignment: .leading)
+                    .onChange(of: viewModel.searchText) { _ in
+                        viewModel.triggerSearchIfReady()
+                    }
+                    .onSubmit {
+                        viewModel.search()
+                    }
 
-            if viewModel.isSearching {
-                ProgressView("Searching patients...")
-            } else {
-                Text("\(viewModel.resultCount) result(s) found")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
+                if !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                    viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count < 3 {
+                    Text("Type at least 3 characters to search.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-            }
+                if viewModel.isSearching {
+                    ProgressView("Searching patients...")
+                } else {
+                    Text("\(viewModel.resultCount) result(s) found")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
 
-            if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 &&
-                !viewModel.isSearching &&
-                viewModel.results.isEmpty {
-                Text("No patients found.")
-                    .foregroundStyle(.secondary)
-            }
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                }
 
-            ScrollView {
+                if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 &&
+                    !viewModel.isSearching &&
+                    viewModel.results.isEmpty {
+                    Text("No patients found.")
+                        .foregroundStyle(.secondary)
+                }
+
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(viewModel.results) { patient in
                         resultRow(patient)
                     }
                 }
             }
-            .frame(maxHeight: .infinity)
+            .padding()
+            .frame(maxWidth: LayoutMetrics.contentMaxWidth, alignment: .leading)
         }
-        .padding()
-        .frame(minWidth: 520, minHeight: 420, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
     }
 
     private var wideHeader: some View {

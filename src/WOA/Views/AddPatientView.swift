@@ -1,5 +1,10 @@
 import SwiftUI
 
+/// Layout constants for this view.
+private enum LayoutMetrics {
+    static let formMaxWidth: CGFloat = 560
+}
+
 /// View for adding a new patient to the database.
 /// Includes form fields, real-time validation, date picker with manual input, and province dropdown.
 struct AddPatientView: View {
@@ -140,6 +145,8 @@ struct AddPatientView: View {
                 }
             }
         }
+        .frame(maxWidth: LayoutMetrics.formMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Add New Patient")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
