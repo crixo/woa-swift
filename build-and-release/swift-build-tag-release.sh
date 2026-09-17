@@ -5,13 +5,13 @@ IFS=$'\n\t'
 
 # Recommended invocation
 # First, run the complete process without publishing anything:
-# ./release.sh \
+# ./swift-build-tag-release.sh \
 #     --scheme WOA \
 #     --project src/WOA.xcodeproj \
 #     --app-name WOA \
 #     --dry-run
 # If the dry run succeeds, execute the actual minor release:
-# ./release.sh \
+# ./swift-build-tag-release..sh \
 #     --scheme WOA \
 #     --project src/WOA.xcodeproj \
 #     --app-name WOA    

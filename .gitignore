@@ -5,6 +5,8 @@ build/
 DerivedData/
 *.build/
 
+dist/
+
 # Xcode user data (always ignore)
 src/WOA.xcodeproj/xcuserdata/
 src/WOA.xcodeproj/project.xcworkspace/xcuserdata/
