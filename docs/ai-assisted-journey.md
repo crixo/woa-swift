@@ -17,3 +17,5 @@
 - Refactoring for responsivness required an additional prompt to finalize the initial request that was partially accomplished. The generate code was working, simply some views did not implemented the initial request
 
 - Display settings in launch screen contained 1 bug fixed simply providing build error.
+
+- Found a bug in the Patient View where the Picker Province did not retain the user selection. Bug has been fixed describing the issue at the first attempt

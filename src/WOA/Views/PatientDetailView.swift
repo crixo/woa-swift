@@ -172,7 +172,7 @@ struct PatientDetailView: View {
             TextField("Phone", text: optionalBinding(\.telefono))
             TextField("Mobile", text: optionalBinding(\.cellulare))
             TextField("Email", text: optionalBinding(\.email))
-            Picker("Province", selection: optionalBinding(\.prov)) {
+            Picker("Province", selection: $viewModel.editForm.prov) {
                 Text("Not selected").tag(String?.none)
                 ForEach(viewModel.provinces) { province in
                     Text(province.descrizione).tag(Optional(province.sigla))
