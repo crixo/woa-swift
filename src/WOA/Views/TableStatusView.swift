@@ -4,7 +4,24 @@ import SwiftUI
 struct TableStatusView: View {
 
     let tables: [TableInfo]
-    let onContinue: () -> Void
+    private let title: String
+    private let onContinue: (() -> Void)?
+    private let onReselectDatabase: (() -> Void)?
+    @State private var isShowingReselectConfirmation = false
+
+    init(tables: [TableInfo], onContinue: @escaping () -> Void) {
+        self.tables = tables
+        self.title = "Database Import Successful"
+        self.onContinue = onContinue
+        self.onReselectDatabase = nil
+    }
+
+    init(tables: [TableInfo], onReselectDatabase: @escaping () -> Void) {
+        self.tables = tables
+        self.title = "Database Tables"
+        self.onContinue = nil
+        self.onReselectDatabase = onReselectDatabase
+    }
 
     private var totalRecords: Int {
         tables.reduce(0) { $0 + $1.recordCount }
@@ -12,7 +29,7 @@ struct TableStatusView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Database Import Successful")
+            Text(title)
                 .font(.title2)
                 .bold()
 
@@ -28,10 +45,30 @@ struct TableStatusView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            Button("Continue") {
-                onContinue()
+            if let onContinue {
+                Button("Continue") {
+                    onContinue()
+                }
+                .keyboardShortcut(.defaultAction)
             }
-            .keyboardShortcut(.defaultAction)
+
+            if let onReselectDatabase {
+                Button("Re-select Database", role: .destructive) {
+                    isShowingReselectConfirmation = true
+                }
+                .confirmationDialog(
+                    "Re-select Database?",
+                    isPresented: $isShowingReselectConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button("Re-select Database", role: .destructive) {
+                        onReselectDatabase()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("The current database connection will be cleared.")
+                }
+            }
         }
         .padding()
     }

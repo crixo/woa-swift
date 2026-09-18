@@ -39,6 +39,8 @@
 		119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */; };
 		A7B6C5D4E3F2A1B0C9D8E7F6 /* RemoteHistoryDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* RemoteHistoryDetailViewModel.swift */; };
 		C9D8E7F6A5B4C3D2E1F0A9B8 /* PatientHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */; };
+		25F7C6BD85DDE9D75DBC1145 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */; };
+		18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */; };
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
@@ -75,6 +77,8 @@
 		3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetailView.swift; sourceTree = "<group>"; };
 		A7B6C5D4E3F2A1B0C9D8E7F5 /* RemoteHistoryDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteHistoryDetailViewModel.swift; sourceTree = "<group>"; };
 		C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientHistoryDetailView.swift; sourceTree = "<group>"; };
+		8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
+		7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationSettingsView.swift; sourceTree = "<group>"; };
 		D95FA83BAAA928615472A6D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CAA83F52316EFEEE760B83B4 /* WOA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WOA.entitlements; sourceTree = "<group>"; };
 		1DE01B2893F4F25F8E093943 /* WOA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WOA.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -170,6 +174,8 @@
 				1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */,
 				3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */,
 				C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */,
+				8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */,
+				7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -314,6 +320,8 @@
 			A7B6C5D4E3F2A1B0C9D8E7F6 /* RemoteHistoryDetailViewModel.swift in Sources */,
 			119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */,
 			C9D8E7F6A5B4C3D2E1F0A9B8 /* PatientHistoryDetailView.swift in Sources */,
+			25F7C6BD85DDE9D75DBC1145 /* LaunchScreenView.swift in Sources */,
+			18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */,
 				A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

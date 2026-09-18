@@ -213,13 +213,6 @@ struct SettingsView: View {
                 .disabled(!settingsViewModel.isConfigured)
             }
 
-            ToolbarItem(placement: .automatic) {
-                Button("Re-select Database") {
-                    navigationPath.removeAll()
-                    settingsViewModel.resetConfiguration()
-                }
-                .disabled(!settingsViewModel.isConfigured)
-            }
         }
         .frame(minWidth: 420, minHeight: 320)
         .onAppear {
@@ -267,22 +260,14 @@ struct SettingsView: View {
     }
 
     private var connectedContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Database Connection Status: ✅ Connected")
-                .font(.headline)
-
-            if let lastValidated = settingsViewModel.allSettings.databaseConnection.lastValidated {
-                Text("Last validated: \(lastValidated.formatted())")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+        LaunchScreenView(
+            tables: settingsViewModel.tableStats,
+            settings: settingsViewModel.allSettings,
+            settingsFilePath: settingsViewModel.settingsFilePath,
+            onReselectDatabase: {
+                navigationPath.removeAll()
+                settingsViewModel.resetConfiguration()
             }
-
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(settingsViewModel.tableStats) { table in
-                    Text("- \(table.name) (\(table.recordCount))")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
+        )
     }
 }

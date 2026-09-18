@@ -3,6 +3,11 @@ import Foundation
 /// Loads and persists `AppSettings` as JSON in Application Support.
 enum ConfigurationService {
 
+    /// Returns the canonical URL for the persisted application settings file.
+    static func configurationFileURL() throws -> URL {
+        try AppPaths.configurationFileURL()
+    }
+
     /// Loads the persisted settings, returning `.default` if no configuration file exists yet.
     static func load() -> AppSettings {
         do {

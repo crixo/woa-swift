@@ -10,10 +10,12 @@ final class SettingsViewModel: ObservableObject {
     @Published var allSettings: AppSettings = .default
     @Published var isLoading: Bool = false
     @Published var connectionError: String?
+    @Published private(set) var settingsFilePath: String = "Unavailable"
 
     /// Loads persisted settings and, if a database is configured, refreshes its stats.
     func loadSettings() {
         isLoading = true
+        updateSettingsFilePath()
         allSettings = ConfigurationService.load()
         isConfigured = allSettings.databaseConnection.status == .connected
             && !allSettings.databaseConnection.path.isEmpty
@@ -51,6 +53,12 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             connectionStatus = "Disconnected"
             connectionError = error.localizedDescription
+            var settings = allSettings
+            settings.databaseConnection.status = .disconnected
+            allSettings = settings
+            isConfigured = false
+            tableStats = []
+            try? ConfigurationService.save(settings)
             AppLogger.error("❌ \(error.localizedDescription)")
         }
     }
@@ -79,5 +87,14 @@ final class SettingsViewModel: ObservableObject {
         isConfigured = false
         connectionStatus = "Disconnected"
         tableStats = []
+    }
+
+    private func updateSettingsFilePath() {
+        do {
+            settingsFilePath = try ConfigurationService.configurationFileURL().path
+        } catch {
+            settingsFilePath = "Unavailable"
+            AppLogger.error("❌ Failed to resolve settings file path: \(error.localizedDescription)")
+        }
     }
 }
