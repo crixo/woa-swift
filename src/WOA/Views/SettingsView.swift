@@ -238,10 +238,10 @@ struct SettingsView: View {
             if settingsViewModel.isLoading {
                 ProgressView()
             } else if selectorViewModel.didImportSuccessfully {
-                TableStatusView(tables: selectorViewModel.importedTables) {
+                TableStatusView(tables: selectorViewModel.importedTables, onContinue: {
                     settingsViewModel.loadSettings()
                     selectorViewModel.didImportSuccessfully = false
-                }
+                })
             } else if settingsViewModel.isConfigured {
                 connectedContent
             } else {

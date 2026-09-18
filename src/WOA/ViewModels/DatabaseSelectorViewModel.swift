@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import UniformTypeIdentifiers
 
 /// Drives the first-run database selection and import workflow.
 @MainActor
@@ -22,8 +23,9 @@ final class DatabaseSelectorViewModel: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.allowedContentTypes = []
-        panel.allowedFileTypes = ["db", "sqlite", "sqlite3"]
+        panel.allowedContentTypes = ["db", "sqlite", "sqlite3"].compactMap {
+            UTType(filenameExtension: $0)
+        }
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
         selectedPath = url.path
