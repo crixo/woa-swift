@@ -31,8 +31,6 @@ struct LaunchScreenView: View {
             tablePanel
                 .frame(maxWidth: .infinity, alignment: .topLeading)
 
-            Divider()
-
             settingsPanel
                 .frame(maxWidth: .infinity, alignment: .topLeading)
         }
@@ -47,7 +45,6 @@ struct LaunchScreenView: View {
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: LayoutMetrics.panelSpacing) {
             tablePanel
-            Divider()
             settingsPanel
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -55,8 +52,8 @@ struct LaunchScreenView: View {
     }
 
     private var tablePanel: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Database Connection Status: Connected")
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+            Label("Database connection", systemImage: "network")
                 .font(.headline)
 
             if let lastValidated = settings.databaseConnection.lastValidated {
@@ -69,6 +66,7 @@ struct LaunchScreenView: View {
                 tables: tables,
                 onReselectDatabase: onReselectDatabase
             )
+            .appCard(padding: AppDesignSystem.spacingLG)
         }
     }
 
@@ -77,5 +75,6 @@ struct LaunchScreenView: View {
             settings: settings,
             settingsFilePath: settingsFilePath
         )
+        .appCard(padding: AppDesignSystem.spacingLG)
     }
 }

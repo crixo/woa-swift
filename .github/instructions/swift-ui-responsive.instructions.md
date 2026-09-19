@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.swift"
+applyTo: "src/Views/**/*.swift, src/DesignSystem/**/*.swift"
 description: "Enforces responsive SwiftUI layouts for macOS applications."
 ---
 
@@ -242,6 +242,25 @@ Example:
     }
 
 Parameters order matters for the `.frame` modifier, the correct sequence is `minWidth`, `idealWidth`, `maxWidth`, `minHeight`, `idealHeight`, `maxHeight`, `alignment`.
+
+## UI/UX Rules
+
+- Prefer reusable modifiers over inline styling.
+- Never duplicate padding/background/corner-radius combinations.
+- Use .appCard() for content containers.
+- Use system colors and materials; avoid hardcoded colors.
+- Support Light Mode and Dark Mode.
+- Use Apple typography hierarchy consistently.
+- Provide empty states using ContentUnavailableView.
+- Use SF Symbols before custom icons.
+- Prefer cards and visual grouping over dense tables.
+- Maintain minimum 44x44 touch targets.
+- Keep spacing consistent through AppSpacing constants.
+- Preserve accessibility and Dynamic Type support.
+- Prefer native SwiftUI APIs over third-party libraries.
+- Do not modify business logic unless explicitly requested.
+- Improve presentation layer first, architecture second.
+- When creating new screens, follow existing DesignSystem components before introducing new styles.
 
 ## Accessibility
 

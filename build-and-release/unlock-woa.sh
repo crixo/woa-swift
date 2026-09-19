@@ -26,5 +26,9 @@ echo "Removing quarantine attribute..."
 sudo xattr -rd com.apple.quarantine "$APP"
 echo
 
-echo "Launching application..."
-open "$APP"
+if xattr -p com.apple.quarantine "$APP" >/dev/null 2>&1; then
+    echo "Quarantine attribute still present"
+    exit 1
+fi
+
+echo "Quarantine attribute removed"

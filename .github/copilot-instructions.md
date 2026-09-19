@@ -242,6 +242,9 @@ Never build paths using string concatenation.
 
 ## Github Copilot Instructions
 
+### Generated code validation.
+Do not validate the generated code unless explicitly requested by the prompt. If the prompt does not request validation, assume the generated code is correct and complete.
+
 ### Plan Files
 - Plan files must be stored in the `.github/plans/` folder at the root of the repository
 - The plan should be named as following: `<prompt_file_name>.plan.md` where `<prompt_file_name>` is the name of the prompt file that generated the code
@@ -267,4 +270,4 @@ For each new file created:
 - Build failures in CI/CD pipelines
 - Xcode not recognizing file changes
 
-**Verification:** After updating project.pbxproj, run `xcodebuild -list` or open in Xcode to confirm all files are recognized.
+**Verification:** After updating project.pbxproj, run `xcodebuild -list` or open in Xcode to confirm all files are recognized. Do this check only if you are on macOS or a CI/CD environment that supports Xcode. On Windows, use `git diff --check` and inspect the project file manually.

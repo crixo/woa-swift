@@ -190,29 +190,53 @@ struct SettingsView: View {
                 }
         }
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button("Home") {
-                    navigationPath.removeAll()
-                }
-            }
-
-            ToolbarItem(placement: .primaryAction) {
-                Button("Back") {
+            ToolbarItemGroup(placement: .navigation) {
+                Button {
                     if !navigationPath.isEmpty {
                         navigationPath.removeLast()
                     }
+                } label: {
+                    Label("Back", systemImage: "chevron.backward")
                 }
+                .labelStyle(.iconOnly)
                 .disabled(navigationPath.isEmpty)
+                .appSecondaryButton()
+                .help("Back")
+
+                Button {
+                    navigationPath.removeAll()
+                } label: {
+                    Label("Home", systemImage: "house")
+                }
+                .labelStyle(.iconOnly)
+                .disabled(navigationPath.isEmpty)
+                .help("Home")
             }
 
-            ToolbarItem(placement: .automatic) {
-                Button("Patients Search") {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: AppDesignSystem.spacingSM) {
+                    Text("WOA")
+                        .font(.headline.weight(.bold))
+                    Text("patients database")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .layoutPriority(1)
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                Button {
                     guard settingsViewModel.isConfigured else { return }
                     navigationPath.append(.patientsSearch)
+                } label: {
+                    Label("Patients Search", systemImage: "person.3.fill")
                 }
+                .labelStyle(.titleAndIcon)
                 .disabled(!settingsViewModel.isConfigured)
+                .appSearchButton()
+                .frame(minWidth: 150)
             }
-
         }
         .frame(minWidth: 420, minHeight: 320)
         .onAppear {
@@ -221,27 +245,42 @@ struct SettingsView: View {
                 navigationPath.removeAll()
             }
         }
-        .onChange(of: settingsViewModel.isConfigured) { isConfigured in
-            if !isConfigured {
+//        .onChange(of: settingsViewModel.isConfigured) { isConfigured in
+//            if !isConfigured {
+//                navigationPath.removeAll()
+//            }
+//        }
+        .onChange(of: settingsViewModel.isConfigured) {
+            if !settingsViewModel.isConfigured {
                 navigationPath.removeAll()
             }
+        }
+
+    }
+
+    private var activeNavigationTitle: String {
+        guard let route = navigationPath.last else { return "WOA" }
+
+        switch route {
+        case .patientsSearch:
+            return "Patient Search"
+        default:
+            return "WOA"
         }
     }
 
     @ViewBuilder
     private var content: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("WOA")
-                .font(.largeTitle)
-                .bold()
-
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXL) {
             if settingsViewModel.isLoading {
-                ProgressView()
+                ProgressView("Loading configuration...")
+                    .appCard(padding: AppDesignSystem.spacingLG)
             } else if selectorViewModel.didImportSuccessfully {
                 TableStatusView(tables: selectorViewModel.importedTables, onContinue: {
                     settingsViewModel.loadSettings()
                     selectorViewModel.didImportSuccessfully = false
                 })
+                .appCard(padding: AppDesignSystem.spacingLG)
             } else if settingsViewModel.isConfigured {
                 connectedContent
             } else {
@@ -252,10 +291,12 @@ struct SettingsView: View {
     }
 
     private var notConfiguredContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             Text("Database Configuration Required")
-                .font(.headline)
+                .font(.title2.weight(.semibold))
+
             DatabaseSelectorView(viewModel: selectorViewModel)
+                .appPanel(padding: AppDesignSystem.spacingLG)
         }
     }
 
