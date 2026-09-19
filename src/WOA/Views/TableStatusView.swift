@@ -28,16 +28,48 @@ struct TableStatusView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(.title2)
-                .bold()
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+            HStack(alignment: .center) {
+                Label(title, systemImage: "checkmark.shield.fill")
+                    .font(.title2.weight(.semibold))
+                Spacer()
+                if let onContinue {
+                    Button("Continue") {
+                        onContinue()
+                    }
+                    .appPrimaryButton()
+                    .keyboardShortcut(.defaultAction)
+                }
+            }
 
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(tables) { table in
-                    Text("- \(table.name) (\(table.recordCount))")
-                        .font(.body)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            if tables.isEmpty {
+                VStack(spacing: AppDesignSystem.spacingSM) {
+                    Image(systemName: "tablecells.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("No tables available")
+                        .font(.headline)
+                    Text("The selected database does not expose any readable tables.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                    ForEach(tables) { table in
+                        HStack(alignment: .center) {
+                            Label(table.name, systemImage: "tablecells")
+                                .font(.body)
+                            Spacer()
+                            Text("\(table.recordCount) rows")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, AppDesignSystem.spacingSM)
+                        .background(Color.primary.opacity(0.025), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
+                    }
                 }
             }
 
@@ -45,17 +77,11 @@ struct TableStatusView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            if let onContinue {
-                Button("Continue") {
-                    onContinue()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-
             if let onReselectDatabase {
                 Button("Re-select Database", role: .destructive) {
                     isShowingReselectConfirmation = true
                 }
+                .appSecondaryButton()
                 .confirmationDialog(
                     "Re-select Database?",
                     isPresented: $isShowingReselectConfirmation,
@@ -70,6 +96,5 @@ struct TableStatusView: View {
                 }
             }
         }
-        .padding()
     }
 }

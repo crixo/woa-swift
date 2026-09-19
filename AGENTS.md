@@ -12,6 +12,7 @@ not just the ones that reference the architecture prompt.
 WOA targets **macOS desktop only**. Never introduce iOS-only frameworks,
 types, or modifiers — including inside "UI field" or form-input code, which
 is where this has leaked before.
+Target version is **macOS 14** or higher
 
 Forbidden, regardless of context:
 

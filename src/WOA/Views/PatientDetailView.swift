@@ -83,11 +83,15 @@ struct PatientDetailView: View {
                 ProgressView("Loading patient...")
             } else if let patient = viewModel.patient {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                         header(patient)
+
                         if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage).foregroundStyle(.red)
+                            Text(errorMessage)
+                                .appErrorText()
+                                .padding(.horizontal, AppDesignSystem.spacingSM)
                         }
+
                         attributesSection(patient)
                         consultationsSection
                         historySection
@@ -119,22 +123,54 @@ struct PatientDetailView: View {
 
     private func header(_ patient: PatientDetail) -> some View {
         responsiveHeader {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(patient.fullName).font(.title).bold()
-                Text("ID \(patient.id) • Age \(patient.ageText) • \(patient.professione ?? "Profession not available")")
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                Label("Patient overview", systemImage: "person.fill")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                Text(patient.fullName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                HStack(spacing: AppDesignSystem.spacingSM) {
+                    Text("ID \(patient.id)")
+                    Text("•")
+                    Text("Age \(patient.ageText)")
+                    if patient.professione?.isEmpty == false {
+                        Text("•")
+                        Text(patient.professione ?? "Profession not available")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         } actions: {
-            if viewModel.isEditing {
-                Button("Cancel") { viewModel.cancelEditing() }
-                Button("Save") { Task { await viewModel.save() } }
-                    .disabled(viewModel.isSaving)
-            } else {
-                Button("Edit") { viewModel.beginEditing() }
-                Button("Delete", role: .destructive) { viewModel.showDeleteConfirmation = true }
-                    .disabled(viewModel.isDeleting)
+            HStack(spacing: AppDesignSystem.spacingSM) {
+                if viewModel.isEditing {
+                    Button("Cancel") { viewModel.cancelEditing() }
+                        .appSecondaryButton()
+
+                    Button("Save") { Task { await viewModel.save() } }
+                        .appPrimaryButton()
+                        .disabled(viewModel.isSaving)
+                } else {
+                    Button {
+                        viewModel.beginEditing()
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .appEditButton()
+
+                    Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                        .appDeleteButton()
+                        .disabled(viewModel.isDeleting)
+                }
             }
         }
+        .appCard(padding: AppDesignSystem.spacingLG)
     }
 
     @ViewBuilder
@@ -142,8 +178,12 @@ struct PatientDetailView: View {
         DisclosureGroup("Patient Attributes", isExpanded: $viewModel.isAttributesExpanded) {
             if viewModel.isEditing {
                 patientForm
+                    .padding(.top, AppDesignSystem.spacingSM)
             } else {
-                VStack(alignment: .leading, spacing: 7) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(minimum: 180), alignment: .leading),
+                    GridItem(.flexible(minimum: 180), alignment: .leading)
+                ], alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                     detailRow("First name", patient.nome)
                     detailRow("Last name", patient.cognome)
                     detailRow("Profession", patient.professione)
@@ -156,98 +196,235 @@ struct PatientDetailView: View {
                     detailRow("Email", patient.email)
                     detailRow("Date of birth", patient.dataNascita?.formatted(date: .abbreviated, time: .omitted))
                 }
-                .padding(.top, 8)
+                .padding(.top, AppDesignSystem.spacingSM)
             }
         }
+        .appPanel(padding: AppDesignSystem.spacingLG)
     }
 
     private var patientForm: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("First name", text: $viewModel.editForm.nome)
-            TextField("Last name", text: $viewModel.editForm.cognome)
-            TextField("Profession", text: optionalBinding(\.professione))
-            TextField("Address", text: optionalBinding(\.indirizzo))
-            TextField("City", text: optionalBinding(\.citta))
-            TextField("Postal code", text: optionalBinding(\.cap))
-            TextField("Phone", text: optionalBinding(\.telefono))
-            TextField("Mobile", text: optionalBinding(\.cellulare))
-            TextField("Email", text: optionalBinding(\.email))
-            Picker("Province", selection: $viewModel.editForm.prov) {
-                Text("Not selected").tag(String?.none)
-                ForEach(viewModel.provinces) { province in
-                    Text(province.descrizione).tag(Optional(province.sigla))
-                }
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+            formField("First name") {
+                TextField("First name", text: $viewModel.editForm.nome)
+                    .textFieldStyle(.plain)
             }
-            DatePicker("Date of birth", selection: Binding(get: { viewModel.editForm.data_nascita ?? Date() }, set: { viewModel.editForm.data_nascita = $0 }), displayedComponents: .date)
-            if let error = viewModel.validationErrors["nome"] { Text(error).foregroundStyle(.red).font(.caption) }
-            if let error = viewModel.validationErrors["cognome"] { Text(error).foregroundStyle(.red).font(.caption) }
-            if let error = viewModel.validationErrors["data_nascita"] { Text(error).foregroundStyle(.red).font(.caption) }
+
+            formField("Last name") {
+                TextField("Last name", text: $viewModel.editForm.cognome)
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Profession") {
+                TextField("Profession", text: optionalBinding(\.professione))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Address") {
+                TextField("Address", text: optionalBinding(\.indirizzo))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("City") {
+                TextField("City", text: optionalBinding(\.citta))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Postal code") {
+                TextField("Postal code", text: optionalBinding(\.cap))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Phone") {
+                TextField("Phone", text: optionalBinding(\.telefono))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Mobile") {
+                TextField("Mobile", text: optionalBinding(\.cellulare))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Email") {
+                TextField("Email", text: optionalBinding(\.email))
+                    .textFieldStyle(.plain)
+            }
+
+            formField("Province") {
+                Picker("Province", selection: $viewModel.editForm.prov) {
+                    Text("Not selected").tag(String?.none)
+                    ForEach(viewModel.provinces) { province in
+                        Text(province.descrizione).tag(Optional(province.sigla))
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            formField("Date of birth") {
+                DatePicker("Date of birth", selection: Binding(
+                    get: { viewModel.editForm.data_nascita ?? Date() },
+                    set: { viewModel.editForm.data_nascita = $0 }
+                ), displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if let error = viewModel.validationErrors["nome"] { Text(error).appErrorText() }
+            if let error = viewModel.validationErrors["cognome"] { Text(error).appErrorText() }
+            if let error = viewModel.validationErrors["data_nascita"] { Text(error).appErrorText() }
         }
-        .padding(.top, 8)
+        .appSection()
+    }
+
+    private func formField<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            content()
+                .padding(.horizontal, AppDesignSystem.spacingSM)
+                .padding(.vertical, AppDesignSystem.spacingSM)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+        }
     }
 
     private var consultationsSection: some View {
         DisclosureGroup("Appointments (\(viewModel.consultations.count))", isExpanded: $viewModel.isConsultationsExpanded) {
-            HStack {
-                Spacer()
-                Button("Add Appointment", action: onAddConsultation)
-            }
-            if viewModel.consultations.isEmpty {
-                Text("No appointments recorded.").foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.consultations) { item in
-                    Button { onOpenConsultation(item.id) } label: {
-                        summaryRow(item.date, item.initialProblem ?? "Reason not available")
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                HStack {
+                    Spacer()
+                    Button(action: onAddConsultation) {
+                        Label("Add Appointment", systemImage: "calendar.badge.plus")
                     }
-                    .buttonStyle(.plain)
+                    .appAddButton()
+                }
+
+                if viewModel.consultations.isEmpty {
+                    Text("No appointments recorded.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.consultations) { item in
+                        Button { onOpenConsultation(item.id) } label: {
+                            summaryRow(item.date, item.initialProblem ?? "Reason not available")
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
+            .padding(.top, AppDesignSystem.spacingSM)
         }
+        .appPanel(padding: AppDesignSystem.spacingLG)
     }
 
     private var historySection: some View {
         DisclosureGroup("Remote Health History (\(viewModel.remoteHistory.count))", isExpanded: $viewModel.isHistoryExpanded) {
-            HStack {
-                Spacer()
-                Button("Add Health Issue", action: onAddHistory)
-            }
-            if viewModel.remoteHistory.isEmpty {
-                Text("No remote health history recorded.").foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.remoteHistory) { item in
-                    Button { onOpenHistory(item.id) } label: {
-                        summaryRow(item.date, item.typeName ?? "Type not available")
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                HStack {
+                    Spacer()
+                    Button(action: onAddHistory) {
+                        Label("Add Health Issue", systemImage: "heart.text.square")
                     }
-                    .buttonStyle(.plain)
+                    .appAddButton()
+                }
+
+                if viewModel.remoteHistory.isEmpty {
+                    Text("No remote health history recorded.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.remoteHistory) { item in
+                        Button { onOpenHistory(item.id) } label: {
+                            summaryRow(item.date, historySummary(item), lineLimit: 1)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
+            .padding(.top, AppDesignSystem.spacingSM)
         }
+        .appPanel(padding: AppDesignSystem.spacingLG)
+    }
+
+    private func historySummary(_ item: RemoteHistorySummary) -> String {
+        let type = item.typeName?.isEmpty == false ? item.typeName! : "Type not available"
+        let description = item.description?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let description, !description.isEmpty else {
+            return type
+        }
+
+        return "\(type) • \(description)"
     }
 
     private func detailRow(_ label: String, _ value: String?) -> some View {
-        LabeledContent(label, value: value?.isEmpty == false ? value! : "Not available")
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            Text(value?.isEmpty == false ? value! : "Not available")
+                .font(.body)
+        }
+        .padding(.vertical, AppDesignSystem.spacingXS)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.015), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
+        .padding(.bottom, 1)
     }
 
-    private func summaryRow(_ date: Date?, _ text: String) -> some View {
+    private func summaryRow(_ date: Date?, _ text: String, lineLimit: Int = 2) -> some View {
         let dateText = date?.formatted(date: .abbreviated, time: .omitted) ?? "Date not available"
         return ViewThatFits(in: .horizontal) {
-            HStack {
+            HStack(alignment: .center, spacing: AppDesignSystem.spacingMD) {
                 Text(dateText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                     .frame(minWidth: LayoutMetrics.dateColumnMinWidth, alignment: .leading)
-                Text(text).foregroundStyle(.primary)
+
+                Text(text)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .lineLimit(lineLimit)
+
                 Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(.secondary)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(dateText).font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                Text(dateText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
                 HStack {
-                    Text(text).foregroundStyle(.primary)
+                    Text(text)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(lineLimit)
+
                     Spacer()
-                    Image(systemName: "chevron.right").foregroundStyle(.secondary)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, AppDesignSystem.spacingSM)
+        .padding(.horizontal, AppDesignSystem.spacingMD)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.025), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
     }
 
     private func optionalBinding(_ keyPath: WritableKeyPath<PatientCreateRequest, String?>) -> Binding<String> {
@@ -313,12 +490,16 @@ struct ConsultoPatientDetailView: View {
                 ProgressView("Loading consultation...")
             } else if let consultation = viewModel.consultation {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                         header(consultation)
                         if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage).foregroundStyle(.red)
+                            Text(errorMessage)
+                                .appErrorText()
+                                .padding(.horizontal, AppDesignSystem.spacingSM)
                         }
-                        if !viewModel.isEditing {
+                        if viewModel.isEditing {
+                            consultationForm
+                        } else {
                             treatmentsSection
                             evaluationsSection
                             examsSection
@@ -351,38 +532,84 @@ struct ConsultoPatientDetailView: View {
 
     private func header(_ consultation: ConsultationDetail) -> some View {
         responsiveHeader {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("ID \(consultation.id)").font(.headline).bold()
-                Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
-                Text(consultation.initialProblem ?? "No problem recorded").font(.subheadline)
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                Label("Appointment overview", systemImage: "calendar.badge.clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                Text(consultation.initialProblem ?? "No problem recorded")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: AppDesignSystem.spacingSM) {
+                    Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                    Text("•")
+                    Text("ID \(consultation.id)")
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         } actions: {
-            if viewModel.isEditing {
-                Button("Cancel") { viewModel.cancelEditing() }
-                Button("Save") { Task { await viewModel.save() } }
-                    .disabled(viewModel.isSaving)
-            } else {
-                Button("✏️") { viewModel.beginEditing() }
-                Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+            HStack(spacing: AppDesignSystem.spacingSM) {
+                if viewModel.isEditing {
+                    Button("Cancel") { viewModel.cancelEditing() }
+                        .appSecondaryButton()
+
+                    Button("Save") { Task { await viewModel.save() } }
+                        .appPrimaryButton()
+                        .disabled(viewModel.isSaving)
+                } else {
+                    Button {
+                        viewModel.beginEditing()
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .appEditButton()
+
+                    Button(role: .destructive) {
+                        viewModel.showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .appDeleteButton()
                     .disabled(viewModel.isDeleting)
+                }
             }
         }
+        .appCard(padding: AppDesignSystem.spacingLG)
+    }
+
+    private var consultationForm: some View {
+        Form {
+            Section("Appointment details") {
+                DatePicker("Date", selection: $viewModel.editForm.date, displayedComponents: .date)
+                TextField("Appointment reason", text: $viewModel.editForm.initialProblem, axis: .vertical)
+            }
+        }
+        .appForm(maxWidth: LayoutMetrics.formMaxWidth)
+        .appPanel(padding: AppDesignSystem.spacingLG)
     }
 
     @ViewBuilder
     private var treatmentsSection: some View {
-        DisclosureGroup("Treatments (\(viewModel.treatments.count))", isExpanded: $viewModel.isTreatmentsExpanded) {
-            VStack(alignment: .leading, spacing: 8) {
+        DisclosureGroup(isExpanded: $viewModel.isTreatmentsExpanded) {
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 if viewModel.treatments.isEmpty {
-                    Text("No treatments recorded").foregroundStyle(.secondary)
+                    ContentUnavailableView("No treatments recorded", systemImage: "cross.case", description: Text("Add a treatment to keep the appointment record complete."))
                 } else {
                     ForEach(viewModel.treatments) { treatment in
                         Button(action: { onOpenTreatment(treatment.id) }) {
-                            HStack {
+                            HStack(spacing: AppDesignSystem.spacingMD) {
+                                Image(systemName: "cross.case.fill")
+                                    .foregroundStyle(.tint)
+                                    .frame(width: 24)
+
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(treatment.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
                                         .font(.subheadline)
-                                        .foregroundStyle(.primary)
+                                        .fontWeight(.semibold)
                                     Text(treatment.description ?? "No description")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -393,28 +620,38 @@ struct ConsultoPatientDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .buttonStyle(.plain)
+                        .appSection()
                     }
                 }
-                Button(action: onAddTreatment) {
-                    Label("Add Treatment", systemImage: "plus.circle")
-                }.buttonStyle(.bordered)
+                addRecordButton("Add Treatment", systemImage: "cross.case.fill", action: onAddTreatment)
             }
+            .padding(.top, AppDesignSystem.spacingSM)
+        } label: {
+            sectionLabel("Treatments", count: viewModel.treatments.count, systemImage: "cross.case.fill")
         }
+        .appPanel(padding: AppDesignSystem.spacingLG)
     }
 
     @ViewBuilder
     private var evaluationsSection: some View {
-        DisclosureGroup("Evaluations (\(viewModel.evaluations.count))", isExpanded: $viewModel.isEvaluationsExpanded) {
-            VStack(alignment: .leading, spacing: 8) {
+        DisclosureGroup(isExpanded: $viewModel.isEvaluationsExpanded) {
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 if viewModel.evaluations.isEmpty {
-                    Text("No evaluations recorded").foregroundStyle(.secondary)
+                    ContentUnavailableView("No evaluations recorded", systemImage: "clipboard", description: Text("Add an evaluation to capture the clinical assessment."))
                 } else {
                     ForEach(viewModel.evaluations) { evaluation in
                         Button(action: { onOpenEvaluation(evaluation.id) }) {
-                            HStack {
+                            HStack(spacing: AppDesignSystem.spacingMD) {
+                                Image(systemName: "clipboard.fill")
+                                    .foregroundStyle(.tint)
+                                    .frame(width: 24)
+
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(evaluation.structural ?? "-").font(.caption).lineLimit(1)
+                                    Text(evaluation.structural ?? "No structural notes")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .lineLimit(1)
                                     Text((evaluation.cranioSacral ?? "-") + " • " + (evaluation.akOrthodontic ?? "-"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -425,30 +662,37 @@ struct ConsultoPatientDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .buttonStyle(.plain)
+                        .appSection()
                     }
                 }
-                Button(action: onAddEvaluation) {
-                    Label("Add Evaluation", systemImage: "plus.circle")
-                }.buttonStyle(.bordered)
+                addRecordButton("Add Evaluation", systemImage: "clipboard.badge.plus", action: onAddEvaluation)
             }
+            .padding(.top, AppDesignSystem.spacingSM)
+        } label: {
+            sectionLabel("Evaluations", count: viewModel.evaluations.count, systemImage: "clipboard.fill")
         }
+        .appPanel(padding: AppDesignSystem.spacingLG)
     }
 
     @ViewBuilder
     private var examsSection: some View {
-        DisclosureGroup("Exams (\(viewModel.exams.count))", isExpanded: $viewModel.isExamsExpanded) {
-            VStack(alignment: .leading, spacing: 8) {
+        DisclosureGroup(isExpanded: $viewModel.isExamsExpanded) {
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 if viewModel.exams.isEmpty {
-                    Text("No exams recorded").foregroundStyle(.secondary)
+                    ContentUnavailableView("No exams recorded", systemImage: "doc.text.magnifyingglass", description: Text("Add an exam when new results are available."))
                 } else {
                     ForEach(viewModel.exams) { exam in
                         Button(action: { onOpenExam(exam.id) }) {
-                            HStack {
+                            HStack(spacing: AppDesignSystem.spacingMD) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .foregroundStyle(.tint)
+                                    .frame(width: 24)
+
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(exam.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
                                         .font(.subheadline)
-                                        .foregroundStyle(.primary)
+                                        .fontWeight(.semibold)
                                     Text((exam.typeName ?? "No type") + " • " + (exam.description ?? "No description"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -459,13 +703,40 @@ struct ConsultoPatientDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .buttonStyle(.plain)
+                        .appSection()
                     }
                 }
-                Button(action: onAddExam) {
-                    Label("Add Exam", systemImage: "plus.circle")
-                }.buttonStyle(.bordered)
+                addRecordButton("Add Exam", systemImage: "doc.badge.plus", action: onAddExam)
             }
+            .padding(.top, AppDesignSystem.spacingSM)
+        } label: {
+            sectionLabel("Exams", count: viewModel.exams.count, systemImage: "doc.text.magnifyingglass")
+        }
+        .appPanel(padding: AppDesignSystem.spacingLG)
+    }
+
+    private func sectionLabel(_ title: String, count: Int, systemImage: String) -> some View {
+        HStack(spacing: AppDesignSystem.spacingSM) {
+            Label(title, systemImage: systemImage)
+                .font(.headline)
+
+            Text("\(count)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.primary.opacity(0.07), in: Capsule())
+        }
+    }
+
+    private func addRecordButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        HStack {
+            Spacer()
+            Button(action: action) {
+                Label(title, systemImage: systemImage)
+            }
+            .appAddButton()
         }
     }
 }
@@ -483,19 +754,56 @@ struct AddConsultationView: View {
 
     var body: some View {
         Form {
-            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-            TextField("Appointment reason", text: $viewModel.request.initialProblem)
-            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel", action: onCancel)
-                Spacer()
-                Button("Add Appointment") { Task { if await viewModel.submit() { onSuccess() } } }
-                    .disabled(viewModel.isSubmitting)
+            Section("Appointment details") {
+                DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                TextField("Appointment reason", text: $viewModel.request.initialProblem)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .appErrorText()
+                }
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "calendar.badge.plus")
+                            .font(.headline)
+                        Text("Review the appointment details before saving.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Spacer()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Appointment", systemImage: "calendar.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Appointment", systemImage: "calendar.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+                    }
+                }
+                .appSection()
             }
         }
-        .padding()
-        .frame(maxWidth: LayoutMetrics.formMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appForm()
         .navigationTitle("Add Appointment")
     }
 }
@@ -513,24 +821,61 @@ struct AddRemoteHistoryView: View {
 
     var body: some View {
         Form {
-            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-            Picker("Type", selection: $viewModel.request.typeID) {
-                ForEach(viewModel.types) { type in
-                    Text(type.name).tag(type.id)
+            Section("History details") {
+                DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                Picker("Type", selection: $viewModel.request.typeID) {
+                    ForEach(viewModel.types) { type in
+                        Text(type.name).tag(type.id)
+                    }
+                }
+                TextField("Description", text: $viewModel.request.description, axis: .vertical)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .appErrorText()
                 }
             }
-            TextField("Description", text: $viewModel.request.description, axis: .vertical)
-            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel", action: onCancel)
-                Spacer()
-                Button("Add Health Issue") { Task { if await viewModel.submit() { onSuccess() } } }
-                    .disabled(viewModel.isSubmitting)
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "heart.text.square")
+                            .font(.headline)
+                        Text("Review the health issue details before saving.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Spacer()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Health Issue", systemImage: "heart.text.square")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Health Issue", systemImage: "heart.text.square")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+                    }
+                }
+                .appSection()
             }
         }
-        .padding()
-        .frame(maxWidth: LayoutMetrics.formMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appForm()
         .navigationTitle("Add Health Issue")
     }
 }
@@ -550,19 +895,56 @@ struct AddTreatmentView: View {
 
     var body: some View {
         Form {
-            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-            TextField("Description", text: $viewModel.request.description, axis: .vertical)
-            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel", action: onCancel)
-                Spacer()
-                Button("Add Treatment") { Task { if await viewModel.submit() { onSuccess() } } }
-                    .disabled(viewModel.isSubmitting)
+            Section("Treatment details") {
+                DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                TextField("Description", text: $viewModel.request.description, axis: .vertical)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .appErrorText()
+                }
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "cross.case.fill")
+                            .font(.headline)
+                        Text("Review the treatment details before creating this record.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Spacer()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Treatment", systemImage: "cross.case.fill")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Treatment", systemImage: "cross.case.fill")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+                    }
+                }
+                .appSection()
             }
         }
-        .padding()
-        .frame(maxWidth: LayoutMetrics.formMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appForm()
         .navigationTitle("Add Treatment")
     }
 }
@@ -592,33 +974,93 @@ struct TreatmentDetailEditView: View {
                     )
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                             if isEditMode {
-                                Form {
-                                    DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-                                    TextField("Description", text: $viewModel.request.description, axis: .vertical)
-                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-                                    HStack {
-                                        Button("Cancel") { isEditMode = false }
+                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                                    HStack(alignment: .center, spacing: AppDesignSystem.spacingSM) {
+                                        Label("Edit treatment", systemImage: "pencil.circle.fill")
+                                            .font(.headline)
                                         Spacer()
-                                        Button("Save") { Task { await viewModel.save() } }
-                                            .disabled(viewModel.isSaving)
+                                        Button("Cancel") { isEditMode = false }
+                                            .appSecondaryButton()
                                     }
+
+                                    Form {
+                                        Section("Treatment details") {
+                                            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                            TextField("Description", text: $viewModel.request.description, axis: .vertical)
+                                        }
+
+                                        if let errorMessage = viewModel.errorMessage {
+                                            Section {
+                                                Text(errorMessage)
+                                                    .appErrorText()
+                                            }
+                                        }
+
+                                        Section {
+                                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                                                ViewThatFits(in: .horizontal) {
+                                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Spacer()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+
+                                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+                                                }
+                                            }
+                                            .appSection()
+                                        }
+                                    }
+                                    .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                                 }
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             } else {
                                 responsiveHeader {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ID \(treatment.id)").font(.headline).bold()
-                                        Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
+                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                        Label("Treatment overview", systemImage: "cross.case.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .textCase(.uppercase)
+
+                                        Text("ID \(treatment.id)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                                            .font(.title3)
+                                            .fontWeight(.semibold)
+
                                         Text(treatment.description ?? "No description")
+                                            .font(.body)
+                                            .foregroundStyle(.primary)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                 } actions: {
-                                    Button("✏️") { isEditMode = true }
-                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                        Button { isEditMode = true } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .appEditButton()
+
+                                        Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                        .appDeleteButton()
                                         .disabled(viewModel.isDeleting)
+                                    }
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             }
                         }
                         .padding()
@@ -661,20 +1103,57 @@ struct AddEvaluationView: View {
 
     var body: some View {
         Form {
-            TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
-            TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
-            TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
-            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel", action: onCancel)
-                Spacer()
-                Button("Add Evaluation") { Task { if await viewModel.submit() { onSuccess() } } }
-                    .disabled(viewModel.isSubmitting)
+            Section("Evaluation details") {
+                TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
+                TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
+                TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .appErrorText()
+                }
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "clipboard.badge.checkmark")
+                            .font(.headline)
+                        Text("Review the evaluation details before saving.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Spacer()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Evaluation", systemImage: "clipboard.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Evaluation", systemImage: "clipboard.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+                    }
+                }
+                .appSection()
             }
         }
-        .padding()
-        .frame(maxWidth: LayoutMetrics.formMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appForm()
         .navigationTitle("Add Evaluation")
     }
 }
@@ -704,35 +1183,94 @@ struct EvaluationDetailEditView: View {
                     )
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                             if isEditMode {
-                                Form {
-                                    TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
-                                    TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
-                                    TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
-                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-                                    HStack {
-                                        Button("Cancel") { isEditMode = false }
+                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                                    HStack(alignment: .center, spacing: AppDesignSystem.spacingSM) {
+                                        Label("Edit evaluation", systemImage: "clipboard.badge.checkmark")
+                                            .font(.headline)
                                         Spacer()
-                                        Button("Save") { Task { await viewModel.save() } }
-                                            .disabled(viewModel.isSaving)
+                                        Button("Cancel") { isEditMode = false }
+                                            .appSecondaryButton()
                                     }
+
+                                    Form {
+                                        Section("Evaluation details") {
+                                            TextField("Structural", text: $viewModel.request.structural, axis: .vertical)
+                                            TextField("Cranio-Sacral", text: $viewModel.request.cranioSacral, axis: .vertical)
+                                            TextField("AK Orthodontic", text: $viewModel.request.akOrthodontic, axis: .vertical)
+                                        }
+
+                                        if let errorMessage = viewModel.errorMessage {
+                                            Section {
+                                                Text(errorMessage)
+                                                    .appErrorText()
+                                            }
+                                        }
+
+                                        Section {
+                                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                                                ViewThatFits(in: .horizontal) {
+                                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Spacer()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+
+                                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+                                                }
+                                            }
+                                            .appSection()
+                                        }
+                                    }
+                                    .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                                 }
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             } else {
                                 responsiveHeader {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ID \(evaluation.id)").font(.headline).bold()
-                                        Text("Structural: \(evaluation.structural ?? "-")").foregroundStyle(.secondary)
-                                        Text("Cranio-Sacral: \(evaluation.cranioSacral ?? "-")").foregroundStyle(.secondary)
-                                        Text("AK Orthodontic: \(evaluation.akOrthodontic ?? "-")").foregroundStyle(.secondary)
+                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                        Label("Evaluation overview", systemImage: "clipboard.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .textCase(.uppercase)
+
+                                        Text("ID \(evaluation.id)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                            Text("Structural: \(evaluation.structural ?? "-")")
+                                                .font(.body)
+                                            Text("Cranio-Sacral: \(evaluation.cranioSacral ?? "-")")
+                                                .font(.body)
+                                            Text("AK Orthodontic: \(evaluation.akOrthodontic ?? "-")")
+                                                .font(.body)
+                                        }
                                     }
                                 } actions: {
-                                    Button("✏️") { isEditMode = true }
-                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                        Button { isEditMode = true } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .appEditButton()
+
+                                        Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                        .appDeleteButton()
                                         .disabled(viewModel.isDeleting)
+                                    }
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             }
                         }
                         .padding()
@@ -775,24 +1313,61 @@ struct AddExamView: View {
 
     var body: some View {
         Form {
-            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-            Picker("Type", selection: $viewModel.request.typeID) {
-                ForEach(viewModel.types) { type in
-                    Text(type.name).tag(type.id)
+            Section("Exam details") {
+                DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                Picker("Type", selection: $viewModel.request.typeID) {
+                    ForEach(viewModel.types) { type in
+                        Text(type.name).tag(type.id)
+                    }
+                }
+                TextField("Description", text: $viewModel.request.description, axis: .vertical)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .appErrorText()
                 }
             }
-            TextField("Description", text: $viewModel.request.description, axis: .vertical)
-            if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-            HStack {
-                Button("Cancel", action: onCancel)
-                Spacer()
-                Button("Add Exam") { Task { if await viewModel.submit() { onSuccess() } } }
-                    .disabled(viewModel.isSubmitting)
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "doc.text.fill")
+                            .font(.headline)
+                        Text("Review the exam details before creating this record.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Spacer()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Exam", systemImage: "doc.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            Button("Cancel", action: onCancel)
+                                .appSecondaryButton()
+                            Button { Task { if await viewModel.submit() { onSuccess() } } } label: {
+                                Label("Add Exam", systemImage: "doc.badge.plus")
+                            }
+                                .appAddButton()
+                                .disabled(viewModel.isSubmitting)
+                        }
+                    }
+                }
+                .appSection()
             }
         }
-        .padding()
-        .frame(maxWidth: LayoutMetrics.formMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .appForm()
         .navigationTitle("Add Exam")
     }
 }
@@ -822,39 +1397,101 @@ struct ExamDetailEditView: View {
                     )
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                             if isEditMode {
-                                Form {
-                                    DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-                                    Picker("Type", selection: $viewModel.request.typeID) {
-                                        ForEach(viewModel.types) { type in
-                                            Text(type.name).tag(type.id)
+                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                                    HStack(alignment: .center, spacing: AppDesignSystem.spacingSM) {
+                                        Label("Edit exam", systemImage: "doc.text.fill")
+                                            .font(.headline)
+                                        Spacer()
+                                        Button("Cancel") { isEditMode = false }
+                                            .appSecondaryButton()
+                                    }
+
+                                    Form {
+                                        Section("Exam details") {
+                                            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                            Picker("Type", selection: $viewModel.request.typeID) {
+                                                ForEach(viewModel.types) { type in
+                                                    Text(type.name).tag(type.id)
+                                                }
+                                            }
+                                            TextField("Description", text: $viewModel.request.description, axis: .vertical)
+                                        }
+
+                                        if let errorMessage = viewModel.errorMessage {
+                                            Section {
+                                                Text(errorMessage)
+                                                    .appErrorText()
+                                            }
+                                        }
+
+                                        Section {
+                                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                                                ViewThatFits(in: .horizontal) {
+                                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Spacer()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+
+                                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                                        Button("Cancel") { isEditMode = false }
+                                                            .appSecondaryButton()
+                                                        Button("Save") { Task { await viewModel.save() } }
+                                                            .appPrimaryButton()
+                                                            .disabled(viewModel.isSaving)
+                                                    }
+                                                }
+                                            }
+                                            .appSection()
                                         }
                                     }
-                                    TextField("Description", text: $viewModel.request.description, axis: .vertical)
-                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-                                    HStack {
-                                        Button("Cancel") { isEditMode = false }
-                                        Spacer()
-                                        Button("Save") { Task { await viewModel.save() } }
-                                            .disabled(viewModel.isSaving)
-                                    }
+                                    .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                                 }
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             } else {
                                 responsiveHeader {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ID \(exam.id)").font(.headline).bold()
-                                        Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
-                                        Text("Type: \(exam.typeName ?? "Not available")").foregroundStyle(.secondary)
-                                        Text(exam.description ?? "No description")
+                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                        Label("Exam overview", systemImage: "doc.text.magnifyingglass")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .textCase(.uppercase)
+
+                                        Text("ID \(exam.id)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                                            .font(.title3)
+                                            .fontWeight(.semibold)
+
+                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                            Text("Type: \(exam.typeName ?? "Not available")")
+                                                .font(.body)
+                                                .foregroundStyle(.secondary)
+                                            Text(exam.description ?? "No description")
+                                                .font(.body)
+                                        }
                                     }
                                 } actions: {
-                                    Button("✏️") { isEditMode = true }
-                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                        Button { isEditMode = true } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .appEditButton()
+
+                                        Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                        .appDeleteButton()
                                         .disabled(viewModel.isDeleting)
+                                    }
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             }
                         }
                         .padding()

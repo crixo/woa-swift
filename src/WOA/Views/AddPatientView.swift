@@ -26,7 +26,7 @@ struct AddPatientView: View {
             Section("Required Information") {
                 // Nome
                 TextField("First name *", text: $viewModel.formData.nome)
-                    .onChange(of: viewModel.formData.nome) { _ in
+                    .onChange(of: viewModel.formData.nome) {
                         viewModel.validationErrors["nome"] = viewModel.validateField("nome") ?? ""
                     }
                 if let error = viewModel.validationErrors["nome"], !error.isEmpty {
@@ -38,7 +38,7 @@ struct AddPatientView: View {
 
                 // Cognome
                 TextField("Last name *", text: $viewModel.formData.cognome)
-                    .onChange(of: viewModel.formData.cognome) { _ in
+                    .onChange(of: viewModel.formData.cognome) {
                         viewModel.validationErrors["cognome"] = viewModel.validateField("cognome") ?? ""
                     }
                 if let error = viewModel.validationErrors["cognome"], !error.isEmpty {
@@ -95,7 +95,7 @@ struct AddPatientView: View {
                         Text(province.descrizione).tag(LookupProvince?(province))
                     }
                 }
-                .onChange(of: viewModel.selectedProvince) { newValue in
+                .onChange(of: viewModel.selectedProvince) { _, newValue in
                     viewModel.formData.prov = newValue?.sigla ?? ""
                 }
 
@@ -117,7 +117,7 @@ struct AddPatientView: View {
                     ),
                     displayedComponents: .date
                 )
-                .onChange(of: viewModel.formData.data_nascita) { _ in
+                .onChange(of: viewModel.formData.data_nascita) {
                     updateManualDateText()
                 }
 
@@ -125,7 +125,7 @@ struct AddPatientView: View {
                     .onAppear {
                         updateManualDateText()
                     }
-                    .onChange(of: manualDateText) { _ in
+                    .onChange(of: manualDateText) {
                         parseManualDate()
                     }
 
@@ -144,25 +144,37 @@ struct AddPatientView: View {
                         .foregroundStyle(.red)
                 }
             }
+
+            Section {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                        Label("Ready to save?", systemImage: "person.badge.plus")
+                            .font(.headline)
+                        Text("Review the required information before adding this patient to the database.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
+                            actionButtons
+                        }
+
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            actionButtons
+                        }
+                    }
+                }
+                .appSection()
+            }
         }
         .frame(maxWidth: LayoutMetrics.formMaxWidth)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.primary.opacity(0.025))
         .navigationTitle("Add New Patient")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    onCancel()
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Add Patient") {
-                    Task {
-                        await viewModel.submitForm()
-                    }
-                }
-                .disabled(viewModel.isSubmitting || viewModel.hasRealValidationErrors)
-            }
-        }
         .alert("Success", isPresented: $viewModel.didSubmitSuccessfully) {
             Button("OK") {
                 onSuccess()
@@ -170,6 +182,28 @@ struct AddPatientView: View {
         } message: {
             Text("Patient added successfully.")
         }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button {
+            onCancel()
+        } label: {
+            Label("Cancel", systemImage: "xmark")
+                .frame(maxWidth: .infinity)
+        }
+        .appSecondaryButton()
+
+        Button {
+            Task {
+                await viewModel.submitForm()
+            }
+        } label: {
+            Label(viewModel.isSubmitting ? "Adding..." : "Add Patient", systemImage: "person.badge.plus")
+                .frame(maxWidth: .infinity)
+        }
+        .appAddButton()
+        .disabled(viewModel.isSubmitting || viewModel.hasRealValidationErrors)
     }
 
     private func updateManualDateText() {

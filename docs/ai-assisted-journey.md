@@ -19,3 +19,5 @@
 - Display settings in launch screen contained 1 bug fixed simply providing build error.
 
 - Found a bug in the Patient View where the Picker Province did not retain the user selection. Bug has been fixed describing the issue at the first attempt
+
+- Beautify plan has been executed succesfully requireing only 1 fix for the FS structure regarding the new file with designing facilities and 1 minimal fix for the code. The problem is that beuatify has been applied only to the launch page and the Navigation bar has been duplicated in that page. All other views have been updated with same minimal prompt and no code generated check. No errors occurred.

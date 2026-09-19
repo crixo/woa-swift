@@ -11,7 +11,7 @@ IFS=$'\n\t'
 #     --app-name WOA \
 #     --dry-run
 # If the dry run succeeds, execute the actual minor release:
-# ./swift-build-tag-release..sh \
+# ./swift-build-tag-release.sh \
 #     --scheme WOA \
 #     --project src/WOA.xcodeproj \
 #     --app-name WOA    

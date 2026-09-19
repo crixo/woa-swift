@@ -3,6 +3,16 @@ import SwiftUI
 /// Layout constants for this view.
 private enum LayoutMetrics {
     static let formMaxWidth: CGFloat = 560
+    static let readableContentMaxWidth: CGFloat = 760
+}
+
+private func infoPill(_ text: String) -> some View {
+    Text(text)
+        .font(.caption.weight(.semibold))
+        .padding(.horizontal, AppDesignSystem.spacingSM)
+        .padding(.vertical, AppDesignSystem.spacingXS)
+        .foregroundStyle(.secondary)
+        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
 }
 
 /// Wide: info leading, actions trailing. Compact: info above, actions below.
@@ -17,7 +27,7 @@ private func responsiveHeader<Info: View, Actions: View>(
             Spacer()
             actions()
         }
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
             info()
             HStack {
                 actions()
@@ -42,75 +52,128 @@ struct PatientHistoryDetailView: View {
                 ProgressView("Loading health history...")
             } else if let history = viewModel.history {
                 if let saveSucceeded = viewModel.saveSucceeded {
-                    VStack(spacing: 16) {
-                        HStack(spacing: 12) {
+                    VStack(spacing: AppDesignSystem.spacingLG) {
+                        HStack(spacing: AppDesignSystem.spacingSM) {
                             Image(systemName: saveSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundStyle(saveSucceeded ? .green : .red)
                                 .font(.title2)
                             Text(saveSucceeded ? "Health history saved successfully" : "Failed to save health history")
-                                .font(.body)
+                                .font(.body.weight(.medium))
                         }
-                        .padding()
+                        .padding(AppDesignSystem.spacingLG)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(saveSucceeded ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        
+                        .background((saveSucceeded ? Color.green : Color.red).opacity(0.1), in: RoundedRectangle(cornerRadius: AppDesignSystem.cardRadius, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppDesignSystem.cardRadius, style: .continuous)
+                                .stroke((saveSucceeded ? Color.green : Color.red).opacity(0.3), lineWidth: 1)
+                        )
+
                         Spacer()
-                        
+
                         Button(action: onBackToPatient) {
                             Text("Back to Patient")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .padding()
+                        .appPrimaryButton()
+                        .padding(.horizontal)
                     }
                     .padding()
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                             if isEditMode {
                                 Form {
-                                    DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-                                    Picker("Type", selection: $viewModel.request.typeID) {
-                                        ForEach(viewModel.types) { type in
-                                            Text(type.name).tag(type.id)
+                                    Section("Health history details") {
+                                        DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                        Picker("Type", selection: $viewModel.request.typeID) {
+                                            ForEach(viewModel.types) { type in
+                                                Text(type.name).tag(type.id)
+                                            }
+                                        }
+                                        TextField("Description", text: $viewModel.request.description, axis: .vertical)
+                                    }
+
+                                    if let errorMessage = viewModel.errorMessage {
+                                        Section {
+                                            Text(errorMessage)
+                                                .appErrorText()
                                         }
                                     }
-                                    TextField("Description", text: $viewModel.request.description, axis: .vertical)
-                                    if let errorMessage = viewModel.errorMessage { Text(errorMessage).foregroundStyle(.red) }
-                                    HStack {
-                                        Button("Cancel") { isEditMode = false }
-                                        Spacer()
-                                        Button("Save") { Task { await viewModel.save() } }
-                                            .disabled(viewModel.isSaving)
+
+                                    Section {
+                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                                            ViewThatFits(in: .horizontal) {
+                                                HStack(spacing: AppDesignSystem.spacingSM) {
+                                                    Button("Cancel") { isEditMode = false }
+                                                        .appSecondaryButton()
+                                                    Spacer()
+                                                    Button("Save") { Task { await viewModel.save() } }
+                                                        .appPrimaryButton()
+                                                        .disabled(viewModel.isSaving)
+                                                }
+
+                                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                                    Button("Cancel") { isEditMode = false }
+                                                        .appSecondaryButton()
+                                                    Button("Save") { Task { await viewModel.save() } }
+                                                        .appPrimaryButton()
+                                                        .disabled(viewModel.isSaving)
+                                                }
+                                            }
+                                        }
+                                        .appSection()
                                     }
                                 }
+                                .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                             } else {
                                 responsiveHeader {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ID \(history.id)").font(.headline).bold()
-                                        Text(history.date?.formatted(date: .long, time: .omitted) ?? "No date").foregroundStyle(.secondary)
-                                        Text("Type: \(history.typeName ?? "Not available")").foregroundStyle(.secondary)
+                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                        Label("Health history overview", systemImage: "heart.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .textCase(.uppercase)
+
+                                        HStack(spacing: AppDesignSystem.spacingSM) {
+                                            infoPill("Record #\(history.id)")
+                                            if let typeName = history.typeName, !typeName.isEmpty {
+                                                infoPill(typeName)
+                                            }
+                                        }
+
+                                        Text(history.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                                            .font(.title3)
+                                            .fontWeight(.semibold)
+
                                         Text(history.description ?? "No description")
+                                            .foregroundStyle(.secondary)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                 } actions: {
-                                    Button("✏️") { isEditMode = true }
-                                    Button("🗑️", role: .destructive) { viewModel.showDeleteConfirmation = true }
-                                        .disabled(viewModel.isDeleting)
+                                    HStack(spacing: AppDesignSystem.spacingSM) {
+                                        Button("Edit", systemImage: "pencil") { isEditMode = true }
+                                            .appEditButton()
+
+                                        Button("Delete", systemImage: "trash", role: .destructive) { viewModel.showDeleteConfirmation = true }
+                                            .appDeleteButton()
+                                            .disabled(viewModel.isDeleting)
+                                    }
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .appCard(padding: AppDesignSystem.spacingLG)
                             }
                         }
                         .padding()
-                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
+                        .frame(maxWidth: LayoutMetrics.readableContentMaxWidth, alignment: .leading)
                     }
                 }
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: AppDesignSystem.spacingSM) {
                     Image(systemName: "heart.text.square")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
                     Text("Health history not found")
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationTitle("Remote Health History")
