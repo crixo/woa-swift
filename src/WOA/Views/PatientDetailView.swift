@@ -55,6 +55,20 @@ private func saveResultCard(succeeded: Bool, successMessage: String, failureMess
     .padding()
 }
 
+private enum ExamSaveResultState: Identifiable {
+    case success
+    case failure(String)
+
+    var id: String {
+        switch self {
+        case .success:
+            return "success"
+        case .failure(let message):
+            return "failure_\(message)"
+        }
+    }
+}
+
 struct PatientDetailView: View {
     let databaseFileURL: URL
     let dataChangeCoordinator: DataChangeCoordinator
@@ -1376,6 +1390,7 @@ struct ExamDetailEditView: View {
     let onBackToConsulto: () -> Void
     @StateObject private var viewModel: ExamEditViewModel
     @State private var isEditMode = false
+    @State private var saveResult: ExamSaveResultState?
 
     init(examID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onBackToConsulto: @escaping () -> Void) {
         self.onBackToConsulto = onBackToConsulto
@@ -1387,116 +1402,116 @@ struct ExamDetailEditView: View {
             if viewModel.isLoading && viewModel.exam == nil {
                 ProgressView("Loading exam...")
             } else if let exam = viewModel.exam {
-                if let saveSucceeded = viewModel.saveSucceeded {
-                    saveResultCard(
-                        succeeded: saveSucceeded,
-                        successMessage: "Exam saved successfully",
-                        failureMessage: "Failed to save exam",
-                        backLabel: "Back to Consultation",
-                        onBack: onBackToConsulto
-                    )
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-                            if isEditMode {
-                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-                                    HStack(alignment: .center, spacing: AppDesignSystem.spacingSM) {
-                                        Label("Edit exam", systemImage: "doc.text.fill")
-                                            .font(.headline)
-                                        Spacer()
-                                        Button("Cancel") { isEditMode = false }
-                                            .appSecondaryButton()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                        if isEditMode {
+                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                                HStack(alignment: .center, spacing: AppDesignSystem.spacingSM) {
+                                    Label("Edit exam", systemImage: "doc.text.fill")
+                                        .font(.headline)
+                                    Spacer()
+                                    Button("Cancel") { isEditMode = false }
+                                        .appSecondaryButton()
+                                }
+
+                                Form {
+                                    Section("Exam details") {
+                                        DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
+                                        Picker("Type", selection: $viewModel.request.typeID) {
+                                            ForEach(viewModel.types) { type in
+                                                Text(type.name).tag(type.id)
+                                            }
+                                        }
+                                        TextField("Description", text: $viewModel.request.description, axis: .vertical)
                                     }
 
-                                    Form {
-                                        Section("Exam details") {
-                                            DatePicker("Date", selection: $viewModel.request.date, displayedComponents: .date)
-                                            Picker("Type", selection: $viewModel.request.typeID) {
-                                                ForEach(viewModel.types) { type in
-                                                    Text(type.name).tag(type.id)
-                                                }
-                                            }
-                                            TextField("Description", text: $viewModel.request.description, axis: .vertical)
-                                        }
-
-                                        if let errorMessage = viewModel.errorMessage {
-                                            Section {
-                                                Text(errorMessage)
-                                                    .appErrorText()
-                                            }
-                                        }
-
+                                    if let errorMessage = viewModel.errorMessage {
                                         Section {
-                                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
-                                                ViewThatFits(in: .horizontal) {
-                                                    HStack(spacing: AppDesignSystem.spacingSM) {
-                                                        Button("Cancel") { isEditMode = false }
-                                                            .appSecondaryButton()
-                                                        Spacer()
-                                                        Button("Save") { Task { await viewModel.save() } }
-                                                            .appPrimaryButton()
-                                                            .disabled(viewModel.isSaving)
-                                                    }
+                                            Text(errorMessage)
+                                                .appErrorText()
+                                        }
+                                    }
 
-                                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                                                        Button("Cancel") { isEditMode = false }
-                                                            .appSecondaryButton()
-                                                        Button("Save") { Task { await viewModel.save() } }
-                                                            .appPrimaryButton()
-                                                            .disabled(viewModel.isSaving)
+                                    Section {
+                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                                            ViewThatFits(in: .horizontal) {
+                                                HStack(spacing: AppDesignSystem.spacingSM) {
+                                                    Button("Cancel") { isEditMode = false }
+                                                        .appSecondaryButton()
+                                                    Spacer()
+                                                    Button("Save") {
+                                                        Task {
+                                                            let didSave = await viewModel.save()
+                                                            saveResult = didSave ? .success : .failure(viewModel.shortErrorMessage ?? "Unable to save exam. Please try again.")
+                                                        }
                                                     }
+                                                    .appPrimaryButton()
+                                                    .disabled(viewModel.isSaving)
+                                                }
+
+                                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                                                    Button("Cancel") { isEditMode = false }
+                                                        .appSecondaryButton()
+                                                    Button("Save") {
+                                                        Task {
+                                                            let didSave = await viewModel.save()
+                                                            saveResult = didSave ? .success : .failure(viewModel.shortErrorMessage ?? "Unable to save exam. Please try again.")
+                                                        }
+                                                    }
+                                                    .appPrimaryButton()
+                                                    .disabled(viewModel.isSaving)
                                                 }
                                             }
-                                            .appSection()
                                         }
-                                    }
-                                    .appForm(maxWidth: LayoutMetrics.formMaxWidth)
-                                }
-                                .appCard(padding: AppDesignSystem.spacingLG)
-                            } else {
-                                responsiveHeader {
-                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                                        Label("Exam overview", systemImage: "doc.text.magnifyingglass")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                            .textCase(.uppercase)
-
-                                        Text("ID \(exam.id)")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-
-                                        Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-
-                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                                            Text("Type: \(exam.typeName ?? "Not available")")
-                                                .font(.body)
-                                                .foregroundStyle(.secondary)
-                                            Text(exam.description ?? "No description")
-                                                .font(.body)
-                                        }
-                                    }
-                                } actions: {
-                                    HStack(spacing: AppDesignSystem.spacingSM) {
-                                        Button { isEditMode = true } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
-                                        .appEditButton()
-
-                                        Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                        .appDeleteButton()
-                                        .disabled(viewModel.isDeleting)
+                                        .appSection()
                                     }
                                 }
-                                .appCard(padding: AppDesignSystem.spacingLG)
+                                .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                             }
+                            .appCard(padding: AppDesignSystem.spacingLG)
+                        } else {
+                            responsiveHeader {
+                                VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                    Label("Exam overview", systemImage: "doc.text.magnifyingglass")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .textCase(.uppercase)
+
+                                    Text("ID \(exam.id)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+
+                                    Text(exam.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+
+                                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                                        Text("Type: \(exam.typeName ?? "Not available")")
+                                            .font(.body)
+                                            .foregroundStyle(.secondary)
+                                        Text(exam.description ?? "No description")
+                                            .font(.body)
+                                    }
+                                }
+                            } actions: {
+                                HStack(spacing: AppDesignSystem.spacingSM) {
+                                    Button { isEditMode = true } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .appEditButton()
+
+                                    Button(role: .destructive) { viewModel.showDeleteConfirmation = true } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    .appDeleteButton()
+                                    .disabled(viewModel.isDeleting)
+                                }
+                            }
+                            .appCard(padding: AppDesignSystem.spacingLG)
                         }
-                        .padding()
-                        .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                     }
+                    .padding()
+                    .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                 }
             } else {
                 VStack(spacing: 8) {
@@ -1509,6 +1524,17 @@ struct ExamDetailEditView: View {
         .onAppear {
             Task { await viewModel.load() }
         }
+        .sheet(item: $saveResult) { result in
+            ExamSaveResultModal(
+                state: result,
+                onDismiss: {
+                    saveResult = nil
+                    if case .success = result {
+                        onBackToConsulto()
+                    }
+                }
+            )
+        }
         .confirmationDialog("Delete this exam?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 Task {
@@ -1516,5 +1542,56 @@ struct ExamDetailEditView: View {
                 }
             }
         }
+    }
+}
+
+private struct ExamSaveResultModal: View {
+    let state: ExamSaveResultState
+    let onDismiss: () -> Void
+
+    private var isSuccess: Bool {
+        if case .success = state {
+            return true
+        }
+        return false
+    }
+
+    private var title: String {
+        isSuccess ? "Exam saved" : "Unable to save"
+    }
+
+    private var message: String {
+        switch state {
+        case .success:
+            return "The exam was saved successfully."
+        case .failure(let detail):
+            return detail
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 10) {
+                Image(systemName: isSuccess ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                    .font(.system(size: 36))
+                Text(title)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text(message)
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 8)
+
+            Button(isSuccess ? "Back to Consultation" : "Close") {
+                onDismiss()
+            }
+            .appPrimaryButton()
+            .frame(maxWidth: .infinity)
+        }
+        .padding(28)
+        .frame(width: 420)
+        .background(isSuccess ? Color.green.opacity(0.12) : Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: AppDesignSystem.cardRadius, style: .continuous))
     }
 }

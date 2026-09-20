@@ -495,6 +495,7 @@ import Foundation
     @Published var request: ExamCreateRequest
     @Published var types: [ExamType] = []
     @Published var errorMessage: String?
+    @Published var shortErrorMessage: String?
     @Published var isLoading = false
     @Published var isSaving = false
     @Published var isDeleting = false
@@ -532,18 +533,26 @@ import Foundation
         isLoading = false
     }
 
-    func save() async {
+    func save() async -> Bool {
         isSaving = true
         errorMessage = nil
+        shortErrorMessage = nil
         do {
             try PatientRepository.updateExam(request, id: examID, databaseFileURL: databaseFileURL)
             dataChangeCoordinator.publishChange(.examUpdated(examID: examID, consultoID: request.consultoID, databaseURL: databaseFileURL))
             saveSucceeded = true
+            shortErrorMessage = nil
             isSaving = false
+            return true
         } catch {
-            errorMessage = error.localizedDescription
+            let detailedMessage = error.localizedDescription
+            let shortMessage = "The exam could not be saved. Please review the details and try again."
+            AppLogger.error("Failed to save exam \(examID): \(detailedMessage)")
+            errorMessage = detailedMessage
+            shortErrorMessage = shortMessage
             saveSucceeded = false
             isSaving = false
+            return false
         }
     }
 

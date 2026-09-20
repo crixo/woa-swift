@@ -141,6 +141,25 @@ LIVE_APP="/Applications/$APP_NAME"
 STAGING_APP="/Applications/.${APP_NAME}.new"
 BACKUP_APP="/Applications/.${APP_NAME}.bak"
 
+if [[ -d "$LIVE_APP" ]]; then
+    LIVE_EXECUTABLE=$(
+        /usr/libexec/PlistBuddy \
+            -c "Print :CFBundleExecutable" \
+            "$LIVE_APP/Contents/Info.plist" \
+            2>/dev/null || true
+    )
+
+    if [[ -n "${LIVE_EXECUTABLE:-}" ]] && pgrep -q -x "$LIVE_EXECUTABLE"; then
+        echo
+        echo "========================================"
+        echo "UPGRADE FAILED"
+        echo "The current version of ${APP_NAME} is still running."
+        echo "Please quit the application and run the installer again."
+        echo "========================================"
+        exit 1
+    fi
+fi
+
 echo
 echo "Preparing upgrade..."
 
