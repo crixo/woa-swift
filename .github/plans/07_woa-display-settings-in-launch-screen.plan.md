@@ -31,16 +31,17 @@ Display the persisted application settings alongside the selected database table
 The existing architecture remains unchanged:
 
 ```text
-SettingsView
+MainView
     -> LaunchScreenView
         -> Table status/list panel
         -> ApplicationSettingsView
-    -> SettingsViewModel
+   -> DatabaseManagementViewModel
+   -> AppSettingsStore
         -> ConfigurationService
             -> AppPaths
 ```
 
-`SettingsView` remains the single navigation and root-state owner. `LaunchScreenView` is a presentation composition, not a new navigation root. Views do not perform file access or persistence.
+`MainView` remains the single navigation owner. `DatabaseManagementViewModel` owns database selection, import, validation, and table state. The injected `AppSettingsStore` owns persisted app configuration shared with patient destinations. `LaunchScreenView` is a presentation composition, not a new navigation root. Views do not perform file access or persistence.
 
 ## Implementation Phases
 
@@ -58,8 +59,8 @@ SettingsView
    - Use flexible sizing, a visible divider, and a compact stacked fallback for narrow windows.
    - Use scrolling where content cannot safely shrink.
 
-3. Update `src/WOA/ViewModels/SettingsViewModel.swift`.
-   - Resolve the settings path through `AppPaths.configurationFileURL()`.
+3. Keep the persisted settings and display path in `src/WOA/Services/AppSettingsStore.swift`.
+   - Resolve the settings path through `ConfigurationService.configurationFileURL()`.
    - Expose a user-readable fallback if resolution fails.
    - Log path-resolution failures without using force unwraps or fatal errors.
    - Leave `ConfigurationService` and `AppPaths` persistence semantics unchanged.
@@ -100,7 +101,8 @@ SettingsView
 - `src/WOA/Views/TableStatusView.swift`
 - `src/WOA/Views/LaunchScreenView.swift`
 - `src/WOA/Views/ApplicationSettingsView.swift`
-- `src/WOA/ViewModels/SettingsViewModel.swift`
+- `src/WOA/ViewModels/DatabaseManagementViewModel.swift`
+- `src/WOA/Services/AppSettingsStore.swift`
 - `src/WOA/Models/AppSettings.swift`
 - `src/WOA/Services/ConfigurationService.swift`
 - `src/WOA/Utils/AppPaths.swift`
@@ -109,7 +111,8 @@ SettingsView
 
 ## Decisions
 
-- Keep `SettingsView` as the only navigation owner.
+- Keep `MainView` as the only navigation owner.
+- Inject one shared `AppSettingsStore`; keep transient database workflow state in `DatabaseManagementViewModel`.
 - Use the existing JSON settings model and Application Support configuration path.
 - Pass settings and the resolved path into `ApplicationSettingsView`; do not access files from the view.
 - Put reselection confirmation at the launch/table surface and invoke the existing `resetConfiguration()` only after explicit confirmation.

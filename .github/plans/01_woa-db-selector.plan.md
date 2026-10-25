@@ -56,13 +56,13 @@ src/WOA/
 │   ├── AppSettings.swift
 │   └── TableInfo.swift
 ├── ViewModels/
-│   ├── SettingsViewModel.swift
-│   └── DatabaseSelectorViewModel.swift
+│   └── DatabaseManagementViewModel.swift
 ├── Views/
 │   ├── SettingsView.swift
 │   ├── TableStatusView.swift
 │   └── DatabaseSelectorView.swift
 ├── Services/
+│   ├── AppSettingsStore.swift
 │   ├── ConfigurationService.swift
 │   ├── DatabaseSelectionService.swift
 │   └── DatabaseValidationService.swift
@@ -159,35 +159,13 @@ src/WOA/
 
 ### Phase 4: ViewModels & Business Logic
 
-**4.1 Create DatabaseSelectorViewModel**
-- `@MainActor` with `@Observable` (or `@StateObject`)
-- Properties:
-  - `isSelecting: Bool` — NSOpenPanel is open
-  - `selectedPath: String?` — user-selected file path
-  - `validationError: String?` — error message if validation fails
-  - `isImporting: Bool` — import in progress
-  - `connectionStatus: String` — "Connected", "Disconnected", "Validating", etc.
-- Methods:
-  - `selectDatabase()` — present NSOpenPanel, filter for .db files
-  - `importDatabase()` — validate + copy + save configuration
-  - `validateConnection()` — test existing connection
-- Error handling: catch errors, set `validationError`, log to AppLogger
+**4.1 Create DatabaseManagementViewModel**
+- `@MainActor` observable model for database selection, import, active connection validation, and table statistics.
+- Expose `isConfigured` for the main navigation and own all transient workflow state.
+- Inject the shared settings store to load and persist the selected connection.
+- Use async tasks for validation and table-stat refresh; report import errors through observable state and AppLogger.
 
-**4.2 Create SettingsViewModel**
-- `@MainActor` observable
-- Properties:
-  - `isConfigured: Bool` — database is configured
-  - `connectionStatus: String` — connection state
-  - `tableStats: [TableInfo]` — list of tables with counts
-  - `allSettings: AppSettings` — all app configuration
-  - `isLoading: Bool` — async operation in progress
-- Methods:
-  - `loadSettings()` — read config from ConfigurationService
-  - `testDatabaseConnection()` — async operation to validate connection
-  - `refreshTableStats()` — async operation to query table counts
-- Use async/await with Task to avoid blocking UI
-
-**Dependencies:** ConfigurationService, TableRepository, DatabaseValidator, AppLogger
+**Dependencies:** AppSettingsStore, ConfigurationService, TableRepository, DatabaseValidator, DatabaseInstaller, AppLogger
 
 ---
 
@@ -204,7 +182,7 @@ src/WOA/
   - Display last validated timestamp
   - Show table list in format: `- paziente (100)`, `- consulto (332)`, etc.
   - Provide "Re-select Database" button for reconfiguration
-- Bind to SettingsViewModel state
+- Bind to DatabaseManagementViewModel and AppSettingsStore state
 - Handle loading state with progress indicator
 
 **5.2 Create TableStatusView (one-time display)**

@@ -3,43 +3,45 @@ import SwiftUI
 /// Main entry point view: database configuration required screen, or connected settings screen.
 struct MainView: View {
 
-    private enum NavigationRoute: Hashable {
-        case patientsSearch
-        case addPatient(databaseURL: URL)
-        case patientDetails(patientID: Int, databaseURL: URL)
-        case editPatient(patientID: Int, databaseURL: URL)
-        case consultoDetail(consultoID: Int, patientID: Int, databaseURL: URL)
-        case addConsultation(patientID: Int, databaseURL: URL)
-        case editConsulto(consultoID: Int, patientID: Int, databaseURL: URL)
-        case addTreatment(consultoID: Int, patientID: Int, databaseURL: URL)
-        case treatmentDetail(treatmentID: Int, databaseURL: URL)
-        case addEvaluation(consultoID: Int, patientID: Int, databaseURL: URL)
-        case evaluationDetail(evaluationID: Int, databaseURL: URL)
-        case addExam(consultoID: Int, patientID: Int, databaseURL: URL)
-        case examDetail(examID: Int, databaseURL: URL)
-        case historyDetail(historyID: Int, databaseURL: URL)
-        case addHistory(patientID: Int, databaseURL: URL)
-    }
-
-    @StateObject private var settingsViewModel = SettingsViewModel()
-    @StateObject private var selectorViewModel = DatabaseSelectorViewModel()
+    @StateObject private var settingsStore: AppSettingsStore
+    @StateObject private var databaseManagementViewModel: DatabaseManagementViewModel
     @StateObject private var dataChangeCoordinator = DataChangeCoordinator()
     @State private var navigationPath: [NavigationRoute] = []
 
+    init() {
+        let settingsStore = AppSettingsStore()
+        _settingsStore = StateObject(wrappedValue: settingsStore)
+        _databaseManagementViewModel = StateObject(
+            wrappedValue: DatabaseManagementViewModel(settingsStore: settingsStore)
+        )
+    }
+
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            content
-                .navigationDestination(for: NavigationRoute.self) { route in
+        MainNavigationView(
+            path: $navigationPath,
+            isConfigured: databaseManagementViewModel.isConfigured,
+            appVersionLabel: appVersionLabel,
+            onSearch: { navigationPath.append(.patientsSearch) }
+        ) {
+            DatabaseManagementView(
+                viewModel: databaseManagementViewModel,
+                settingsStore: settingsStore,
+                onResetConfiguration: {
+                    navigationPath.removeAll()
+                    databaseManagementViewModel.resetConfiguration()
+                }
+            )
+        } destinationContent: { route in
                     switch route {
                     case .patientsSearch:
                         PazienteSearchView(
-                            databasePath: settingsViewModel.allSettings.databaseConnection.path,
+                            databasePath: settingsStore.settings.databaseConnection.path,
                             onAddPatient: {
-                                let url = URL(fileURLWithPath: settingsViewModel.allSettings.databaseConnection.path)
+                                let url = URL(fileURLWithPath: settingsStore.settings.databaseConnection.path)
                                 navigationPath.append(.addPatient(databaseURL: url))
                             },
                             onOpenDetails: { patient in
-                                let url = URL(fileURLWithPath: settingsViewModel.allSettings.databaseConnection.path)
+                                let url = URL(fileURLWithPath: settingsStore.settings.databaseConnection.path)
                                 navigationPath.append(.patientDetails(patientID: patient.id, databaseURL: url))
                             }
                         )
@@ -221,84 +223,14 @@ struct MainView: View {
                             }
                         )
                     }
-                }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .navigation) {
-                Button {
-                    if !navigationPath.isEmpty {
-                        navigationPath.removeLast()
-                    }
-                } label: {
-                    Label("Back", systemImage: "chevron.backward")
-                }
-                .labelStyle(.iconOnly)
-                .disabled(navigationPath.isEmpty)
-                .appSecondaryButton()
-                .help("Back")
-
-                Button {
-                    navigationPath.removeAll()
-                } label: {
-                    Label("Home", systemImage: "house")
-                }
-                .labelStyle(.iconOnly)
-                .disabled(navigationPath.isEmpty)
-                .help("Home")
-            }
-
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: AppDesignSystem.spacingSM) {
-                    Text("WOA")
-                        .font(.headline.weight(.bold))
-                    Text("patients database … \(appVersionLabel)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                .layoutPriority(1)
-                .padding(.horizontal, AppDesignSystem.spacingMD)
-            }
-
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    guard settingsViewModel.isConfigured else { return }
-                    navigationPath.append(.patientsSearch)
-                } label: {
-                    Label("Patients Search", systemImage: "person.3.fill")
-                }
-                .labelStyle(.titleAndIcon)
-                .disabled(!settingsViewModel.isConfigured)
-                .appSearchButton()
-                .frame(minWidth: 150)
-            }
-        }
-        .frame(minWidth: 420, minHeight: 320)
-        .onAppear {
-            settingsViewModel.loadSettings()
-            if !settingsViewModel.isConfigured {
-                navigationPath.removeAll()
-            }
-        }
-        .onChange(of: settingsViewModel.isConfigured) {
-            if !settingsViewModel.isConfigured {
+        .onChange(of: databaseManagementViewModel.isConfigured) {
+            if !databaseManagementViewModel.isConfigured {
                 navigationPath.removeAll()
             }
         }
 
     }
-
-    private var activeNavigationTitle: String {
-        guard let route = navigationPath.last else { return "WOA" }
-
-        switch route {
-        case .patientsSearch:
-            return "Patient Search"
-        default:
-            return "WOA"
-        }
-    }
-
     /// Bundle version from Info.plist (`CFBundleVersion`). Debug builds append `(next)`.
     private var appVersionLabel: String {
         let version = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
@@ -309,46 +241,4 @@ struct MainView: View {
         #endif
     }
 
-    @ViewBuilder
-    private var content: some View {
-        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXL) {
-            if settingsViewModel.isLoading {
-                ProgressView("Loading configuration...")
-                    .appCard(padding: AppDesignSystem.spacingLG)
-            } else if selectorViewModel.didImportSuccessfully {
-                TableStatusView(tables: selectorViewModel.importedTables, onContinue: {
-                    settingsViewModel.loadSettings()
-                    selectorViewModel.didImportSuccessfully = false
-                })
-                .appCard(padding: AppDesignSystem.spacingLG)
-            } else if settingsViewModel.isConfigured {
-                connectedContent
-            } else {
-                notConfiguredContent
-            }
-        }
-        .padding()
-    }
-
-    private var notConfiguredContent: some View {
-        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-            Text("Database Configuration Required")
-                .font(.title2.weight(.semibold))
-
-            DatabaseSelectorView(viewModel: selectorViewModel)
-                .appPanel(padding: AppDesignSystem.spacingLG)
-        }
-    }
-
-    private var connectedContent: some View {
-        LaunchScreenView(
-            tables: settingsViewModel.tableStats,
-            settings: settingsViewModel.allSettings,
-            settingsFilePath: settingsViewModel.settingsFilePath,
-            onReselectDatabase: {
-                navigationPath.removeAll()
-                settingsViewModel.resetConfiguration()
-            }
-        )
-    }
 }

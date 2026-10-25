@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		119F943034C191E5532E5C34 /* PazienteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */; };
-		14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B549519CFC9343E163188 /* SettingsViewModel.swift */; };
 		179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */; };
 		18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */; };
 		1CF715648142F644A915620A /* PatientDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */; };
@@ -71,6 +70,8 @@
 		9F43EDFD0024598194AA014B /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */; };
 		9F811D53E20904ED24296741 /* SQLiteConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */; };
 		A05D281816CFF7D5E0A63372 /* TableRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E0A4BC115F3429CA90AB58 /* TableRepository.swift */; };
+		A11CE0000000000000000001 /* MainNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE0000000000000000003 /* MainNavigationView.swift */; };
+		A11CE0000000000000000002 /* DatabaseManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE0000000000000000004 /* DatabaseManagementView.swift */; };
 		A1405971480FBD7EC5E17001 /* DatabaseConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */; };
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 		A19D13E40FAE64468A122581 /* AppDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */; };
@@ -79,12 +80,13 @@
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
 		AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */; };
 		C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */; };
+		C2A1C0DE0000000000000001 /* DatabaseManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */; };
+		C2A1C0DE0000000000000003 /* AppSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1C0DE0000000000000004 /* AppSettingsStore.swift */; };
 		C66D91E3CDAD66EC6B88C2FD /* DatabaseInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */; };
 		C9D8E7F6A5B4C3D2E1F0A9B8 /* AnamnesiRemotaDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8E7F6A5B4C3D2E1F0A9B7 /* AnamnesiRemotaDetailEditView.swift */; };
 		D9541321ECD55B507735E530 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D16E0614E8990F046ED322E /* AppLogger.swift */; };
 		E45709F0BE5A8666BB5B6105 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8810C7A02BA28A9C1525CAB /* AppSettings.swift */; };
 		E5897BCEAB4696F30686A54A /* PazienteSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CBF9C0D9FBAFD0E9C2A70F /* PazienteSearchViewModel.swift */; };
-		F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */; };
 		FE82FE566DA80BFB9937C385 /* DatabaseValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */; };
 /* End PBXBuildFile section */
 
@@ -158,16 +160,18 @@
 		8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseURLProvider.swift; sourceTree = "<group>"; };
 		9C8B7A6F5E4D3C2B1A0F9E8D /* LookupProvince.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookupProvince.swift; sourceTree = "<group>"; };
+		A11CE0000000000000000003 /* MainNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNavigationView.swift; sourceTree = "<group>"; };
+		A11CE0000000000000000004 /* DatabaseManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManagementView.swift; sourceTree = "<group>"; };
 		A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaDetailViewModel.swift; sourceTree = "<group>"; };
 		B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		B6F0B83E842A9D8E705D14D6 /* PatientRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientRepository.swift; sourceTree = "<group>"; };
+		C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManagementViewModel.swift; sourceTree = "<group>"; };
+		C2A1C0DE0000000000000004 /* AppSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsStore.swift; sourceTree = "<group>"; };
 		C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseValidator.swift; sourceTree = "<group>"; };
 		C9D8E7F6A5B4C3D2E1F0A9B7 /* AnamnesiRemotaDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaDetailEditView.swift; sourceTree = "<group>"; };
 		CAA83F52316EFEEE760B83B4 /* WOA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WOA.entitlements; sourceTree = "<group>"; };
-		CB5B549519CFC9343E163188 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		CC15800193813A517BDC67EE /* TableInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableInfo.swift; sourceTree = "<group>"; };
 		D246D1CD0E6902E67DB2FD78 /* PazienteDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteDetailViewModel.swift; sourceTree = "<group>"; };
-		D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorViewModel.swift; sourceTree = "<group>"; };
 		D95FA83BAAA928615472A6D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E8810C7A02BA28A9C1525CAB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInstaller.swift; sourceTree = "<group>"; };
@@ -219,10 +223,12 @@
 				6B97361730607ABE002FB511 /* ConsultoAddView.swift */,
 				6B973615306078F2002FB511 /* ConsultoDetailView.swift */,
 				6BA1FD7D308D412100092371 /* ConsultoEditView.swift */,
+				A11CE0000000000000000004 /* DatabaseManagementView.swift */,
 				7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */,
 				6B97362130607DA8002FB511 /* EsameAddView.swift */,
 				6B97362330607DD5002FB511 /* EsameDetailEditView.swift */,
 				8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */,
+				A11CE0000000000000000003 /* MainNavigationView.swift */,
 				B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */,
 				1A2B3C4D5E6F7A8B9C0D1E2F /* PazienteAddView.swift */,
 				3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */,
@@ -269,14 +275,13 @@
 				6B56187F3067E1C900DB86EE /* ConsultoAddViewModel.swift */,
 				6B5618733067E18500DB86EE /* ConsultoDetailViewModel.swift */,
 				6BA1FD7B308D3F7900092371 /* ConsultoEditViewModel.swift */,
-				D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */,
+				C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */,
 				6B56187B3067E1B500DB86EE /* EsameAddViewModel.swift */,
 				6B56187D3067E1C200DB86EE /* EsameDetailEditViewModel.swift */,
 				2E4D5C6B7A8F9E0D1C2B3A4F /* PazienteAddViewModel.swift */,
 				D246D1CD0E6902E67DB2FD78 /* PazienteDetailViewModel.swift */,
 				6BD4980E307834E900754FB9 /* PazienteEditViewModel.swift */,
 				33CBF9C0D9FBAFD0E9C2A70F /* PazienteSearchViewModel.swift */,
-				CB5B549519CFC9343E163188 /* SettingsViewModel.swift */,
 				6B5618753067E18B00DB86EE /* TrattamentoAddViewModel.swift */,
 				6B5618773067E19400DB86EE /* TrattamentoDetailEditViewModel.swift */,
 				6B5618713067E17100DB86EE /* ValutazioneAddViewModel.swift */,
@@ -372,6 +377,7 @@
 			isa = PBXGroup;
 			children = (
 				131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */,
+				C2A1C0DE0000000000000004 /* AppSettingsStore.swift */,
 				8A9C7B6F5E4D3C2B1A0F9E8D /* DataChangeCoordinator.swift */,
 			);
 			path = Services;
@@ -481,12 +487,14 @@
 				6B97361830607ABE002FB511 /* ConsultoAddView.swift in Sources */,
 				6B7E3248306DB0E100C6A538 /* FormValidators.swift in Sources */,
 				6B56187E3067E1C200DB86EE /* EsameDetailEditViewModel.swift in Sources */,
-				14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */,
-				F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */,
+				C2A1C0DE0000000000000001 /* DatabaseManagementViewModel.swift in Sources */,
+				C2A1C0DE0000000000000003 /* AppSettingsStore.swift in Sources */,
 				E5897BCEAB4696F30686A54A /* PazienteSearchViewModel.swift in Sources */,
 				6BB539393068540C000CBED8 /* DateOfBirthComplexField.swift in Sources */,
 				7F9E4C2A1B3D5E6F8A9B0C1D /* PazienteAddViewModel.swift in Sources */,
 				9F43EDFD0024598194AA014B /* MainView.swift in Sources */,
+				A11CE0000000000000000001 /* MainNavigationView.swift in Sources */,
+				A11CE0000000000000000002 /* DatabaseManagementView.swift in Sources */,
 				6B97361A30607C21002FB511 /* TrattamentoAddView.swift in Sources */,
 				6B97362030607D63002FB511 /* ValutazioneDetailEditView.swift in Sources */,
 				C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */,

@@ -3,7 +3,7 @@ import SwiftUI
 /// Sub-component allowing the user to browse for and import a SQLite database file.
 struct DatabaseSelectorView: View {
 
-    @ObservedObject var viewModel: DatabaseSelectorViewModel
+    @ObservedObject var viewModel: DatabaseManagementViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
