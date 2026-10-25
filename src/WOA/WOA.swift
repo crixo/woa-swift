@@ -11,7 +11,7 @@ struct WOA: App {
 
     var body: some Scene {
         WindowGroup {
-            SettingsView()
+            MainView()
         }
     }
 }

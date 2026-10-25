@@ -665,6 +665,7 @@ xcodebuild \
     -destination 'generic/platform=macOS' \
     -archivePath "$ARCHIVE_PATH" \
     MARKETING_VERSION="$VERSION" \
+    CURRENT_PROJECT_VERSION="$VERSION" \
     clean archive
 
 [[ -d "$ARCHIVE_PATH" ]] ||
@@ -736,6 +737,37 @@ ditto \
 
 [[ -d "$APP_PATH" ]] ||
     die "Application bundle was not created: ${APP_PATH}"
+
+# ==============================================================================
+# Verify baked Info.plist versions match the release version
+# ==============================================================================
+
+APP_INFO_PLIST="${APP_PATH}/Contents/Info.plist"
+
+[[ -f "$APP_INFO_PLIST" ]] ||
+    die "Application Info.plist was not found: ${APP_INFO_PLIST}"
+
+BAKED_SHORT_VERSION="$(
+    /usr/libexec/PlistBuddy \
+        -c 'Print :CFBundleShortVersionString' \
+        "$APP_INFO_PLIST"
+)"
+
+BAKED_BUNDLE_VERSION="$(
+    /usr/libexec/PlistBuddy \
+        -c 'Print :CFBundleVersion' \
+        "$APP_INFO_PLIST"
+)"
+
+if [[ "$BAKED_SHORT_VERSION" != "$VERSION" ]]; then
+    die "CFBundleShortVersionString is '${BAKED_SHORT_VERSION}', expected '${VERSION}'."
+fi
+
+if [[ "$BAKED_BUNDLE_VERSION" != "$VERSION" ]]; then
+    die "CFBundleVersion is '${BAKED_BUNDLE_VERSION}', expected '${VERSION}'."
+fi
+
+log "Verified app versions: CFBundleShortVersionString=${BAKED_SHORT_VERSION}, CFBundleVersion=${BAKED_BUNDLE_VERSION}"
 
 # ==============================================================================
 # Create the uploadable application ZIP

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Layout constants specific to the patients search screen.
-private enum LayoutMetrics {
+private enum LayoutMetrics2 {
     static let contentSpacing: CGFloat = AppDesignSystem.spacingLG
     static let searchFieldMinWidth: CGFloat = 200
     static let headerSpacing: CGFloat = AppDesignSystem.spacingSM
@@ -9,25 +9,26 @@ private enum LayoutMetrics {
     static let contentMaxWidth: CGFloat = AppDesignSystem.panelMaxWidth
 }
 
+
 /// Search and browse patients by name; details and add patient are rendered inline by the root navigation stack.
-struct PatientsSearchView: View {
+struct PazienteSearchView: View {
 
     let databasePath: String
     let onAddPatient: () -> Void
     let onOpenDetails: (PatientSearchResult) -> Void
 
-    @StateObject private var viewModel: PatientsSearchViewModel
+    @StateObject private var viewModel: PazienteSearchViewModel
 
     init(databasePath: String, onAddPatient: @escaping () -> Void = {}, onOpenDetails: @escaping (PatientSearchResult) -> Void = { _ in }) {
         self.databasePath = databasePath
         self.onAddPatient = onAddPatient
         self.onOpenDetails = onOpenDetails
-        _viewModel = StateObject(wrappedValue: PatientsSearchViewModel(databasePath: databasePath))
+        _viewModel = StateObject(wrappedValue: PazienteSearchViewModel(databasePath: databasePath))
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: LayoutMetrics.contentSpacing) {
+            VStack(alignment: .leading, spacing: LayoutMetrics2.contentSpacing) {
                 ViewThatFits(in: .horizontal) {
                     wideHeader
                     compactHeader
@@ -53,7 +54,7 @@ struct PatientsSearchView: View {
                 }
             }
             .padding()
-            .frame(maxWidth: LayoutMetrics.contentMaxWidth, alignment: .leading)
+            .frame(maxWidth: LayoutMetrics2.contentMaxWidth, alignment: .leading)
         }
         .frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
         .navigationBarBackButtonHidden(true)
@@ -71,7 +72,7 @@ struct PatientsSearchView: View {
     }
 
     private var compactHeader: some View {
-        VStack(alignment: .leading, spacing: LayoutMetrics.headerSpacing) {
+        VStack(alignment: .leading, spacing: LayoutMetrics2.headerSpacing) {
             headerTitle
 
             addPatientButton
@@ -92,7 +93,7 @@ struct PatientsSearchView: View {
 
             TextField("Search by name", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
-                .frame(minWidth: LayoutMetrics.searchFieldMinWidth, maxWidth: .infinity, alignment: .leading)
+                .frame(minWidth: LayoutMetrics2.searchFieldMinWidth, maxWidth: .infinity, alignment: .leading)
                 .onChange(of: viewModel.searchText) {
                     viewModel.triggerSearchIfReady()
                 }
@@ -159,7 +160,7 @@ struct PatientsSearchView: View {
     }
 
     private func wideResultRow(_ patient: PatientSearchResult) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: LayoutMetrics.contentSpacing) {
+        HStack(alignment: .firstTextBaseline, spacing: LayoutMetrics2.contentSpacing) {
             patientSummary(patient)
 
             Spacer()
@@ -170,7 +171,7 @@ struct PatientsSearchView: View {
     }
 
     private func compactResultRow(_ patient: PatientSearchResult) -> some View {
-        VStack(alignment: .leading, spacing: LayoutMetrics.rowSpacing) {
+        VStack(alignment: .leading, spacing: LayoutMetrics2.rowSpacing) {
             patientSummary(patient)
 
             detailsButton(for: patient)
@@ -208,16 +209,16 @@ struct PatientsSearchView: View {
 }
 
 #Preview("Compact") {
-    PatientsSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: "/tmp/preview.db")
         .frame(width: 420, height: 500)
 }
 
 #Preview("Standard") {
-    PatientsSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: "/tmp/preview.db")
         .frame(width: 700, height: 600)
 }
 
 #Preview("Wide") {
-    PatientsSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: "/tmp/preview.db")
         .frame(width: 1100, height: 700)
 }

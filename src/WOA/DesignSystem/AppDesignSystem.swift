@@ -13,6 +13,12 @@ enum AppDesignSystem {
     static let formMaxWidth: CGFloat = 560
 }
 
+enum LayoutMetrics {
+    static let readableContentMaxWidth: CGFloat = 760
+    static let formMaxWidth: CGFloat = 560
+    static let dateColumnMinWidth: CGFloat = 100
+}
+
 private struct AppCardModifier: ViewModifier {
     let padding: CGFloat
 
@@ -51,6 +57,7 @@ private struct AppSectionModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous)
                     .stroke(Color.primary.opacity(0.06), lineWidth: 1)
             )
+            .frame(maxWidth: .infinity)//make cancel/save button centered
     }
 }
 
@@ -156,4 +163,17 @@ extension View {
             .foregroundStyle(.red)
             .fixedSize(horizontal: false, vertical: true)
     }
+    
+    func appOverviewDate() -> some View {
+        self
+            .font(.title3)
+            .fontWeight(.semibold)
+    }
+    
+    func appOverviewText() -> some View {
+        self
+            .fixedSize(horizontal: false, vertical: true)
+    }
+    
+        
 }

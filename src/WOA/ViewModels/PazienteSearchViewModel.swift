@@ -2,7 +2,7 @@ import Foundation
 
 /// Coordinates patient name searches and exposes the selected route payload without managing a modal sheet.
 @MainActor
-final class PatientsSearchViewModel: ObservableObject {
+final class PazienteSearchViewModel: ObservableObject {
 
     @Published var searchText: String = ""
     @Published var results: [PatientSearchResult] = []

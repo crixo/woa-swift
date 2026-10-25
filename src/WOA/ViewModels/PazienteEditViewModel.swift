@@ -2,30 +2,50 @@ import Foundation
 
 /// ViewModel managing the add patient form state, validation, and submission.
 /// Handles real-time validation as user types and orchestrates the patient creation flow.
-@MainActor final class AddPatientViewModel: ObservableObject {
+@MainActor final class PazienteEditViewModel: ModelFormValidator<PatientCreateRequest>, EntityEditViewModel{
+    let patientID: Int
     let databaseFileURL: URL
     let dataChangeCoordinator: DataChangeCoordinator
     
     @Published var formData: PatientCreateRequest = .init()
     @Published var selectedProvince: LookupProvince?
     @Published var allProvinces: [LookupProvince] = []
-    @Published var isSubmitting: Bool = false
     var hasRealValidationErrors: Bool {
         let res = validationErrors.values.contains { !$0.isEmpty }
         return res
     }
     @Published var validationErrors: [String: String] = [:]
-    @Published var globalErrorMessage: String?
     @Published var didSubmitSuccessfully: Bool = false
     
-    init(databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
+    @Published var errorMessage: String?
+    @Published var shortErrorMessage: String?
+    @Published var isSaving = false
+    
+    @Published var isLoading = false
+    @Published private(set) var entity: PatientDetail?
+    
+    init(patientID: Int, databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator) {
+        self.patientID = patientID
         self.databaseFileURL = databaseFileURL
         self.dataChangeCoordinator = dataChangeCoordinator
+
+        super.init(trigger: .onChangeAndSubmit)
+        
+        bindModel { [unowned self] in self.formData }
+        register(\.nome, value: { [weak self] in self?.formData.nome ?? "" },
+                 rules: [.required("Nome è richiesto"), .minLength(2)])
+        
+        register(\.cognome, value: { [weak self] in self?.formData.cognome ?? "" },
+                 rules: [.required("Cognome è richiesto"), .minLength(2)])
+        
+        register(\.email, value: { [weak self] in self?.formData.email ?? "" },
+                 rules: [.email()])//.required(),
+        
         Task {
             await loadProvinces()
         }
+        
     }
-    
     // MARK: - Loading
     
     /// Loads all provinces from the database for the dropdown.
@@ -80,59 +100,50 @@ import Foundation
         }
     }
     
-    /// Validates all required fields before form submission.
-    /// Populates validationErrors dict; returns true if form is valid.
-    private func validateAllFields() -> Bool {
-        validationErrors = [:]
-        
-        // Validate nome
-        if let error = validateField("nome") {
-            validationErrors["nome"] = error
+    
+    func load() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            entity = try PatientRepository.fetchPatient(by: patientID, databaseFileURL: databaseFileURL)
+            allProvinces = try PatientRepository.fetchProvinces(databaseFileURL: databaseFileURL)
+            if let entity {
+                formData = entity.formData
+                if let sigla = formData.prov {
+                    formData.prov = allProvinces.first {
+                        $0.sigla.caseInsensitiveCompare(sigla) == .orderedSame
+                    }?.sigla
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            AppLogger.error("Failed to load patient \(patientID): \(error.localizedDescription)")
         }
-        
-        // Validate cognome
-        if let error = validateField("cognome") {
-            validationErrors["cognome"] = error
-        }
-        
-        // Validate prov (required for submission)
-//        if formData.prov == nil || formData.prov?.isEmpty ?? true {
-//            validationErrors["prov"] = "Province is required"
-//        }
-        
-        // Validate data_nascita
-        if let error = validateField("data_nascita") {
-            validationErrors["data_nascita"] = error
-        }
-        
-        let errors = validationErrors.isEmpty
-        
-        return errors
+        isLoading = false
     }
+    
+    
     
     // MARK: - Submission
     
     /// Orchestrates form submission: validates all fields, then creates patient in DB.
     /// On success, sets didSubmitSuccessfully (triggers alert and dismissal).
     /// On error, sets globalErrorMessage (form remains open).
-    func submitForm() async {
-        // First validate all fields
-        guard validateAllFields() else {
-            return
-        }
+    func save() async -> Bool {
+        guard validateAll() else { return false}
         
-        isSubmitting = true
-        globalErrorMessage = nil
-        
+        isSaving = true
+        errorMessage = nil
+        didSubmitSuccessfully = false
         do {
-            let patientID = try PatientRepository.createPatient(formData, databaseFileURL: databaseFileURL)
-            dataChangeCoordinator.publishChange(.patientCreated(patientID: patientID, databaseURL: databaseFileURL))
+            try PatientRepository.updatePatient(formData, patientID: patientID, databaseFileURL: databaseFileURL)
             didSubmitSuccessfully = true
+            //isEditing = false//moved to alert in view
+            dataChangeCoordinator.publishChange(.patientUpdated(patientID: patientID, databaseURL: databaseFileURL))
         } catch {
-            AppLogger.error("❌ Failed to add patient: \(error.localizedDescription)")
-            globalErrorMessage = error.localizedDescription
+            errorMessage = error.localizedDescription
         }
-        
-        isSubmitting = false
+        isSaving = false
+        return didSubmitSuccessfully
     }
 }

@@ -304,7 +304,7 @@ enum PatientRepository {
         return results
     }
 
-    static func createConsultation(_ request: ConsultationCreateRequest, databaseFileURL: URL) throws -> Int {
+    static func createConsultation(_ request: ConsultoRequest, databaseFileURL: URL) throws -> Int {
         let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         try connection.execute(
             "INSERT INTO consulto (ID_paziente, data, problema_iniziale) VALUES (?, ?, ?)",
@@ -348,7 +348,7 @@ enum PatientRepository {
 
     // MARK: - Consultation Update/Delete
     
-    static func updateConsultation(_ request: ConsultationCreateRequest, consultationID: Int, databaseFileURL: URL) throws {
+    static func updateConsultation(_ request: ConsultoRequest, consultationID: Int, databaseFileURL: URL) throws {
         let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE consulto SET ID_paziente = ?, data = ?, problema_iniziale = ?

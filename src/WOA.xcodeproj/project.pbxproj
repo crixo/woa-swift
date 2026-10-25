@@ -7,40 +7,83 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */; };
+		119F943034C191E5532E5C34 /* PazienteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */; };
 		14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5B549519CFC9343E163188 /* SettingsViewModel.swift */; };
 		179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */; };
 		18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */; };
 		1CF715648142F644A915620A /* PatientDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */; };
 		25F7C6BD85DDE9D75DBC1145 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */; };
 		390A4A75FC367BC506B58587 /* DatabaseURLProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */; };
-		3C7B8E9F2D0A5E1F6B9C4D7E /* AddPatientView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */; };
+		3C7B8E9F2D0A5E1F6B9C4D7E /* PazienteAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* PazienteAddView.swift */; };
 		3C8FB1B78DEB8D64D61A31D9 /* PatientSearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE4A06DA7FCE2E7700759BE /* PatientSearchResult.swift */; };
-		42C4BC0D631BF5AF6480D4FB /* PatientDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */; };
+		42C4BC0D631BF5AF6480D4FB /* PazienteDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D246D1CD0E6902E67DB2FD78 /* PazienteDetailViewModel.swift */; };
 		57A0C2211082BD2CE12EFA80 /* TableInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC15800193813A517BDC67EE /* TableInfo.swift */; };
 		590C71E5F2B3C30E7BC014E3 /* PatientRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F0B83E842A9D8E705D14D6 /* PatientRepository.swift */; };
 		5D6E7F8G9H0I1J2K3L4M5N6O /* PatientCreateRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5E6D7C8B9A0E1F2D3C4B5A /* PatientCreateRequest.swift */; };
+		6B1673FF308CE99D00DA8DCA /* EntityEditTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1673FE308CE99D00DA8DCA /* EntityEditTemplate.swift */; };
+		6B167401308CE9C700DA8DCA /* EntityEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B167400308CE9C700DA8DCA /* EntityEditViewModel.swift */; };
+		6B371E543061D407002CB617 /* ResponsiveHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B371E533061D407002CB617 /* ResponsiveHeader.swift */; };
+		6B371E563061D55E002CB617 /* SaveResultCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B371E553061D55E002CB617 /* SaveResultCard.swift */; };
+		6B371E583061D795002CB617 /* SaveResultState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B371E573061D795002CB617 /* SaveResultState.swift */; };
+		6B371E5A3061D8D7002CB617 /* SaveResultModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B371E593061D8D7002CB617 /* SaveResultModal.swift */; };
+		6B4A9B533070ED4600B31881 /* EntityAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4A9B523070ED4600B31881 /* EntityAddViewModel.swift */; };
+		6B4A9B563070F1C100B31881 /* EntityDetailEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4A9B553070F1C100B31881 /* EntityDetailEditViewModel.swift */; };
+		6B5618723067E17100DB86EE /* ValutazioneAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618713067E17100DB86EE /* ValutazioneAddViewModel.swift */; };
+		6B5618743067E18500DB86EE /* ConsultoDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618733067E18500DB86EE /* ConsultoDetailViewModel.swift */; };
+		6B5618763067E18B00DB86EE /* TrattamentoAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618753067E18B00DB86EE /* TrattamentoAddViewModel.swift */; };
+		6B5618783067E19400DB86EE /* TrattamentoDetailEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618773067E19400DB86EE /* TrattamentoDetailEditViewModel.swift */; };
+		6B56187A3067E1A800DB86EE /* ValutazioneDetailEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618793067E1A800DB86EE /* ValutazioneDetailEditViewModel.swift */; };
+		6B56187C3067E1B500DB86EE /* EsameAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B56187B3067E1B500DB86EE /* EsameAddViewModel.swift */; };
+		6B56187E3067E1C200DB86EE /* EsameDetailEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B56187D3067E1C200DB86EE /* EsameDetailEditViewModel.swift */; };
+		6B5618803067E1C900DB86EE /* ConsultoAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B56187F3067E1C900DB86EE /* ConsultoAddViewModel.swift */; };
+		6B5618823067E1D000DB86EE /* AnamnesiRemotaAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5618813067E1D000DB86EE /* AnamnesiRemotaAddViewModel.swift */; };
+		6B61D4403065B13700256187 /* EntityLabelForEdit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B61D43F3065B13700256187 /* EntityLabelForEdit.swift */; };
+		6B61D4423065B13700256187 /* EntityDetailEditTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B61D4413065B13700256187 /* EntityDetailEditTemplate.swift */; };
+		6B7290363069440900DE838D /* SummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7290353069440900DE838D /* SummaryRow.swift */; };
+		6B7E3248306DB0E100C6A538 /* FormValidators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7E3247306DB0D700C6A538 /* FormValidators.swift */; };
+		6B7E324A306DB5B600C6A538 /* FormField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7E3249306DB5B600C6A538 /* FormField.swift */; };
+		6B7E324C306DB61800C6A538 /* FormFieldStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7E324B306DB61800C6A538 /* FormFieldStyle.swift */; };
+		6B9736143060772F002FB511 /* AnamnesiRemotaAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9736133060772F002FB511 /* AnamnesiRemotaAddView.swift */; };
+		6B973616306078F2002FB511 /* ConsultoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B973615306078F2002FB511 /* ConsultoDetailView.swift */; };
+		6B97361830607ABE002FB511 /* ConsultoAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97361730607ABE002FB511 /* ConsultoAddView.swift */; };
+		6B97361A30607C21002FB511 /* TrattamentoAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97361930607C21002FB511 /* TrattamentoAddView.swift */; };
+		6B97361C30607C73002FB511 /* TrattamentoDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97361B30607C73002FB511 /* TrattamentoDetailEditView.swift */; };
+		6B97361E30607D36002FB511 /* ValutazioneAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97361D30607D36002FB511 /* ValutazioneAddView.swift */; };
+		6B97362030607D63002FB511 /* ValutazioneDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97361F30607D63002FB511 /* ValutazioneDetailEditView.swift */; };
+		6B97362230607DA8002FB511 /* EsameAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97362130607DA8002FB511 /* EsameAddView.swift */; };
+		6B97362430607DD5002FB511 /* EsameDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97362330607DD5002FB511 /* EsameDetailEditView.swift */; };
+		6BA1FD7C308D3F7900092371 /* ConsultoEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA1FD7B308D3F7900092371 /* ConsultoEditViewModel.swift */; };
+		6BA1FD7E308D412100092371 /* ConsultoEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA1FD7D308D412100092371 /* ConsultoEditView.swift */; };
+		6BA28AAF3076FABA000FCEE6 /* OptionalDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA28AAE3076FABA000FCEE6 /* OptionalDatePicker.swift */; };
+		6BB539373068526D000CBED8 /* DateOfBirthField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB5393630685170000CBED8 /* DateOfBirthField.swift */; };
+		6BB539393068540C000CBED8 /* DateOfBirthComplexField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB539383068540C000CBED8 /* DateOfBirthComplexField.swift */; };
+		6BC06D9630647F6C00C86D03 /* FormActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC06D9530647F6C00C86D03 /* FormActionBar.swift */; };
+		6BD4980D3078337400754FB9 /* PazienteEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD4980C3078337400754FB9 /* PazienteEditView.swift */; };
+		6BD4980F307834E900754FB9 /* PazienteEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD4980E307834E900754FB9 /* PazienteEditViewModel.swift */; };
+		6BEBF6B8307591DB00D3B7B7 /* NullUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEBF6B7307591CC00D3B7B7 /* NullUtils.swift */; };
+		6BF9B37C306721000046E378 /* EntityAddTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF9B37B306721000046E378 /* EntityAddTemplate.swift */; };
+		6BF9B37E306723AE0046E378 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF9B37D3067239B0046E378 /* StringExtensions.swift */; };
 		6E7F8G9H0I1J2K3L4M5N6O7P /* LookupProvince.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C8B7A6F5E4D3C2B1A0F9E8D /* LookupProvince.swift */; };
 		749E7601AAE198F951F0E593 /* ConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */; };
-		7F9E4C2A1B3D5E6F8A9B0C1D /* AddPatientViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4D5C6B7A8F9E0D1C2B3A4F /* AddPatientViewModel.swift */; };
+		7F9E4C2A1B3D5E6F8A9B0C1D /* PazienteAddViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4D5C6B7A8F9E0D1C2B3A4F /* PazienteAddViewModel.swift */; };
 		83DD24CB5076FA763507A02C /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BE1399DE8EF7E36603D099 /* AppPaths.swift */; };
 		8B9A7C6F5E4D3C2B1A0F9E8D /* DataChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9C7B6F5E4D3C2B1A0F9E8D /* DataChangeCoordinator.swift */; };
-		9F43EDFD0024598194AA014B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */; };
+		9F43EDFD0024598194AA014B /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */; };
 		9F811D53E20904ED24296741 /* SQLiteConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */; };
 		A05D281816CFF7D5E0A63372 /* TableRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E0A4BC115F3429CA90AB58 /* TableRepository.swift */; };
 		A1405971480FBD7EC5E17001 /* DatabaseConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */; };
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 		A19D13E40FAE64468A122581 /* AppDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */; };
-		A5AE86B82384923CB29493F2 /* PatientsSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */; };
-		A7B6C5D4E3F2A1B0C9D8E7F6 /* RemoteHistoryDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* RemoteHistoryDetailViewModel.swift */; };
+		A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */; };
+		A7B6C5D4E3F2A1B0C9D8E7F6 /* AnamnesiRemotaDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */; };
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
 		AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */; };
 		C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */; };
 		C66D91E3CDAD66EC6B88C2FD /* DatabaseInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA0CC105F495123DC24DE40 /* DatabaseInstaller.swift */; };
-		C9D8E7F6A5B4C3D2E1F0A9B8 /* PatientHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */; };
+		C9D8E7F6A5B4C3D2E1F0A9B8 /* AnamnesiRemotaDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D8E7F6A5B4C3D2E1F0A9B7 /* AnamnesiRemotaDetailEditView.swift */; };
 		D9541321ECD55B507735E530 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D16E0614E8990F046ED322E /* AppLogger.swift */; };
 		E45709F0BE5A8666BB5B6105 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8810C7A02BA28A9C1525CAB /* AppSettings.swift */; };
-		E5897BCEAB4696F30686A54A /* PatientsSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CBF9C0D9FBAFD0E9C2A70F /* PatientsSearchViewModel.swift */; };
+		E5897BCEAB4696F30686A54A /* PazienteSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CBF9C0D9FBAFD0E9C2A70F /* PazienteSearchViewModel.swift */; };
 		F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */; };
 		FE82FE566DA80BFB9937C385 /* DatabaseValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */; };
 /* End PBXBuildFile section */
@@ -51,20 +94,63 @@
 		13BE1399DE8EF7E36603D099 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
 		15AEF16CBBFAC57F8562AC3C /* SQLiteConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteConnection.swift; sourceTree = "<group>"; };
 		19E0A4BC115F3429CA90AB58 /* TableRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableRepository.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPatientView.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F7A8B9C0D1E2F /* PazienteAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteAddView.swift; sourceTree = "<group>"; };
 		1DE01B2893F4F25F8E093943 /* WOA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WOA.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableStatusView.swift; sourceTree = "<group>"; };
-		2E4D5C6B7A8F9E0D1C2B3A4F /* AddPatientViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPatientViewModel.swift; sourceTree = "<group>"; };
-		33CBF9C0D9FBAFD0E9C2A70F /* PatientsSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientsSearchViewModel.swift; sourceTree = "<group>"; };
+		2E4D5C6B7A8F9E0D1C2B3A4F /* PazienteAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteAddViewModel.swift; sourceTree = "<group>"; };
+		33CBF9C0D9FBAFD0E9C2A70F /* PazienteSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteSearchViewModel.swift; sourceTree = "<group>"; };
 		366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrator.swift; sourceTree = "<group>"; };
-		3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetailView.swift; sourceTree = "<group>"; };
+		3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteDetailView.swift; sourceTree = "<group>"; };
 		3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDesignSystem.swift; sourceTree = "<group>"; };
 		4F5E6D7C8B9A0E1F2D3C4B5A /* PatientCreateRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCreateRequest.swift; sourceTree = "<group>"; };
 		6900B3D0AFD3A779E8390DDD /* DatabaseConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseConnection.swift; sourceTree = "<group>"; };
 		6AAA6146CE03C9DC44FE980B /* PatientDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetail.swift; sourceTree = "<group>"; };
+		6B1673FE308CE99D00DA8DCA /* EntityEditTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityEditTemplate.swift; sourceTree = "<group>"; };
+		6B167400308CE9C700DA8DCA /* EntityEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityEditViewModel.swift; sourceTree = "<group>"; };
+		6B371E533061D407002CB617 /* ResponsiveHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveHeader.swift; sourceTree = "<group>"; };
+		6B371E553061D55E002CB617 /* SaveResultCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveResultCard.swift; sourceTree = "<group>"; };
+		6B371E573061D795002CB617 /* SaveResultState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveResultState.swift; sourceTree = "<group>"; };
+		6B371E593061D8D7002CB617 /* SaveResultModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveResultModal.swift; sourceTree = "<group>"; };
+		6B4A9B523070ED4600B31881 /* EntityAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityAddViewModel.swift; sourceTree = "<group>"; };
+		6B4A9B553070F1C100B31881 /* EntityDetailEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityDetailEditViewModel.swift; sourceTree = "<group>"; };
+		6B5618713067E17100DB86EE /* ValutazioneAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValutazioneAddViewModel.swift; sourceTree = "<group>"; };
+		6B5618733067E18500DB86EE /* ConsultoDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoDetailViewModel.swift; sourceTree = "<group>"; };
+		6B5618753067E18B00DB86EE /* TrattamentoAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrattamentoAddViewModel.swift; sourceTree = "<group>"; };
+		6B5618773067E19400DB86EE /* TrattamentoDetailEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrattamentoDetailEditViewModel.swift; sourceTree = "<group>"; };
+		6B5618793067E1A800DB86EE /* ValutazioneDetailEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValutazioneDetailEditViewModel.swift; sourceTree = "<group>"; };
+		6B56187B3067E1B500DB86EE /* EsameAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EsameAddViewModel.swift; sourceTree = "<group>"; };
+		6B56187D3067E1C200DB86EE /* EsameDetailEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EsameDetailEditViewModel.swift; sourceTree = "<group>"; };
+		6B56187F3067E1C900DB86EE /* ConsultoAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoAddViewModel.swift; sourceTree = "<group>"; };
+		6B5618813067E1D000DB86EE /* AnamnesiRemotaAddViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaAddViewModel.swift; sourceTree = "<group>"; };
+		6B61D43F3065B13700256187 /* EntityLabelForEdit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityLabelForEdit.swift; sourceTree = "<group>"; };
+		6B61D4413065B13700256187 /* EntityDetailEditTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityDetailEditTemplate.swift; sourceTree = "<group>"; };
+		6B7290353069440900DE838D /* SummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryRow.swift; sourceTree = "<group>"; };
+		6B7E3247306DB0D700C6A538 /* FormValidators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormValidators.swift; sourceTree = "<group>"; };
+		6B7E3249306DB5B600C6A538 /* FormField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormField.swift; sourceTree = "<group>"; };
+		6B7E324B306DB61800C6A538 /* FormFieldStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormFieldStyle.swift; sourceTree = "<group>"; };
+		6B9736133060772F002FB511 /* AnamnesiRemotaAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaAddView.swift; sourceTree = "<group>"; };
+		6B973615306078F2002FB511 /* ConsultoDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoDetailView.swift; sourceTree = "<group>"; };
+		6B97361730607ABE002FB511 /* ConsultoAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoAddView.swift; sourceTree = "<group>"; };
+		6B97361930607C21002FB511 /* TrattamentoAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrattamentoAddView.swift; sourceTree = "<group>"; };
+		6B97361B30607C73002FB511 /* TrattamentoDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrattamentoDetailEditView.swift; sourceTree = "<group>"; };
+		6B97361D30607D36002FB511 /* ValutazioneAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValutazioneAddView.swift; sourceTree = "<group>"; };
+		6B97361F30607D63002FB511 /* ValutazioneDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValutazioneDetailEditView.swift; sourceTree = "<group>"; };
+		6B97362130607DA8002FB511 /* EsameAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EsameAddView.swift; sourceTree = "<group>"; };
+		6B97362330607DD5002FB511 /* EsameDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EsameDetailEditView.swift; sourceTree = "<group>"; };
+		6BA1FD7B308D3F7900092371 /* ConsultoEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoEditViewModel.swift; sourceTree = "<group>"; };
+		6BA1FD7D308D412100092371 /* ConsultoEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultoEditView.swift; sourceTree = "<group>"; };
+		6BA28AAE3076FABA000FCEE6 /* OptionalDatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalDatePicker.swift; sourceTree = "<group>"; };
+		6BB5393630685170000CBED8 /* DateOfBirthField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateOfBirthField.swift; sourceTree = "<group>"; };
+		6BB539383068540C000CBED8 /* DateOfBirthComplexField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateOfBirthComplexField.swift; sourceTree = "<group>"; };
+		6BC06D9530647F6C00C86D03 /* FormActionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormActionBar.swift; sourceTree = "<group>"; };
+		6BD4980C3078337400754FB9 /* PazienteEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteEditView.swift; sourceTree = "<group>"; };
+		6BD4980E307834E900754FB9 /* PazienteEditViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteEditViewModel.swift; sourceTree = "<group>"; };
+		6BEBF6B7307591CC00D3B7B7 /* NullUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NullUtils.swift; sourceTree = "<group>"; };
+		6BF9B37B306721000046E378 /* EntityAddTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityAddTemplate.swift; sourceTree = "<group>"; };
+		6BF9B37D3067239B0046E378 /* StringExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtensions.swift; sourceTree = "<group>"; };
 		6D16E0614E8990F046ED322E /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		6EE4A06DA7FCE2E7700759BE /* PatientSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientSearchResult.swift; sourceTree = "<group>"; };
-		7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientsSearchView.swift; sourceTree = "<group>"; };
+		7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteSearchView.swift; sourceTree = "<group>"; };
 		7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationSettingsView.swift; sourceTree = "<group>"; };
 		7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorView.swift; sourceTree = "<group>"; };
 		841E2099FACAFAD0EADBCE07 /* WOA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WOA.swift; sourceTree = "<group>"; };
@@ -72,15 +158,15 @@
 		8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseURLProvider.swift; sourceTree = "<group>"; };
 		9C8B7A6F5E4D3C2B1A0F9E8D /* LookupProvince.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookupProvince.swift; sourceTree = "<group>"; };
-		A7B6C5D4E3F2A1B0C9D8E7F5 /* RemoteHistoryDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteHistoryDetailViewModel.swift; sourceTree = "<group>"; };
-		B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaDetailViewModel.swift; sourceTree = "<group>"; };
+		B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		B6F0B83E842A9D8E705D14D6 /* PatientRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientRepository.swift; sourceTree = "<group>"; };
 		C506AA0F7086EA7A58F34778 /* DatabaseValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseValidator.swift; sourceTree = "<group>"; };
-		C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientHistoryDetailView.swift; sourceTree = "<group>"; };
+		C9D8E7F6A5B4C3D2E1F0A9B7 /* AnamnesiRemotaDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaDetailEditView.swift; sourceTree = "<group>"; };
 		CAA83F52316EFEEE760B83B4 /* WOA.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WOA.entitlements; sourceTree = "<group>"; };
 		CB5B549519CFC9343E163188 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		CC15800193813A517BDC67EE /* TableInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableInfo.swift; sourceTree = "<group>"; };
-		D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientDetailViewModel.swift; sourceTree = "<group>"; };
+		D246D1CD0E6902E67DB2FD78 /* PazienteDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteDetailViewModel.swift; sourceTree = "<group>"; };
 		D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorViewModel.swift; sourceTree = "<group>"; };
 		D95FA83BAAA928615472A6D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E8810C7A02BA28A9C1525CAB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -127,15 +213,26 @@
 		361A96287B469014303ADA68 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				B34CB7CFAFD6C7DAF10B2EAD /* SettingsView.swift */,
-				1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */,
-				7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */,
-				7A8E64F9AA364459DA7B9AA3 /* PatientsSearchView.swift */,
-				1A2B3C4D5E6F7A8B9C0D1E2F /* AddPatientView.swift */,
-				3EBD0B2AEF01C055EF0C0EF9 /* PatientDetailView.swift */,
-				C9D8E7F6A5B4C3D2E1F0A9B7 /* PatientHistoryDetailView.swift */,
-				8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */,
+				6B9736133060772F002FB511 /* AnamnesiRemotaAddView.swift */,
+				C9D8E7F6A5B4C3D2E1F0A9B7 /* AnamnesiRemotaDetailEditView.swift */,
 				7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */,
+				6B97361730607ABE002FB511 /* ConsultoAddView.swift */,
+				6B973615306078F2002FB511 /* ConsultoDetailView.swift */,
+				6BA1FD7D308D412100092371 /* ConsultoEditView.swift */,
+				7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */,
+				6B97362130607DA8002FB511 /* EsameAddView.swift */,
+				6B97362330607DD5002FB511 /* EsameDetailEditView.swift */,
+				8DB3BF7C16A019C90F8DA970 /* LaunchScreenView.swift */,
+				B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */,
+				1A2B3C4D5E6F7A8B9C0D1E2F /* PazienteAddView.swift */,
+				3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */,
+				6BD4980C3078337400754FB9 /* PazienteEditView.swift */,
+				7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */,
+				1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */,
+				6B97361930607C21002FB511 /* TrattamentoAddView.swift */,
+				6B97361B30607C73002FB511 /* TrattamentoDetailEditView.swift */,
+				6B97361D30607D36002FB511 /* ValutazioneAddView.swift */,
+				6B97361F30607D63002FB511 /* ValutazioneDetailEditView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -144,6 +241,7 @@
 			isa = PBXGroup;
 			children = (
 				3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */,
+				6B7E324B306DB61800C6A538 /* FormFieldStyle.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -165,14 +263,57 @@
 		66A6CF0333FEC5FF7999C4F8 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				CB5B549519CFC9343E163188 /* SettingsViewModel.swift */,
+				6B4A9B543070F1AE00B31881 /* _protocols */,
+				6B5618813067E1D000DB86EE /* AnamnesiRemotaAddViewModel.swift */,
+				A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */,
+				6B56187F3067E1C900DB86EE /* ConsultoAddViewModel.swift */,
+				6B5618733067E18500DB86EE /* ConsultoDetailViewModel.swift */,
+				6BA1FD7B308D3F7900092371 /* ConsultoEditViewModel.swift */,
 				D7884B960765B2F5A26BC5FF /* DatabaseSelectorViewModel.swift */,
-				33CBF9C0D9FBAFD0E9C2A70F /* PatientsSearchViewModel.swift */,
-				2E4D5C6B7A8F9E0D1C2B3A4F /* AddPatientViewModel.swift */,
-				D246D1CD0E6902E67DB2FD78 /* PatientDetailViewModel.swift */,
-				A7B6C5D4E3F2A1B0C9D8E7F5 /* RemoteHistoryDetailViewModel.swift */,
+				6B56187B3067E1B500DB86EE /* EsameAddViewModel.swift */,
+				6B56187D3067E1C200DB86EE /* EsameDetailEditViewModel.swift */,
+				2E4D5C6B7A8F9E0D1C2B3A4F /* PazienteAddViewModel.swift */,
+				D246D1CD0E6902E67DB2FD78 /* PazienteDetailViewModel.swift */,
+				6BD4980E307834E900754FB9 /* PazienteEditViewModel.swift */,
+				33CBF9C0D9FBAFD0E9C2A70F /* PazienteSearchViewModel.swift */,
+				CB5B549519CFC9343E163188 /* SettingsViewModel.swift */,
+				6B5618753067E18B00DB86EE /* TrattamentoAddViewModel.swift */,
+				6B5618773067E19400DB86EE /* TrattamentoDetailEditViewModel.swift */,
+				6B5618713067E17100DB86EE /* ValutazioneAddViewModel.swift */,
+				6B5618793067E1A800DB86EE /* ValutazioneDetailEditViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		6B48141130631AFF0048BB71 /* SharedViews */ = {
+			isa = PBXGroup;
+			children = (
+				6BB539383068540C000CBED8 /* DateOfBirthComplexField.swift */,
+				6BB5393630685170000CBED8 /* DateOfBirthField.swift */,
+				6BF9B37B306721000046E378 /* EntityAddTemplate.swift */,
+				6B61D4413065B13700256187 /* EntityDetailEditTemplate.swift */,
+				6B1673FE308CE99D00DA8DCA /* EntityEditTemplate.swift */,
+				6B61D43F3065B13700256187 /* EntityLabelForEdit.swift */,
+				6BC06D9530647F6C00C86D03 /* FormActionBar.swift */,
+				6B7E3249306DB5B600C6A538 /* FormField.swift */,
+				6BA28AAE3076FABA000FCEE6 /* OptionalDatePicker.swift */,
+				6B371E533061D407002CB617 /* ResponsiveHeader.swift */,
+				6B371E553061D55E002CB617 /* SaveResultCard.swift */,
+				6B371E593061D8D7002CB617 /* SaveResultModal.swift */,
+				6B371E573061D795002CB617 /* SaveResultState.swift */,
+				6B7290353069440900DE838D /* SummaryRow.swift */,
+			);
+			path = SharedViews;
+			sourceTree = "<group>";
+		};
+		6B4A9B543070F1AE00B31881 /* _protocols */ = {
+			isa = PBXGroup;
+			children = (
+				6B4A9B523070ED4600B31881 /* EntityAddViewModel.swift */,
+				6B4A9B553070F1C100B31881 /* EntityDetailEditViewModel.swift */,
+				6B167400308CE9C700DA8DCA /* EntityEditViewModel.swift */,
+			);
+			path = _protocols;
 			sourceTree = "<group>";
 		};
 		7E16784D0833ACC7E50A389D /* WOA */ = {
@@ -182,6 +323,7 @@
 				572DBB1F6037B9A2232570A0 /* Models */,
 				66A6CF0333FEC5FF7999C4F8 /* ViewModels */,
 				361A96287B469014303ADA68 /* Views */,
+				6B48141130631AFF0048BB71 /* SharedViews */,
 				3F1D2A4B6C8E0F1A3B5D7E9C /* DesignSystem */,
 				E8C529F41B4987AF3B611E97 /* Services */,
 				011BB6DBE231C444B4E050DA /* Repositories */,
@@ -212,6 +354,9 @@
 		BC92EE4195E9ABB3D51AB189 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				6BEBF6B7307591CC00D3B7B7 /* NullUtils.swift */,
+				6B7E3247306DB0D700C6A538 /* FormValidators.swift */,
+				6BF9B37D3067239B0046E378 /* StringExtensions.swift */,
 				13BE1399DE8EF7E36603D099 /* AppPaths.swift */,
 				6D16E0614E8990F046ED322E /* AppLogger.swift */,
 				9019AD70B0677F5D3985FFE9 /* DatabaseURLProvider.swift */,
@@ -301,40 +446,83 @@
 			buildActionMask = 2147483647;
 			files = (
 				83DD24CB5076FA763507A02C /* AppPaths.swift in Sources */,
+				6B7E324A306DB5B600C6A538 /* FormField.swift in Sources */,
+				6BA1FD7E308D412100092371 /* ConsultoEditView.swift in Sources */,
+				6B56187C3067E1B500DB86EE /* EsameAddViewModel.swift in Sources */,
 				D9541321ECD55B507735E530 /* AppLogger.swift in Sources */,
+				6B56187A3067E1A800DB86EE /* ValutazioneDetailEditViewModel.swift in Sources */,
 				390A4A75FC367BC506B58587 /* DatabaseURLProvider.swift in Sources */,
+				6BB539373068526D000CBED8 /* DateOfBirthField.swift in Sources */,
 				FE82FE566DA80BFB9937C385 /* DatabaseValidator.swift in Sources */,
+				6BC06D9630647F6C00C86D03 /* FormActionBar.swift in Sources */,
 				179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */,
 				C66D91E3CDAD66EC6B88C2FD /* DatabaseInstaller.swift in Sources */,
 				9F811D53E20904ED24296741 /* SQLiteConnection.swift in Sources */,
+				6B371E563061D55E002CB617 /* SaveResultCard.swift in Sources */,
 				A1405971480FBD7EC5E17001 /* DatabaseConnection.swift in Sources */,
+				6B4A9B563070F1C100B31881 /* EntityDetailEditViewModel.swift in Sources */,
 				E45709F0BE5A8666BB5B6105 /* AppSettings.swift in Sources */,
 				57A0C2211082BD2CE12EFA80 /* TableInfo.swift in Sources */,
+				6B371E5A3061D8D7002CB617 /* SaveResultModal.swift in Sources */,
 				5D6E7F8G9H0I1J2K3L4M5N6O /* PatientCreateRequest.swift in Sources */,
+				6B371E543061D407002CB617 /* ResponsiveHeader.swift in Sources */,
+				6BD4980F307834E900754FB9 /* PazienteEditViewModel.swift in Sources */,
+				6BD4980D3078337400754FB9 /* PazienteEditView.swift in Sources */,
 				6E7F8G9H0I1J2K3L4M5N6O7P /* LookupProvince.swift in Sources */,
 				749E7601AAE198F951F0E593 /* ConfigurationService.swift in Sources */,
+				6B5618743067E18500DB86EE /* ConsultoDetailViewModel.swift in Sources */,
 				8B9A7C6F5E4D3C2B1A0F9E8D /* DataChangeCoordinator.swift in Sources */,
 				A05D281816CFF7D5E0A63372 /* TableRepository.swift in Sources */,
 				590C71E5F2B3C30E7BC014E3 /* PatientRepository.swift in Sources */,
+				6B5618763067E18B00DB86EE /* TrattamentoAddViewModel.swift in Sources */,
+				6B97361C30607C73002FB511 /* TrattamentoDetailEditView.swift in Sources */,
 				3C8FB1B78DEB8D64D61A31D9 /* PatientSearchResult.swift in Sources */,
+				6BA28AAF3076FABA000FCEE6 /* OptionalDatePicker.swift in Sources */,
+				6B97361830607ABE002FB511 /* ConsultoAddView.swift in Sources */,
+				6B7E3248306DB0E100C6A538 /* FormValidators.swift in Sources */,
+				6B56187E3067E1C200DB86EE /* EsameDetailEditViewModel.swift in Sources */,
 				14FD060FF8998D47805A21B0 /* SettingsViewModel.swift in Sources */,
 				F5DA1A515C66BA81DCEDF127 /* DatabaseSelectorViewModel.swift in Sources */,
-				E5897BCEAB4696F30686A54A /* PatientsSearchViewModel.swift in Sources */,
-				7F9E4C2A1B3D5E6F8A9B0C1D /* AddPatientViewModel.swift in Sources */,
-				9F43EDFD0024598194AA014B /* SettingsView.swift in Sources */,
+				E5897BCEAB4696F30686A54A /* PazienteSearchViewModel.swift in Sources */,
+				6BB539393068540C000CBED8 /* DateOfBirthComplexField.swift in Sources */,
+				7F9E4C2A1B3D5E6F8A9B0C1D /* PazienteAddViewModel.swift in Sources */,
+				9F43EDFD0024598194AA014B /* MainView.swift in Sources */,
+				6B97361A30607C21002FB511 /* TrattamentoAddView.swift in Sources */,
+				6B97362030607D63002FB511 /* ValutazioneDetailEditView.swift in Sources */,
 				C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */,
 				AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */,
-				A5AE86B82384923CB29493F2 /* PatientsSearchView.swift in Sources */,
-				3C7B8E9F2D0A5E1F6B9C4D7E /* AddPatientView.swift in Sources */,
+				6B97362230607DA8002FB511 /* EsameAddView.swift in Sources */,
+				A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */,
+				3C7B8E9F2D0A5E1F6B9C4D7E /* PazienteAddView.swift in Sources */,
+				6B167401308CE9C700DA8DCA /* EntityEditViewModel.swift in Sources */,
 				1CF715648142F644A915620A /* PatientDetail.swift in Sources */,
-				42C4BC0D631BF5AF6480D4FB /* PatientDetailViewModel.swift in Sources */,
-				A7B6C5D4E3F2A1B0C9D8E7F6 /* RemoteHistoryDetailViewModel.swift in Sources */,
-				119F943034C191E5532E5C34 /* PatientDetailView.swift in Sources */,
-				C9D8E7F6A5B4C3D2E1F0A9B8 /* PatientHistoryDetailView.swift in Sources */,
+				6B371E583061D795002CB617 /* SaveResultState.swift in Sources */,
+				6B97361E30607D36002FB511 /* ValutazioneAddView.swift in Sources */,
+				42C4BC0D631BF5AF6480D4FB /* PazienteDetailViewModel.swift in Sources */,
+				6B7E324C306DB61800C6A538 /* FormFieldStyle.swift in Sources */,
+				6B97362430607DD5002FB511 /* EsameDetailEditView.swift in Sources */,
+				A7B6C5D4E3F2A1B0C9D8E7F6 /* AnamnesiRemotaDetailViewModel.swift in Sources */,
+				6BF9B37E306723AE0046E378 /* StringExtensions.swift in Sources */,
+				119F943034C191E5532E5C34 /* PazienteDetailView.swift in Sources */,
+				6B1673FF308CE99D00DA8DCA /* EntityEditTemplate.swift in Sources */,
+				C9D8E7F6A5B4C3D2E1F0A9B8 /* AnamnesiRemotaDetailEditView.swift in Sources */,
+				6B61D4403065B13700256187 /* EntityLabelForEdit.swift in Sources */,
+				6B61D4423065B13700256187 /* EntityDetailEditTemplate.swift in Sources */,
 				25F7C6BD85DDE9D75DBC1145 /* LaunchScreenView.swift in Sources */,
+				6B5618783067E19400DB86EE /* TrattamentoDetailEditViewModel.swift in Sources */,
 				18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */,
+				6B7290363069440900DE838D /* SummaryRow.swift in Sources */,
+				6B5618803067E1C900DB86EE /* ConsultoAddViewModel.swift in Sources */,
 				A19D13E40FAE64468A122581 /* AppDesignSystem.swift in Sources */,
 				A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */,
+				6BEBF6B8307591DB00D3B7B7 /* NullUtils.swift in Sources */,
+				6B5618823067E1D000DB86EE /* AnamnesiRemotaAddViewModel.swift in Sources */,
+				6B4A9B533070ED4600B31881 /* EntityAddViewModel.swift in Sources */,
+				6BF9B37C306721000046E378 /* EntityAddTemplate.swift in Sources */,
+				6B973616306078F2002FB511 /* ConsultoDetailView.swift in Sources */,
+				6B5618723067E17100DB86EE /* ValutazioneAddViewModel.swift in Sources */,
+				6B9736143060772F002FB511 /* AnamnesiRemotaAddView.swift in Sources */,
+				6BA1FD7C308D3F7900092371 /* ConsultoEditViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,6 +535,7 @@
 				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 0.2.0;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = WOA/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -354,6 +543,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;
@@ -390,6 +580,7 @@
 				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 0.2.0;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = WOA/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -397,6 +588,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;

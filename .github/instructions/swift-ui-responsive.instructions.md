@@ -93,36 +93,7 @@ Reorganize layouts when proportional resizing is insufficient:
 - Replace detailed blocks with compact alternatives.
 - Adjust grid columns automatically.
 
-Prefer `ViewThatFits` when SwiftUI can select the first layout that fits.
-
-Example:
-
-    ViewThatFits(in: .horizontal) {
-        WideContentLayout()
-        CompactContentLayout()
-    }
-
-Use `GeometryReader` only when explicit measurement or content-driven breakpoints are required.
-
-Example:
-
-    GeometryReader { geometry in
-        Group {
-            if geometry.size.width >= LayoutMetrics.wideBreakpoint {
-                WideContentLayout()
-            } else {
-                CompactContentLayout()
-            }
-        }
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .topLeading
-        )
-    }
-
-- Do not use `GeometryReader` when flexible frames, adaptive grids, standard containers, or `ViewThatFits` are sufficient.
-- Do not nest `GeometryReader` instances unless every measurement is necessary.
+Prefer `ViewThatFits` over `GeometryReader` when SwiftUI can select the first layout that fits, but do not use neither when flexible frames, adaptive grids, or standard containers are sufficient unless explicit requested.
 
 ## Breakpoints
 

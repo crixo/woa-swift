@@ -55,7 +55,7 @@ struct ConsultationDetail: Identifiable, Hashable {
     var initialProblem: String?
 }
 
-struct ConsultationCreateRequest: Hashable {
+struct ConsultoRequest: Hashable {
     var patientID: Int
     var date: Date = Date()
     var initialProblem: String = ""
