@@ -11,6 +11,9 @@ final class DatabaseManagementViewModel: ObservableObject {
     @Published var connectionStatus: String = "Disconnected"
     @Published var tableStats: [TableInfo] = []
     @Published var connectionError: String?
+    @Published var migrationError: String?
+    @Published private(set) var sessionMigrations: [DatabaseMigration] = []
+    @Published private(set) var migrationHistoryError: String?
     @Published var isSelecting: Bool = false
     @Published var selectedPath: String?
     @Published var validationError: String?
@@ -20,18 +23,29 @@ final class DatabaseManagementViewModel: ObservableObject {
 
     var isConfigured: Bool {
         settingsStore.settings.databaseConnection.status == .connected
-            && !settingsStore.settings.databaseConnection.path.isEmpty
+            && hasConfiguredDatabase
     }
 
-    init(settingsStore: AppSettingsStore) {
+    var hasConfiguredDatabase: Bool {
+        !settingsStore.settings.databaseConnection.path.isEmpty
+    }
+
+    var isReadyForUse: Bool {
+        isConfigured && !isLoading && migrationError == nil
+    }
+
+    private let migrationService: DatabaseMigrationService
+
+    init(settingsStore: AppSettingsStore, migrationService: DatabaseMigrationService) {
         self.settingsStore = settingsStore
+        self.migrationService = migrationService
     }
 
     func loadSettings() {
         isLoading = true
         settingsStore.load()
 
-        guard isConfigured else {
+        guard hasConfiguredDatabase else {
             connectionStatus = "Disconnected"
             tableStats = []
             isLoading = false
@@ -39,36 +53,73 @@ final class DatabaseManagementViewModel: ObservableObject {
         }
 
         Task {
-            await testDatabaseConnection()
-            await refreshTableStats()
+            await connectConfiguredDatabase()
             isLoading = false
         }
     }
 
-    func testDatabaseConnection() async {
+    private func connectConfiguredDatabase() async {
         let path = settingsStore.settings.databaseConnection.path
         guard !path.isEmpty else {
             connectionStatus = "Disconnected"
             return
         }
 
+        let databaseURL = URL(fileURLWithPath: path)
         do {
-            try DatabaseValidator.validate(fileURL: URL(fileURLWithPath: path))
+            try await migrationService.applyPendingMigrations(to: databaseURL)
+        } catch {
+            await refreshSessionMigrations(for: databaseURL)
+            migrationError = error.localizedDescription
+            connectionStatus = "Disconnected"
+            connectionError = error.localizedDescription
+            tableStats = []
+            var settings = settingsStore.settings
+            settings.databaseConnection.status = .disconnected
+            do {
+                try settingsStore.save(settings)
+            } catch {
+                AppLogger.error("Unable to save disconnected database status: \(error.localizedDescription)")
+            }
+            AppLogger.error("Database migrations blocked startup: \(error.localizedDescription)")
+            return
+        }
+
+        await refreshSessionMigrations(for: databaseURL)
+        migrationError = nil
+        do {
+            try DatabaseValidator.validate(fileURL: databaseURL)
             connectionStatus = "Connected"
             connectionError = nil
 
             var settings = settingsStore.settings
             settings.databaseConnection.status = .connected
             settings.databaseConnection.lastValidated = Date()
-            try? settingsStore.save(settings)
+            try settingsStore.save(settings)
+            await refreshTableStats()
         } catch {
             connectionStatus = "Disconnected"
             connectionError = error.localizedDescription
             var settings = settingsStore.settings
             settings.databaseConnection.status = .disconnected
-            try? settingsStore.save(settings)
+            do {
+                try settingsStore.save(settings)
+            } catch {
+                AppLogger.error("Unable to save disconnected database status: \(error.localizedDescription)")
+            }
             tableStats = []
             AppLogger.error("❌ \(error.localizedDescription)")
+        }
+    }
+
+    private func refreshSessionMigrations(for databaseURL: URL) async {
+        do {
+            sessionMigrations = try await migrationService.migrationHistory(for: databaseURL)
+                .filter { $0.appliedInCurrentSession && $0.result == .success }
+            migrationHistoryError = nil
+        } catch {
+            migrationHistoryError = error.localizedDescription
+            AppLogger.error("Unable to load current-session migrations: \(error.localizedDescription)")
         }
     }
 
@@ -90,10 +141,29 @@ final class DatabaseManagementViewModel: ObservableObject {
     func resetConfiguration() {
         var settings = settingsStore.settings
         settings.databaseConnection = .notConfigured
-        try? settingsStore.save(settings)
+        do {
+            try settingsStore.save(settings)
+        } catch {
+            connectionError = "Unable to reset database configuration: \(error.localizedDescription)"
+            AppLogger.error(connectionError ?? "Unable to reset database configuration.")
+            return
+        }
         connectionStatus = "Disconnected"
         connectionError = nil
+        migrationError = nil
+        sessionMigrations = []
+        migrationHistoryError = nil
         tableStats = []
+    }
+
+    func retryMigrations() {
+        guard hasConfiguredDatabase else { return }
+        migrationError = nil
+        isLoading = true
+        Task {
+            await connectConfiguredDatabase()
+            isLoading = false
+        }
     }
 
     func selectDatabase() {
@@ -124,17 +194,36 @@ final class DatabaseManagementViewModel: ObservableObject {
         Task {
             do {
                 let destinationURL = try DatabaseInstaller.install(from: sourceURL)
-                let tables = try TableRepository.fetchTableStats(fileURL: destinationURL)
+
                 var settings = settingsStore.settings
                 settings.databaseConnection = DatabaseConnection(
                     path: destinationURL.path,
-                    lastValidated: Date(),
-                    status: .connected
+                    status: .disconnected
                 )
                 try settingsStore.save(settings)
 
+                do {
+                    try await migrationService.applyPendingMigrations(to: destinationURL)
+                } catch {
+                    await refreshSessionMigrations(for: destinationURL)
+                    migrationError = error.localizedDescription
+                    connectionStatus = "Disconnected"
+                    validationError = error.localizedDescription
+                    tableStats = []
+                    isImporting = false
+                    AppLogger.error("Database import blocked by migration failure: \(error.localizedDescription)")
+                    return
+                }
+
+                await refreshSessionMigrations(for: destinationURL)
+                try DatabaseValidator.validate(fileURL: destinationURL)
+                let tables = try TableRepository.fetchTableStats(fileURL: destinationURL)
+                settings.databaseConnection.lastValidated = Date()
+                settings.databaseConnection.status = .connected
+                try settingsStore.save(settings)
                 importedTables = tables
                 connectionStatus = "Connected"
+                migrationError = nil
                 didImportSuccessfully = true
                 AppLogger.info("✅ Database import completed successfully: \(destinationURL.path)")
             } catch {

@@ -27,8 +27,13 @@ final class SQLiteConnection {
 
     private var handle: OpaquePointer?
 
-    init(fileURL: URL, readOnly: Bool = false) throws {
-        let flags = readOnly ? SQLITE_OPEN_READONLY : (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
+    init(fileURL: URL, readOnly: Bool = false, createIfMissing: Bool = true) throws {
+        let flags: Int32
+        if readOnly {
+            flags = SQLITE_OPEN_READONLY
+        } else {
+            flags = SQLITE_OPEN_READWRITE | (createIfMissing ? SQLITE_OPEN_CREATE : 0)
+        }
         var db: OpaquePointer?
         let result = sqlite3_open_v2(fileURL.path, &db, flags, nil)
         guard result == SQLITE_OK, let db else {
@@ -48,6 +53,21 @@ final class SQLiteConnection {
     /// Executes a SQL statement with no result rows.
     func execute(_ sql: String) throws {
         _ = try execute(sql, parameters: [])
+    }
+
+    /// Executes a complete SQL script containing one or more statements.
+    func executeScript(_ sql: String) throws {
+        guard let handle else {
+            throw SQLiteConnectionError.queryFailed(message: "connection closed")
+        }
+
+        var errorMessage: UnsafeMutablePointer<CChar>?
+        let result = sqlite3_exec(handle, sql, nil, nil, &errorMessage)
+        guard result == SQLITE_OK else {
+            let message = errorMessage.map { String(cString: $0) } ?? String(cString: sqlite3_errmsg(handle))
+            sqlite3_free(errorMessage)
+            throw SQLiteConnectionError.queryFailed(message: message)
+        }
     }
 
     /// Executes a SQL statement with bound values and returns the affected row count.

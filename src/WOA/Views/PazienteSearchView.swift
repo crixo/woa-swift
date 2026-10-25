@@ -57,7 +57,6 @@ struct PazienteSearchView: View {
             .frame(maxWidth: LayoutMetrics2.contentMaxWidth, alignment: .leading)
         }
         .frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
-        .navigationBarBackButtonHidden(true)
         .navigationTitle("Patient Search")
     }
 

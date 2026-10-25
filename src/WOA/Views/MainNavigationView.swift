@@ -16,6 +16,7 @@ enum NavigationRoute: Hashable {
     case examDetail(examID: Int, databaseURL: URL)
     case historyDetail(historyID: Int, databaseURL: URL)
     case addHistory(patientID: Int, databaseURL: URL)
+    case migrationHistory(databaseURL: URL)
 }
 
 struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
@@ -34,19 +35,7 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
                 }
         }
         .toolbar {
-            ToolbarItemGroup(placement: .navigation) {
-                Button {
-                    if !path.isEmpty {
-                        path.removeLast()
-                    }
-                } label: {
-                    Label("Back", systemImage: "chevron.backward")
-                }
-                .labelStyle(.iconOnly)
-                .disabled(path.isEmpty)
-                .appSecondaryButton()
-                .help("Back")
-
+            ToolbarItem(placement: .navigation) {
                 Button {
                     path.removeAll()
                 } label: {
@@ -70,7 +59,7 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
                 .padding(.horizontal, AppDesignSystem.spacingMD)
             }
 
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
                 Button(action: onSearch) {
                     Label("Patients Search", systemImage: "person.3.fill")
                 }

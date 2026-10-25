@@ -4,8 +4,11 @@ import SwiftUI
 struct LaunchScreenView: View {
 
     let tables: [TableInfo]
+    let sessionMigrations: [DatabaseMigration]
+    let migrationHistoryError: String?
     let settings: AppSettings
     let settingsFilePath: String
+    let onMigrationHistory: () -> Void
     let onReselectDatabase: () -> Void
 
     private enum LayoutMetrics {
@@ -27,24 +30,27 @@ struct LaunchScreenView: View {
     }
 
     private var wideLayout: some View {
-        HStack(alignment: .top, spacing: LayoutMetrics.panelSpacing) {
-            tablePanel
+        VStack(spacing: LayoutMetrics.panelSpacing) {
+            HStack(alignment: .top, spacing: LayoutMetrics.panelSpacing) {
+                VStack(alignment: .leading, spacing: LayoutMetrics.panelSpacing) {
+                    tablePanel
+                    migrationsPanel
+                }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
 
-            settingsPanel
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+                settingsPanel
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+            .frame(minWidth: LayoutMetrics.wideLayoutMinimumWidth)
         }
-        .frame(
-            minWidth: LayoutMetrics.wideLayoutMinimumWidth,
-            maxWidth: LayoutMetrics.contentMaxWidth,
-            alignment: .center
-        )
+        .frame(maxWidth: LayoutMetrics.contentMaxWidth, alignment: .center)
         .padding(LayoutMetrics.panelPadding)
     }
 
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: LayoutMetrics.panelSpacing) {
             tablePanel
+            migrationsPanel
             settingsPanel
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -76,5 +82,54 @@ struct LaunchScreenView: View {
             settingsFilePath: settingsFilePath
         )
         .appCard(padding: AppDesignSystem.spacingLG)
+    }
+
+    private var migrationsPanel: some View {
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+            HStack {
+                Label("Migrations applied this session", systemImage: "clock.arrow.circlepath")
+                    .font(.headline)
+                Spacer()
+                Button("Migration History", systemImage: "list.bullet") {
+                    onMigrationHistory()
+                }
+                .appSecondaryButton()
+            }
+
+            Group {
+                if let migrationHistoryError {
+                    Text("Unable to load migration history: \(migrationHistoryError)")
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                        .textSelection(.enabled)
+                } else if sessionMigrations.isEmpty {
+                    Text("No migrations applied")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                            ForEach(sessionMigrations) { migration in
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(migration.name)
+                                        .font(.callout.weight(.medium))
+                                        .textSelection(.enabled)
+                                    Spacer(minLength: AppDesignSystem.spacingSM)
+                                    Text(migration.timestamp, format: .dateTime.year().month().day().hour().minute().second())
+                                        .font(.callout)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    .frame(height: min(CGFloat(sessionMigrations.count) * 32, 96))
+                    .accessibilityLabel("Migrations applied this session")
+                }
+            }
+
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .appCard(padding: AppDesignSystem.spacingLG)
+        }
     }
 }

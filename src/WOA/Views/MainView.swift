@@ -4,28 +4,39 @@ import SwiftUI
 struct MainView: View {
 
     @StateObject private var settingsStore: AppSettingsStore
+    @StateObject private var migrationService: DatabaseMigrationService
     @StateObject private var databaseManagementViewModel: DatabaseManagementViewModel
     @StateObject private var dataChangeCoordinator = DataChangeCoordinator()
     @State private var navigationPath: [NavigationRoute] = []
 
     init() {
         let settingsStore = AppSettingsStore()
+        let migrationService = DatabaseMigrationService()
         _settingsStore = StateObject(wrappedValue: settingsStore)
+        _migrationService = StateObject(wrappedValue: migrationService)
         _databaseManagementViewModel = StateObject(
-            wrappedValue: DatabaseManagementViewModel(settingsStore: settingsStore)
+            wrappedValue: DatabaseManagementViewModel(
+                settingsStore: settingsStore,
+                migrationService: migrationService
+            )
         )
     }
 
     var body: some View {
         MainNavigationView(
             path: $navigationPath,
-            isConfigured: databaseManagementViewModel.isConfigured,
+            isConfigured: databaseManagementViewModel.isReadyForUse,
             appVersionLabel: appVersionLabel,
             onSearch: { navigationPath.append(.patientsSearch) }
         ) {
             DatabaseManagementView(
                 viewModel: databaseManagementViewModel,
                 settingsStore: settingsStore,
+                onMigrationHistory: {
+                    let path = settingsStore.settings.databaseConnection.path
+                    guard !path.isEmpty else { return }
+                    navigationPath.append(.migrationHistory(databaseURL: URL(fileURLWithPath: path)))
+                },
                 onResetConfiguration: {
                     navigationPath.removeAll()
                     databaseManagementViewModel.resetConfiguration()
@@ -221,6 +232,11 @@ struct MainView: View {
                             onSuccess: {
                                 if !navigationPath.isEmpty { navigationPath.removeLast() }
                             }
+                        )
+                    case .migrationHistory(let databaseURL):
+                        MigrationHistoryView(
+                            databaseURL: databaseURL,
+                            migrationService: migrationService
                         )
                     }
         }
