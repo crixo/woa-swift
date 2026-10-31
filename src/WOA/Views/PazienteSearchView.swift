@@ -42,8 +42,6 @@ struct PazienteSearchView: View {
                     compactHeader
                 }
 
-                searchPanel
-
                 if showLastModifiedPatients {
                     LastModifiedPatientsView(
                         patients: viewModel.lastModifiedPatients,
@@ -52,6 +50,8 @@ struct PazienteSearchView: View {
                         onOpenPatientDetails: onOpenPatientDetails
                     )
                 }
+                
+                searchPanel
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)

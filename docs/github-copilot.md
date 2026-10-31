@@ -1,20 +1,28 @@
-# Github Copilot
+# GitHub Copilot and repository guidance
 
-## Custom Agents
+## Guidance files
 
-### Woa compliance reviewer
-`copilot-instructions.md`, `AGENTS.md`, and any matching `.instructions.md` files get injected into context no matter which chat mode you're in.
-The custom agent adds a persona on top of it, with restricted tools and its own review-focused system prompt.
+- [`AGENTS.md`](../AGENTS.md) and
+  [`.github/copilot-instructions.md`](../.github/copilot-instructions.md)
+  contain repository-wide guidance.
+- [`.github/instructions/`](../.github/instructions/) contains scoped
+  instructions with `applyTo` patterns. They apply when relevant files are
+  being worked on; they are not a replacement for the root instructions.
+- [`.github/plans/`](../.github/plans/) stores approved feature and architecture
+  plans. Review applicable plans before introducing significant behavior or
+  architecture changes.
+- [`.github/prompts/`](../.github/prompts/) contains feature prompts. A prompt
+  is task-specific and does not replace the repository's always-on constraints.
 
-When to use it:
-- Right after a feature prompt (.prompt.md) generates or edits views — before you accept the changes.
-- Before you commit or open a PR, as your own stand-in for the code-review pass you don't have configured.
-- After any hand-written edit you made yourself outside a prompt flow — that's exactly the kind of change that drifts from the rules unnoticed.
-- Periodically on the whole src/ tree if you suspect drift has accumulated, e.g. right now, to see how much of the existing codebase already violates the new Navigation rule before you run the refactor prompt.
+## WOA compliance reviewer
 
-## Prompts
+The custom agent definition is
+[`.github/agents/woa-compliance-reviewer.agent.md`](../.github/agents/woa-compliance-reviewer.agent.md).
+Use it to review source changes for compliance with `AGENTS.md`,
+`copilot-instructions.md`, and matching scoped instructions, especially after
+SwiftUI feature work or before a release. It is a read-only reviewer; it does
+not implement fixes.
 
-### refactor-responsive-swiftui
-``` invocation
-/refactor-responsive-swiftui Refactor the selected root view and only its directly related child views. Preserve the existing visual design and application behavior.
-```
+For application navigation, sandbox/storage conventions, shared forms, and
+change notifications, see the [architecture guide](architecture.md). For
+builds and release operations, see [Build, release, and installation](build-and-release.md).

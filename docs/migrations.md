@@ -1,136 +1,103 @@
-# Database migrations
+# Database migrations and audit history
 
-WOA runs bundled SQLite migrations before it connects and exposes a configured
-database to the rest of the application. This applies both to a database already
-configured on a later launch and to a database newly imported by the user.
+WOA applies bundled SQL migrations to the active SQLite database before
+database-backed features become available. This happens for a newly selected
+database and on later launches when new migrations have shipped.
 
-## Migration bundle and release packaging
+## Where migrations live and how they ship
 
 Migration scripts live in [`data/migrations`](../data/migrations/). The Xcode
-project references that directory as a folder resource: the `migrations`
-`PBXFileReference` points to `../../data/migrations`, and its build file is
-included in the WOA target's Resources build phase in
-[`project.pbxproj`](../src/WOA.xcodeproj/project.pbxproj). Xcode copies the
-directory, including its SQL files, into the built app as
-`WOA.app/Contents/Resources/migrations`. At runtime,
+project includes this directory as a folder resource in the WOA target, so the
+SQL files are copied into the app bundle's `Contents/Resources/migrations`
+directory. At runtime,
 [`DatabaseMigrationService`](../src/WOA/Services/DatabaseMigrationService.swift)
-locates that resource through `Bundle.main`; it does not read migration scripts
-from the working tree or a user-selected location.
+loads scripts from that bundled resource; it does not read them from a working
+tree or a user-selected folder.
 
-The scripts do not create this bundle themselves:
+Build and release instructions are in
+[Build, release, and installation](build-and-release.md).
 
-- [`build-release.sh`](../build-and-release/build-release.sh) runs
-  `xcodebuild build` using the Release configuration. It does not separately
-  generate or copy migrations; the Xcode Resources build phase handles that.
-- [`swift-build-tag-release.sh`](../build-and-release/swift-build-tag-release.sh)
-  creates an Xcode archive, copies or exports the resulting `.app`, then creates
-  an application ZIP and DMG. Those packages contain the same app bundle and
-  its Xcode-bundled `Contents/Resources/migrations` directory.
-- [`codemagic.yaml`](../codemagic.yaml) has a standard release workflow that
-  archives the app, copies it from the archive, and creates a DMG. Its other
-  release workflow invokes `./build_release.sh`; that path/name does not match
-  the checked-in [`build-release.sh`](../build-and-release/build-release.sh)
-  location, so verify that workflow's script path before relying on it.
+## Add a migration
 
-If `data/migrations` contains no `.sql` files, the app still creates the
-migration ledger but has no scripts to apply.
+1. Add a forward-only `.sql` file under `data/migrations/`.
+2. Start the filename with a unique numeric migration ID followed by `_` or
+   `-`, for example `002_add_example_index.sql`.
+3. Keep the migration ID unique by numeric value: `1_...sql` and
+   `001-...sql` are duplicates.
+4. Do not edit, rename, or reuse an ID after it has been applied. Add a new
+   migration for subsequent schema changes.
+5. Do not create or alter `woa_migration` in a script; the app owns that
+   ledger. Do not add transaction statements: the service wraps each script in
+   its own transaction.
 
-## Adding a migration
-
-Add a forward-only `.sql` file with a unique numeric prefix and `_` or `-`
-separator, for example `001_add_example_index.sql` or
-`002-add-example-column.sql`. The prefix is the migration ID and determines
-execution order numerically, not lexicographically. IDs must be unique even if
-their spelling differs (for example, `1_...sql` and `001-...sql` collide).
-
-Treat an applied migration as immutable: do not rename, edit, or reuse its ID.
-Add a new migration to make a later schema change. Do not create or alter the
-`woa_migration` ledger in a migration script.
+Scripts are ordered numerically by their prefix, not lexicographically. A
+missing bundled directory, malformed filename, duplicate numeric ID, or
+unreadable SQL file stops the migration run.
 
 ## Runtime process
 
-1. **Prepare the database.** When importing, WOA copies the selected database
-   into Application Support, normalizes SQLite journal state, and checks that
-   the expected core tables are present. A later launch uses that stored copy.
-2. **Find and parse scripts.** The migration service looks up the bundled
-   `migrations` directory, reads its `.sql` files, validates the numeric
-   filename prefixes, rejects duplicate IDs, and sorts the scripts by numeric
-   ID. A missing bundle, malformed filename, unreadable file, or duplicate ID
-   stops the migration run.
-3. **Open the configured database and ledger.** The service opens the existing
-   SQLite database (it does not create a missing database) and ensures the
-   `woa_migration` table exists. The ledger stores each migration's ID,
-   filename, timestamp, result (`success` or `failure`), and error detail.
-4. **Run pending migrations.** A migration whose ID already has a successful
-   ledger entry is skipped. Each other script runs in its own
-   `BEGIN IMMEDIATE` / `COMMIT` transaction, and its success is recorded in
-   that transaction. Scripts must not start or commit transactions themselves.
-5. **Record and surface failures.** If a script fails, its transaction is
-   rolled back and a failure entry is recorded. The service logs and throws the
-   error, stopping the batch; later migrations in the batch do not run. Only
-   successful IDs are skipped on the next attempt, so the failed migration can
-   be retried on the next launch or by using the retry button. If rollback or
-   failure recording also fails, that additional detail is included in the
-   surfaced error.
-6. **Validate and connect.** After all pending migrations succeed, the
-   application validates the expected WOA schema, marks the database connected,
-   and loads table statistics. On import, this is a second validation, after
-   migrations. A database is not made available to feature views when migration
-   fails.
+1. **Resolve the active database.** On later launches, WOA restores the saved
+   database path and, for direct external access, resolves its security-scoped
+   folder bookmark. During selection, WOA either uses the selected database
+   directly or installs a copy in Application Support.
+2. **Load and validate scripts.** The service reads `.sql` files from the
+   bundled `migrations` resource, validates their IDs, and sorts them.
+3. **Open the database and ledger.** WOA opens the existing database (it does
+   not create a missing database) and creates `woa_migration` if necessary.
+   Each ledger row contains the migration ID, filename, timestamp, result
+   (`success` or `failure`), and optional error detail.
+4. **Skip completed work.** Only IDs with a successful ledger entry are
+   skipped. Failed entries remain eligible for retry.
+5. **Apply one script transactionally.** The service starts
+   `BEGIN IMMEDIATE`, executes the script, records success, and commits. If SQL
+   fails, it rolls back and records the failure. A failed migration stops the
+   batch; later scripts do not run.
+6. **Connect only after success.** WOA validates the expected core tables,
+   marks the connection ready, and loads table statistics. A database with a
+   migration failure stays disconnected until the user retries or selects a
+   recovery action.
 
-The database itself is application data, not a bundled resource. An imported
-SQLite file is copied to
-`Application Support/WOA/database/woa.db`; its connection settings are stored
-separately in `Application Support/WOA/configuration/app-settings.json`.
-`UserDefaults` are for small preferences, not the database or migration ledger.
-Import uses the system file picker and temporarily accesses the selected file;
-because WOA copies it into Application Support, it does not need a persistent
-security-scoped bookmark to use the imported database on later launches.
+If rollback or failure recording also fails, that additional failure detail is
+included in the surfaced error. Retrying the next launch or choosing **Retry
+Migrations** reruns failed IDs while leaving successful IDs skipped.
 
-## Views and failure behavior
+## User-visible behavior and history
 
-- **`MainView` / `MainNavigationView`** own the migration service and typed
-  navigation route. `MainView` opens migration history in the main navigation
-  stack; it is not a separate window or sheet.
-- **`DatabaseManagementView`** is the root gate for database setup and
-  connection. It shows a loading state during connection. On a migration error
-  it replaces the normal content with **“Database Migration Required”** and
-  **“The database could not be updated. WOA cannot continue until the migration
-  succeeds.”** It also displays the detailed error text and a **“Retry
-  Migrations”** button. The ViewModel leaves the database disconnected and
-  `isReadyForUse` false, which disables access to database-dependent features
-  until retry succeeds.
-- **`DatabaseSelectorView`** lets the user choose and import a database when
-  none is configured. During import it shows **“Validating database...”** and
-  displays ordinary import/validation errors inline. A migration failure is
-  promoted to the same blocking error in `DatabaseManagementView`, rather than
-  allowing the import success screen to appear.
-- **`TableStatusView`** is shown after successful import to confirm the imported
-  database and its tables, with a **“Continue”** action. It is not shown when
-  migration fails.
-- **`LaunchScreenView`** shows the connected database and the migrations
-  applied in the current session, with a link to the full history. A failure to
-  read history is shown inline as **“Unable to load migration history: …”**.
-  This is a history-display problem, distinct from a migration failure that
-  blocks the database.
-- **`MigrationHistoryView`** lists ledger entries newest first with filename,
-  timestamp, success/failure status, error detail, and a current-session
-  marker. It offers **“Refresh”**, shows **“No Migrations Applied”** when the
-  ledger has no entries, and shows **“Unable to Load Migration History”** plus
-  the underlying error if history cannot be read.
+Migration errors block database-backed features. The database management
+screen shows **Database Migration Required**, the underlying error, and
+recovery actions where applicable:
 
-For common migration failures, the detailed blocking error identifies the
-problem: for example, a missing bundle asks to reinstall the application;
-invalid or duplicate filenames identify the offending name or ID; and SQL
-execution errors include the migration filename and SQLite error. The failed
-entry and details can also be inspected in Migration History if the ledger
-remains readable.
+- Retry migrations.
+- Grant access to the database's containing folder and retry.
+- Copy an external database into Application Support and retry.
+- Choose another database.
 
-## History and storage
+The **Migration History** destination reads `woa_migration` newest first and
+shows each filename, timestamp, success/failure status, error detail, and
+whether it succeeded during the current app session. A history-display error
+is reported separately from a migration failure that blocks startup.
 
-The ledger is created by the application before scripts run and is separate
-from any existing table named `migration`; the `woa_` prefix avoids collisions.
-Migration history is kept in the target SQLite database, not in application
-preferences or the app bundle. The history view orders entries by timestamp
-descending, then ID descending. The current-session marker is runtime state and
-is set only for migrations that succeeded during this launch.
+The migration ledger is stored in the active SQLite database, not in
+`UserDefaults` or the app bundle. It is distinct from any pre-existing table
+named `migration`.
+
+## Audit history
+
+[`001_create-auditing-table.sql`](../data/migrations/001_create-auditing-table.sql)
+creates `woa_auditing` and indexes its timestamp and `(entity_table, entity_id)`
+columns. Each row records:
+
+- `entity_table` and `entity_id`
+- `recorded_at` in UTC
+- `change_type`: `create`, `added`, `update`, or `delete`
+
+The repository's mutation helper performs the entity write and its audit insert
+in the same SQLite transaction. If either fails, the transaction is rolled
+back. The last-modified-patients query maps supported patient, consultation,
+remote-history, treatment, evaluation, and exam changes to their patient and
+shows the most recently changed patients. Its default display limit is five.
+
+This audit table stores change metadata only. It does not preserve old/new
+field values or provide a general-purpose revision history. The `woa_migration`
+ledger tracks schema changes; `woa_auditing` tracks application entity
+mutations.
