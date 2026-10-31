@@ -1,6 +1,100 @@
 import Foundation
 import SQLite3
 
+enum AuditChangeType: String, Codable, Equatable {
+    case create
+    case added
+    case update
+    case delete
+}
+
+struct PatientAuditSummary: Identifiable, Equatable {
+    let id: Int
+    let fullName: String
+    let changedAt: Date
+}
+
+enum AuditRepository {
+    static func recordChange(
+        entityTable: String,
+        entityID: String,
+        changeType: AuditChangeType,
+        using connection: SQLiteConnection,
+        timestamp: Date = Date()
+    ) throws {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        try connection.execute(
+            "INSERT INTO woa_auditing (entity_table, entity_id, recorded_at, change_type) VALUES (?, ?, ?, ?)",
+            parameters: [
+                .text(entityTable),
+                .text(entityID),
+                .text(formatter.string(from: timestamp)),
+                .text(changeType.rawValue)
+            ]
+        )
+    }
+
+    static func fetchLastModifiedPatients(
+        limit: Int = AppSettings.AppConstants.lastModifiedPatientsLimit,
+        databaseFileURL: URL
+    ) throws -> [PatientAuditSummary] {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: true)
+        let sql = """
+            WITH recent_changes AS (
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN paziente p ON a.entity_table = 'paziente' AND a.entity_id = CAST(p.ID AS TEXT)
+                UNION ALL
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN consulto c ON a.entity_table = 'consulto' AND a.entity_id = CAST(c.ID AS TEXT)
+                JOIN paziente p ON p.ID = c.ID_paziente
+                UNION ALL
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN anamnesi_remota h ON a.entity_table = 'anamnesi_remota' AND a.entity_id = CAST(h.ID AS TEXT)
+                JOIN paziente p ON p.ID = h.ID_paziente
+                UNION ALL
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN trattamento t ON a.entity_table = 'trattamento' AND a.entity_id = CAST(t.ID AS TEXT)
+                JOIN paziente p ON p.ID = t.ID_paziente
+                UNION ALL
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN valutazione v ON a.entity_table = 'valutazione' AND a.entity_id = CAST(v.ID AS TEXT)
+                JOIN paziente p ON p.ID = v.ID_paziente
+                UNION ALL
+                SELECT p.ID AS patient_id, p.cognome, p.nome, a.recorded_at AS changed_at
+                FROM woa_auditing a
+                JOIN esame e ON a.entity_table = 'esame' AND a.entity_id = CAST(e.ID AS TEXT)
+                JOIN paziente p ON p.ID = e.ID_paziente
+            )
+            SELECT patient_id, cognome, nome, MAX(changed_at) AS changed_at
+            FROM recent_changes
+            GROUP BY patient_id, cognome, nome
+            ORDER BY changed_at DESC
+            LIMIT ?
+            """
+
+        var results: [PatientAuditSummary] = []
+        try connection.query(sql, parameters: [.integer(limit)]) { statement in
+            let id = Int(sqlite3_column_int64(statement, 0))
+            let cognome = PatientRepository.stringValue(from: statement, columnIndex: 1) ?? ""
+            let nome = PatientRepository.stringValue(from: statement, columnIndex: 2) ?? ""
+            let changedAt = PatientRepository.parseDate(from: statement, columnIndex: 3) ?? Date()
+            results.append(PatientAuditSummary(
+                id: id,
+                fullName: [nome, cognome].filter { !$0.isEmpty }.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines),
+                changedAt: changedAt
+            ))
+        }
+
+        return results
+    }
+}
+
 /// Queries the application database for patient records matching a partial name search.
 enum PatientRepository {
 
@@ -57,13 +151,13 @@ enum PatientRepository {
         return matches
     }
 
-    private static func stringValue(from statement: OpaquePointer, columnIndex: Int32) -> String? {
+    fileprivate static func stringValue(from statement: OpaquePointer, columnIndex: Int32) -> String? {
         guard let cString = sqlite3_column_text(statement, columnIndex) else { return nil }
         let value = String(cString: cString)
         return value.isEmpty ? nil : value
     }
 
-    private static func parseDate(from statement: OpaquePointer, columnIndex: Int32) -> Date? {
+    fileprivate static func parseDate(from statement: OpaquePointer, columnIndex: Int32) -> Date? {
         guard let raw = stringValue(from: statement, columnIndex: columnIndex) else { return nil }
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -122,6 +216,35 @@ enum PatientRepository {
         return provinces
     }
 
+    private static func withAuditTransaction<Result>(
+        databaseFileURL: URL,
+        entityTable: String,
+        changeType: AuditChangeType,
+        mutation: (SQLiteConnection) throws -> (Result, String)
+    ) throws -> Result {
+        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
+        try connection.execute("BEGIN IMMEDIATE")
+
+        do {
+            let result = try mutation(connection)
+            try AuditRepository.recordChange(
+                entityTable: entityTable,
+                entityID: result.1,
+                changeType: changeType,
+                using: connection
+            )
+            try connection.execute("COMMIT")
+            return result.0
+        } catch {
+            do {
+                try connection.execute("ROLLBACK")
+            } catch {
+                AppLogger.warning("Audit transaction rollback failed for \(entityTable): \(error.localizedDescription)")
+            }
+            throw error
+        }
+    }
+
     /// Creates a new patient record in the database.
     /// Returns the ID of the inserted patient on success.
     /// Throws SQLiteConnectionError if the insert fails.
@@ -130,50 +253,49 @@ enum PatientRepository {
         databaseFileURL: URL
     ) throws -> Int {
         AppLogger.info("Adding patient: \(request.nome) \(request.cognome)")
-        
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        
-        // Format date_nascita if provided
-        var dateString: String? = nil
-        if let date = request.data_nascita {
+
+        let dateString: String? = request.data_nascita.map { date in
             let formatter = DateFormatter()
             formatter.locale = Locale(identifier: "en_US_POSIX")
             formatter.dateFormat = "yyyy-MM-dd"
-            dateString = formatter.string(from: date)
+            return formatter.string(from: date)
         }
-        
+
         let insertSQL = """
         INSERT INTO paziente (
             cognome, nome, professione, indirizzo, citta,
             telefono, cellulare, prov, cap, email, data_nascita
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        
-        try connection.execute(
-            insertSQL,
-            parameters: [
-                .text(request.cognome),
-                .text(request.nome),
-                Self.value(request.professione),
-                Self.value(request.indirizzo),
-                Self.value(request.citta),
-                Self.value(request.telefono),
-                Self.value(request.cellulare),
-                Self.value(request.prov),
-                Self.value(request.cap),
-                Self.value(request.email),
-                Self.value(dateString)
-            ]
-        )
-        
-        // Get the ID of the inserted row
-        var lastID: Int = 0
-        try connection.query("SELECT last_insert_rowid()") { statement in
-            lastID = Int(sqlite3_column_int64(statement, 0))
+
+        let patientID: Int = try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "paziente",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                insertSQL,
+                parameters: [
+                    .text(request.cognome),
+                    .text(request.nome),
+                    Self.value(request.professione),
+                    Self.value(request.indirizzo),
+                    Self.value(request.citta),
+                    Self.value(request.telefono),
+                    Self.value(request.cellulare),
+                    Self.value(request.prov),
+                    Self.value(request.cap),
+                    Self.value(request.email),
+                    Self.value(dateString)
+                ]
+            )
+
+            let lastID = try lastInsertedID(from: connection)
+            return (lastID, String(lastID))
         }
-        
-        AppLogger.info("✅ Patient created successfully: ID=\(lastID)")
-        return lastID
+
+        AppLogger.info("✅ Patient created successfully: ID=\(patientID)")
+        return patientID
     }
 
     static func fetchPatient(by id: Int, databaseFileURL: URL) throws -> PatientDetail? {
@@ -305,94 +427,152 @@ enum PatientRepository {
     }
 
     static func createConsultation(_ request: ConsultoRequest, databaseFileURL: URL) throws -> Int {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        try connection.execute(
-            "INSERT INTO consulto (ID_paziente, data, problema_iniziale) VALUES (?, ?, ?)",
-            parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .text(request.initialProblem)]
-        )
-        return try lastInsertedID(from: connection)
+        return try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "consulto",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                "INSERT INTO consulto (ID_paziente, data, problema_iniziale) VALUES (?, ?, ?)",
+                parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .text(request.initialProblem)]
+            )
+            let id = try lastInsertedID(from: connection)
+            return (id, String(id))
+        }
     }
 
     static func createRemoteHistory(_ request: RemoteHistoryCreateRequest, databaseFileURL: URL) throws -> Int {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        try connection.execute(
-            "INSERT INTO anamnesi_remota (ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?)",
-            parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .integer(request.typeID), Self.value(request.description)]
-        )
-        return try lastInsertedID(from: connection)
+        return try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "anamnesi_remota",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                "INSERT INTO anamnesi_remota (ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?)",
+                parameters: [.integer(request.patientID), .text(Self.databaseDateTime(request.date)), .integer(request.typeID), Self.value(request.description)]
+            )
+            let id = try lastInsertedID(from: connection)
+            return (id, String(id))
+        }
     }
 
     static func updatePatient(_ request: PatientCreateRequest, patientID: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE paziente SET cognome = ?, nome = ?, professione = ?, indirizzo = ?, citta = ?,
             telefono = ?, cellulare = ?, prov = ?, cap = ?, email = ?, data_nascita = ?
         WHERE ID = ?
         """
         let dateString = request.data_nascita.map(Self.databaseDate)
-        let changes = try connection.execute(sql, parameters: [
-            .text(request.cognome), .text(request.nome), Self.value(request.professione),
-            Self.value(request.indirizzo), Self.value(request.citta), Self.value(request.telefono),
-            Self.value(request.cellulare), Self.value(request.prov), Self.value(request.cap),
-            Self.value(request.email), Self.value(dateString), .integer(patientID)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Patient ID \(patientID) was not updated")
+
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "paziente",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .text(request.cognome), .text(request.nome), Self.value(request.professione),
+                Self.value(request.indirizzo), Self.value(request.citta), Self.value(request.telefono),
+                Self.value(request.cellulare), Self.value(request.prov), Self.value(request.cap),
+                Self.value(request.email), Self.value(dateString), .integer(patientID)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Patient ID \(patientID) was not updated")
+            }
+            return ((), String(patientID))
         }
     }
 
     static func deletePatient(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM paziente WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "paziente",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM paziente WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Patient ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     // MARK: - Consultation Update/Delete
     
     static func updateConsultation(_ request: ConsultoRequest, consultationID: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE consulto SET ID_paziente = ?, data = ?, problema_iniziale = ?
         WHERE ID = ?
         """
-        let changes = try connection.execute(sql, parameters: [
-            .integer(request.patientID),
-            .text(Self.databaseDateTime(request.date)),
-            .text(request.initialProblem),
-            .integer(consultationID)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Consultation ID \(consultationID) was not updated")
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "consulto",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .text(request.initialProblem),
+                .integer(consultationID)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Consultation ID \(consultationID) was not updated")
+            }
+            return ((), String(consultationID))
         }
     }
 
     static func deleteConsultation(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM consulto WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "consulto",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM consulto WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Consultation ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     // MARK: - Remote History Update/Delete
     
     static func updateRemoteHistory(_ request: RemoteHistoryCreateRequest, id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE anamnesi_remota SET ID_paziente = ?, data = ?, tipo = ?, descrizione = ?
         WHERE ID = ?
         """
-        let changes = try connection.execute(sql, parameters: [
-            .integer(request.patientID),
-            .text(Self.databaseDateTime(request.date)),
-            .integer(request.typeID),
-            Self.value(request.description),
-            .integer(id)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Remote history ID \(id) was not updated")
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "anamnesi_remota",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .integer(request.typeID),
+                Self.value(request.description),
+                .integer(id)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Remote history ID \(id) was not updated")
+            }
+            return ((), String(id))
         }
     }
 
     static func deleteRemoteHistory(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM anamnesi_remota WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "anamnesi_remota",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM anamnesi_remota WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Remote history ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     // MARK: - Treatment CRUD
@@ -432,40 +612,61 @@ enum PatientRepository {
     }
 
     static func createTreatment(_ request: TreatmentCreateRequest, databaseFileURL: URL) throws -> Int {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        try connection.execute(
-            "INSERT INTO trattamento (ID_consulto, ID_paziente, data, descrizione) VALUES (?, ?, ?, ?)",
-            parameters: [
-                .integer(request.consultoID),
-                .integer(request.patientID),
-                .text(Self.databaseDateTime(request.date)),
-                .text(request.description)
-            ]
-        )
-        return try lastInsertedID(from: connection)
+        return try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "trattamento",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                "INSERT INTO trattamento (ID_consulto, ID_paziente, data, descrizione) VALUES (?, ?, ?, ?)",
+                parameters: [
+                    .integer(request.consultoID),
+                    .integer(request.patientID),
+                    .text(Self.databaseDateTime(request.date)),
+                    .text(request.description)
+                ]
+            )
+            let id = try lastInsertedID(from: connection)
+            return (id, String(id))
+        }
     }
 
     static func updateTreatment(_ request: TreatmentCreateRequest, id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE trattamento SET ID_consulto = ?, ID_paziente = ?, data = ?, descrizione = ?
         WHERE ID = ?
         """
-        let changes = try connection.execute(sql, parameters: [
-            .integer(request.consultoID),
-            .integer(request.patientID),
-            .text(Self.databaseDateTime(request.date)),
-            .text(request.description),
-            .integer(id)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Treatment ID \(id) was not updated")
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "trattamento",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .text(request.description),
+                .integer(id)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Treatment ID \(id) was not updated")
+            }
+            return ((), String(id))
         }
     }
 
     static func deleteTreatment(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM trattamento WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "trattamento",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM trattamento WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Treatment ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     // MARK: - Evaluation CRUD
@@ -507,42 +708,63 @@ enum PatientRepository {
     }
 
     static func createEvaluation(_ request: EvaluationCreateRequest, databaseFileURL: URL) throws -> Int {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        try connection.execute(
-            "INSERT INTO valutazione (ID_consulto, ID_paziente, strutturale, cranio_sacrale, ak_ortodontica) VALUES (?, ?, ?, ?, ?)",
-            parameters: [
-                .integer(request.consultoID),
-                .integer(request.patientID),
-                .text(request.structural),
-                .text(request.cranioSacral),
-                .text(request.akOrthodontic)
-            ]
-        )
-        return try lastInsertedID(from: connection)
+        return try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "valutazione",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                "INSERT INTO valutazione (ID_consulto, ID_paziente, strutturale, cranio_sacrale, ak_ortodontica) VALUES (?, ?, ?, ?, ?)",
+                parameters: [
+                    .integer(request.consultoID),
+                    .integer(request.patientID),
+                    .text(request.structural),
+                    .text(request.cranioSacral),
+                    .text(request.akOrthodontic)
+                ]
+            )
+            let id = try lastInsertedID(from: connection)
+            return (id, String(id))
+        }
     }
 
     static func updateEvaluation(_ request: EvaluationCreateRequest, id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE valutazione SET ID_consulto = ?, ID_paziente = ?, strutturale = ?, cranio_sacrale = ?, ak_ortodontica = ?
         WHERE ID = ?
         """
-        let changes = try connection.execute(sql, parameters: [
-            .integer(request.consultoID),
-            .integer(request.patientID),
-            .text(request.structural),
-            .text(request.cranioSacral),
-            .text(request.akOrthodontic),
-            .integer(id)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Evaluation ID \(id) was not updated")
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "valutazione",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(request.structural),
+                .text(request.cranioSacral),
+                .text(request.akOrthodontic),
+                .integer(id)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Evaluation ID \(id) was not updated")
+            }
+            return ((), String(id))
         }
     }
 
     static func deleteEvaluation(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM valutazione WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "valutazione",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM valutazione WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Evaluation ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     // MARK: - Exam CRUD
@@ -609,42 +831,63 @@ enum PatientRepository {
     }
 
     static func createExam(_ request: ExamCreateRequest, databaseFileURL: URL) throws -> Int {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        try connection.execute(
-            "INSERT INTO esame (ID_consulto, ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?, ?)",
-            parameters: [
-                .integer(request.consultoID),
-                .integer(request.patientID),
-                .text(Self.databaseDateTime(request.date)),
-                .integer(request.typeID),
-                .text(request.description)
-            ]
-        )
-        return try lastInsertedID(from: connection)
+        return try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "esame",
+            changeType: .added
+        ) { connection in
+            try connection.execute(
+                "INSERT INTO esame (ID_consulto, ID_paziente, data, tipo, descrizione) VALUES (?, ?, ?, ?, ?)",
+                parameters: [
+                    .integer(request.consultoID),
+                    .integer(request.patientID),
+                    .text(Self.databaseDateTime(request.date)),
+                    .integer(request.typeID),
+                    .text(request.description)
+                ]
+            )
+            let id = try lastInsertedID(from: connection)
+            return (id, String(id))
+        }
     }
 
     static func updateExam(_ request: ExamCreateRequest, id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
         let sql = """
         UPDATE esame SET ID_consulto = ?, ID_paziente = ?, data = ?, tipo = ?, descrizione = ?
         WHERE ID = ?
         """
-        let changes = try connection.execute(sql, parameters: [
-            .integer(request.consultoID),
-            .integer(request.patientID),
-            .text(Self.databaseDateTime(request.date)),
-            .integer(request.typeID),
-            .text(request.description),
-            .integer(id)
-        ])
-        guard changes == 1 else {
-            throw SQLiteConnectionError.queryFailed(message: "Exam ID \(id) was not updated")
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "esame",
+            changeType: .update
+        ) { connection in
+            let changes = try connection.execute(sql, parameters: [
+                .integer(request.consultoID),
+                .integer(request.patientID),
+                .text(Self.databaseDateTime(request.date)),
+                .integer(request.typeID),
+                .text(request.description),
+                .integer(id)
+            ])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Exam ID \(id) was not updated")
+            }
+            return ((), String(id))
         }
     }
 
     static func deleteExam(id: Int, databaseFileURL: URL) throws {
-        let connection = try SQLiteConnection(fileURL: databaseFileURL, readOnly: false)
-        _ = try connection.execute("DELETE FROM esame WHERE ID = ?", parameters: [.integer(id)])
+        try withAuditTransaction(
+            databaseFileURL: databaseFileURL,
+            entityTable: "esame",
+            changeType: .delete
+        ) { connection in
+            let changes = try connection.execute("DELETE FROM esame WHERE ID = ?", parameters: [.integer(id)])
+            guard changes == 1 else {
+                throw SQLiteConnectionError.queryFailed(message: "Exam ID \(id) was not deleted")
+            }
+            return ((), String(id))
+        }
     }
 
     private static func value(_ value: String?) -> SQLiteValue {

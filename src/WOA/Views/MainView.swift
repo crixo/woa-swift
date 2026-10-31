@@ -54,6 +54,10 @@ struct MainView: View {
                             onOpenDetails: { patient in
                                 let url = URL(fileURLWithPath: settingsStore.settings.databaseConnection.path)
                                 navigationPath.append(.patientDetails(patientID: patient.id, databaseURL: url))
+                            },
+                            onOpenPatientDetails: { patientID in
+                                let url = URL(fileURLWithPath: settingsStore.settings.databaseConnection.path)
+                                navigationPath.append(.patientDetails(patientID: patientID, databaseURL: url))
                             }
                         )
                     case .addPatient(let databaseURL):

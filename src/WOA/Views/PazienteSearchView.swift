@@ -16,13 +16,21 @@ struct PazienteSearchView: View {
     let databasePath: String
     let onAddPatient: () -> Void
     let onOpenDetails: (PatientSearchResult) -> Void
+    let onOpenPatientDetails: (Int) -> Void
 
     @StateObject private var viewModel: PazienteSearchViewModel
+    @State private var showLastModifiedPatients = false
 
-    init(databasePath: String, onAddPatient: @escaping () -> Void = {}, onOpenDetails: @escaping (PatientSearchResult) -> Void = { _ in }) {
+    init(
+        databasePath: String,
+        onAddPatient: @escaping () -> Void = {},
+        onOpenDetails: @escaping (PatientSearchResult) -> Void = { _ in },
+        onOpenPatientDetails: @escaping (Int) -> Void = { _ in }
+    ) {
         self.databasePath = databasePath
         self.onAddPatient = onAddPatient
         self.onOpenDetails = onOpenDetails
+        self.onOpenPatientDetails = onOpenPatientDetails
         _viewModel = StateObject(wrappedValue: PazienteSearchViewModel(databasePath: databasePath))
     }
 
@@ -35,6 +43,15 @@ struct PazienteSearchView: View {
                 }
 
                 searchPanel
+
+                if showLastModifiedPatients {
+                    LastModifiedPatientsView(
+                        patients: viewModel.lastModifiedPatients,
+                        isLoading: viewModel.isLoadingLastModifiedPatients,
+                        errorMessage: viewModel.lastModifiedPatientsError,
+                        onOpenPatientDetails: onOpenPatientDetails
+                    )
+                }
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
@@ -58,6 +75,9 @@ struct PazienteSearchView: View {
         }
         .frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
         .navigationTitle("Patient Search")
+        .onAppear {
+            viewModel.loadLastModifiedPatients()
+        }
     }
 
     private var wideHeader: some View {
@@ -144,10 +164,22 @@ struct PazienteSearchView: View {
     }
 
     private var addPatientButton: some View {
-        Button(action: onAddPatient) {
-            Label("Add Patient", systemImage: "person.badge.plus")
+        HStack(spacing: AppDesignSystem.spacingSM) {
+            Button {
+                showLastModifiedPatients.toggle()
+                if showLastModifiedPatients {
+                    viewModel.loadLastModifiedPatients()
+                }
+            } label: {
+                Label(showLastModifiedPatients ? "Hide recent patients" : "Show last \(AppSettings.AppConstants.lastModifiedPatientsLimit) modified patients", systemImage: "clock.arrow.circlepath")
+            }
+            .appSecondaryButton()
+
+            Button(action: onAddPatient) {
+                Label("Add Patient", systemImage: "person.badge.plus")
+            }
+            .appAddButton()
         }
-        .appAddButton()
     }
 
     @ViewBuilder

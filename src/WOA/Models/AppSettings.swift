@@ -3,6 +3,10 @@ import Foundation
 /// Persisted application configuration.
 struct AppSettings: Codable, Equatable {
 
+    enum AppConstants {
+        static let lastModifiedPatientsLimit = 5
+    }
+
     enum LogLevel: String, Codable {
         case info
         case warning

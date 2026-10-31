@@ -76,6 +76,7 @@
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 		A19D13E40FAE64468A122581 /* AppDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */; };
 		A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */; };
+		AFAF2E8B74D9E8F0E1A2B3C4 /* LastModifiedPatientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3A5A7D8F4E9C6B2A1D0E3F /* LastModifiedPatientsView.swift */; };
 		A7B6C5D4E3F2A1B0C9D8E7F6 /* AnamnesiRemotaDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */; };
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
 		AA0100000000000000000001 /* DatabaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000002 /* DatabaseMigration.swift */; };
@@ -159,6 +160,7 @@
 		6D16E0614E8990F046ED322E /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		6EE4A06DA7FCE2E7700759BE /* PatientSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientSearchResult.swift; sourceTree = "<group>"; };
 		7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PazienteSearchView.swift; sourceTree = "<group>"; };
+		7B3A5A7D8F4E9C6B2A1D0E3F /* LastModifiedPatientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastModifiedPatientsView.swift; sourceTree = "<group>"; };
 		7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationSettingsView.swift; sourceTree = "<group>"; };
 		7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSelectorView.swift; sourceTree = "<group>"; };
 		841E2099FACAFAD0EADBCE07 /* WOA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WOA.swift; sourceTree = "<group>"; };
@@ -248,6 +250,7 @@
 				3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */,
 				6BD4980C3078337400754FB9 /* PazienteEditView.swift */,
 				7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */,
+				7B3A5A7D8F4E9C6B2A1D0E3F /* LastModifiedPatientsView.swift */,
 				1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */,
 				6B97361930607C21002FB511 /* TrattamentoAddView.swift */,
 				6B97361B30607C73002FB511 /* TrattamentoDetailEditView.swift */,
@@ -525,6 +528,7 @@
 				AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */,
 				6B97362230607DA8002FB511 /* EsameAddView.swift in Sources */,
 				A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */,
+				AFAF2E8B74D9E8F0E1A2B3C4 /* LastModifiedPatientsView.swift in Sources */,
 				3C7B8E9F2D0A5E1F6B9C4D7E /* PazienteAddView.swift in Sources */,
 				6B167401308CE9C700DA8DCA /* EntityEditViewModel.swift in Sources */,
 				1CF715648142F644A915620A /* PatientDetail.swift in Sources */,

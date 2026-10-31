@@ -7,8 +7,11 @@ final class PazienteSearchViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var results: [PatientSearchResult] = []
     @Published var isSearching: Bool = false
+    @Published var isLoadingLastModifiedPatients: Bool = false
     @Published var selectedPatient: PatientSearchResult?
     @Published var errorMessage: String?
+    @Published var lastModifiedPatients: [PatientAuditSummary] = []
+    @Published var lastModifiedPatientsError: String?
 
     private let databasePath: String
 
@@ -56,6 +59,29 @@ final class PazienteSearchViewModel: ObservableObject {
         }
 
         search()
+    }
+
+    func loadLastModifiedPatients() {
+        isLoadingLastModifiedPatients = true
+        lastModifiedPatientsError = nil
+
+        Task {
+            do {
+                let url = URL(fileURLWithPath: databasePath)
+                let patients = try AuditRepository.fetchLastModifiedPatients(
+                    limit: AppSettings.AppConstants.lastModifiedPatientsLimit,
+                    databaseFileURL: url
+                )
+                lastModifiedPatients = patients
+                AppLogger.info("✅ Loaded \(patients.count) recent patient changes")
+            } catch {
+                lastModifiedPatients = []
+                lastModifiedPatientsError = error.localizedDescription
+                AppLogger.error("❌ Unable to load recent patient changes: \(error.localizedDescription)")
+            }
+
+            isLoadingLastModifiedPatients = false
+        }
     }
 
     func openDetails(_ patient: PatientSearchResult) {
