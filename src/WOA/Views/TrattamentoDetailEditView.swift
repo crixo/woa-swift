@@ -16,25 +16,25 @@ struct TrattamentoDetailEditView: View {
             viewModel: viewModel,
             entityName: "trattamento",
             parentName: "consulto",
-            loadingMessage: "Loading trattamento...",
-            notFoundMessage: "trattamento not found",
+            loadingMessage: "Caricamento trattamento...",
+            notFoundMessage: "trattamento non trovato",
             navigationTitle: "trattamento",
             onBack: onBackToConsulto,
             isEditMode: $isEditMode,
             saveResult: $saveResult
         ) {
-            FormField("Date", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("In che data e' avvenuto questo trattamento?", selection: $viewModel.formData.date, displayedComponents: .date)//.labelsHidden()
+            FormField("Data", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
+                DatePicker("In che data è avvenuto questo trattamento?", selection: $viewModel.formData.date, displayedComponents: .date)//.labelsHidden()
             }
             
-            FormField("Description", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {
-                TextField("Add a description", text: $viewModel.formData.description).textFieldStyle(.plain)
+            FormField("Descrizione", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {
+                TextField("Aggiungi una descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
         } displayContent: { treatment in
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                EntityLabelForEdit(name: "trattamento overview", id: treatment.id)
-                Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "No date").appOverviewDate()
-                Text(treatment.description ?? "No description").appOverviewText()
+                EntityLabelForEdit(name: "panoramica trattamento", id: treatment.id)
+                Text(treatment.date?.formatted(date: .long, time: .omitted) ?? "Nessuna data").appOverviewDate()
+                Text(treatment.description ?? "Nessuna descrizione").appOverviewText()
             }
         }
     }

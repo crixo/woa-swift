@@ -8,12 +8,12 @@ struct ApplicationSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-            Label("Application settings", systemImage: "gearshape.fill")
+            Label("Impostazioni applicazione", systemImage: "gearshape.fill")
                 .font(.headline)
 
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                    Text("Settings file")
+                    Text("File impostazioni")
                         .font(.subheadline.weight(.semibold))
                     Text(settingsFilePath)
                         .font(.callout)
@@ -24,11 +24,11 @@ struct ApplicationSettingsView: View {
                 .appSection()
 
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                    settingRow(label: "Database Path", value: databasePath)
-                    settingRow(label: "Connection Status", value: settings.databaseConnection.status.rawValue)
-                    settingRow(label: "Last Validated", value: lastValidated)
-                    settingRow(label: "Log Level", value: settings.logLevel.rawValue)
-                    settingRow(label: "Theme", value: settings.theme.rawValue)
+                    settingRow(label: "Percorso database", value: databasePath)
+                    settingRow(label: "Stato connessione", value: settings.databaseConnection.status.rawValue)
+                    settingRow(label: "Ultima validazione", value: lastValidated)
+                    settingRow(label: "Livello log", value: settings.logLevel.rawValue)
+                    settingRow(label: "Tema", value: settings.theme.rawValue)
                 }
             }
         }
@@ -37,12 +37,12 @@ struct ApplicationSettingsView: View {
 
     private var databasePath: String {
         settings.databaseConnection.path.isEmpty
-            ? "Not configured"
+            ? "Non configurato"
             : settings.databaseConnection.path
     }
 
     private var lastValidated: String {
-        settings.databaseConnection.lastValidated?.formatted() ?? "Not available"
+        settings.databaseConnection.lastValidated?.formatted() ?? "Non disponibile"
     }
 
     private func settingRow(label: String, value: String) -> some View {

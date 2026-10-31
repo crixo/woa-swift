@@ -23,28 +23,28 @@ struct ValutazioneDetailEditView: View {
             viewModel: viewModel,
             entityName: "Evaluation",
             parentName: "Consultation",
-            loadingMessage: "Loading evaluation...",
-            notFoundMessage: "Evaluation not found",
-            navigationTitle: "Evaluation",
+            loadingMessage: "Caricamento valutazione...",
+            notFoundMessage: "Valutazione non trovata",
+            navigationTitle: "Valutazione",
             onBack: onBackToConsulto,
             isEditMode: $isEditMode,
             saveResult: $saveResult
         ) {
-            FormField("Structural", field: \EvaluationCreateRequest.structural, form: viewModel, isRequired: false) {
+            FormField("Strutturale", field: \EvaluationCreateRequest.structural, form: viewModel, isRequired: false) {
                 TextField("Strutturale", text: $viewModel.formData.structural).textFieldStyle(.plain)
             }
-            FormField("Cranio-Sacrale", field: \EvaluationCreateRequest.cranioSacral, form: viewModel, isRequired: false) {
-                TextField("Cranio-Sacrale", text: $viewModel.formData.cranioSacral).textFieldStyle(.plain)
+            FormField("Cranio-sacrale", field: \EvaluationCreateRequest.cranioSacral, form: viewModel, isRequired: false) {
+                TextField("Cranio-sacrale", text: $viewModel.formData.cranioSacral).textFieldStyle(.plain)
             }
-            FormField("AK Orthodontic", field: \EvaluationCreateRequest.akOrthodontic, form: viewModel, isRequired: false) {
-                TextField("AK Orthodontic", text: $viewModel.formData.akOrthodontic).textFieldStyle(.plain)
+            FormField("AK Ortodontico", field: \EvaluationCreateRequest.akOrthodontic, form: viewModel, isRequired: false) {
+                TextField("AK Ortodontico", text: $viewModel.formData.akOrthodontic).textFieldStyle(.plain)
             }
         } displayContent: { evaluation in
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                EntityLabelForEdit(name: "Evaluation", id: evaluation.id)
-                Text("Structural: \(evaluation.structural ?? "-")")
-                Text("Cranio-Sacral: \(evaluation.cranioSacral ?? "-")")
-                Text("AK Orthodontic: \(evaluation.akOrthodontic ?? "-")")
+                EntityLabelForEdit(name: "Valutazione", id: evaluation.id)
+                Text("Strutturale: \(evaluation.structural ?? "-")")
+                Text("Cranio-sacrale: \(evaluation.cranioSacral ?? "-")")
+                Text("AK Ortodontico: \(evaluation.akOrthodontic ?? "-")")
             }
         }
     }

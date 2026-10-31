@@ -40,14 +40,14 @@ struct ResponsiveHeaderActions: View {
             Button {
                 isEditMode = true
             } label: {
-                Label("Edit", systemImage: "pencil")
+                Label("Modifica", systemImage: "pencil")
             }
             .appEditButton()
 
             Button(role: .destructive) {
                 showDeleteConfirmation = true
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label("Elimina", systemImage: "trash")
             }
             .appDeleteButton()
             .disabled(isDeleting)

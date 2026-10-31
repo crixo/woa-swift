@@ -16,12 +16,12 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.entity == nil {
-                ProgressView("\(entityName.capitalized) in fase di caricamento")
+                ProgressView("Caricamento \(entityName.capitalized)...")
             } else if viewModel.entity != nil {
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-                            Label("Edit \(entityName)", systemImage: "square.and.pencil")
+                            Label("Modifica \(entityName)", systemImage: "square.and.pencil")
                                 .font(.headline)
                             Form {
                                 editContent()
@@ -48,7 +48,7 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
             } else {
                 VStack(spacing: AppDesignSystem.spacingSM) {
                     Image(systemName: "exclamationmark.circle")
-                    Text("\(entityName.capitalized) non presente")
+                    Text("\(entityName.capitalized) non trovato")
                 }
             }
         }
@@ -69,15 +69,15 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
 
     private var actionButtons: some View {
         Group {
-            Button("Cancel") { onBack()}
+            Button("Annulla") { onBack()}
                 .appSecondaryButton()
             Spacer()
-            Button("Save") {
+            Button("Salva") {
                 Task {
                     let didSave = await viewModel.save()
                     saveResult = didSave
                         ? .success
-                    : .failure(viewModel.shortErrorMessage ?? "Unable to save \(entityName.lowercased()). Please try again.")
+                    : .failure(viewModel.shortErrorMessage ?? "Impossibile salvare \(entityName.lowercased()). Riprova.")
                 }
             }
             .appPrimaryButton()

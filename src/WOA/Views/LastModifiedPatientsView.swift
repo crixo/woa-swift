@@ -15,22 +15,22 @@ struct LastModifiedPatientsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-            Label("Last modified patients", systemImage: "clock.arrow.circlepath")
+            Label("Pazienti modificati di recente", systemImage: "clock.arrow.circlepath")
                 .font(.headline)
 
             if isLoading {
-                ProgressView("Loading recent changes...")
+                ProgressView("Caricamento modifiche recenti...")
             } else if let errorMessage {
                 Text(errorMessage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if patients.isEmpty {
-                Text("No recent patient changes found.")
+                Text("Nessuna modifica recente dei pazienti trovata.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                    Text("Tap a patient to open their detail view")
+                    Text("Tocca un paziente per aprire la sua scheda")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -50,7 +50,7 @@ struct LastModifiedPatientsView: View {
 
                                 Spacer()
 
-                                Label("Open", systemImage: "chevron.right.circle.fill")
+                                Label("Apri", systemImage: "chevron.right.circle.fill")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.blue)
                             }
@@ -64,7 +64,7 @@ struct LastModifiedPatientsView: View {
                         }
                         .buttonStyle(.plain)
                         .contentShape(Rectangle())
-                        .accessibilityHint("Opens the patient detail view")
+                        .accessibilityHint("Apre la scheda del paziente")
                     }
                 }
             }

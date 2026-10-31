@@ -61,7 +61,7 @@ struct PazienteSearchView: View {
                 if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 &&
                     !viewModel.isSearching &&
                     viewModel.results.isEmpty {
-                    ContentUnavailableView("No patients found", systemImage: "person.slash", description: Text("Try a different name or search term."))
+                    ContentUnavailableView("Nessun paziente trovato", systemImage: "person.slash", description: Text("Prova un nome o un termine di ricerca diverso."))
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -74,7 +74,7 @@ struct PazienteSearchView: View {
             .frame(maxWidth: LayoutMetrics2.contentMaxWidth, alignment: .leading)
         }
         .frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
-        .navigationTitle("Patient Search")
+        .navigationTitle("Ricerca pazienti")
         .onAppear {
             viewModel.loadLastModifiedPatients()
         }
@@ -100,17 +100,17 @@ struct PazienteSearchView: View {
 
     private var headerTitle: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Find a patient by name to view their record.")
+            Text("Trova un paziente per nome per visualizzare la sua scheda.")
                 .font(.title2.weight(.semibold))
         }
     }
 
     private var searchPanel: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-            Label("Search patients", systemImage: "magnifyingglass")
+            Label("Cerca pazienti", systemImage: "magnifyingglass")
                 .font(.headline)
 
-            TextField("Search by name", text: $viewModel.searchText)
+            TextField("Cerca per nome", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
                 .frame(minWidth: LayoutMetrics2.searchFieldMinWidth, maxWidth: .infinity, alignment: .leading)
                 .onChange(of: viewModel.searchText) {
@@ -123,7 +123,7 @@ struct PazienteSearchView: View {
             Button {
                 viewModel.search()
             } label: {
-                Label("Search", systemImage: "magnifyingglass")
+                Label("Cerca", systemImage: "magnifyingglass")
             }
             .appSearchButton()
 
@@ -146,7 +146,7 @@ struct PazienteSearchView: View {
     private var searchHint: some View {
         if !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
             viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).count < 3 {
-            Text("Type at least 3 characters to search.")
+            Text("Digita almeno 3 caratteri per cercare.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -155,9 +155,9 @@ struct PazienteSearchView: View {
     @ViewBuilder
     private var resultSummary: some View {
         if viewModel.isSearching {
-            ProgressView("Searching patients...")
+            ProgressView("Ricerca pazienti...")
         } else {
-            Label("\(viewModel.resultCount) result(s) found", systemImage: "person.2")
+            Label("\(viewModel.resultCount) risultato/i trovato/i", systemImage: "person.2")
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }
@@ -171,12 +171,12 @@ struct PazienteSearchView: View {
                     viewModel.loadLastModifiedPatients()
                 }
             } label: {
-                Label(showLastModifiedPatients ? "Hide recent patients" : "Show last \(AppSettings.AppConstants.lastModifiedPatientsLimit) modified patients", systemImage: "clock.arrow.circlepath")
+                Label(showLastModifiedPatients ? "Nascondi pazienti recenti" : "Mostra gli ultimi \(AppSettings.AppConstants.lastModifiedPatientsLimit) pazienti modificati", systemImage: "clock.arrow.circlepath")
             }
             .appSecondaryButton()
 
             Button(action: onAddPatient) {
-                Label("Add Patient", systemImage: "person.badge.plus")
+                Label("Aggiungi paziente", systemImage: "person.badge.plus")
             }
             .appAddButton()
         }
@@ -214,9 +214,9 @@ struct PazienteSearchView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(patient.fullName)
                 .font(.headline)
-            Text("Age: \(patient.ageText)")
+            Text("Età: \(patient.ageText)")
                 .font(.subheadline)
-            Text(patient.address.isEmpty ? "Address not available" : patient.address)
+            Text(patient.address.isEmpty ? "Indirizzo non disponibile" : patient.address)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
@@ -228,7 +228,7 @@ struct PazienteSearchView: View {
         Button {
             openDetails(patient)
         } label: {
-            Label("View details", systemImage: "arrow.right.circle")
+            Label("Vedi dettagli", systemImage: "arrow.right.circle")
         }
         .appSecondaryButton()
     }
@@ -239,7 +239,7 @@ struct PazienteSearchView: View {
     }
 }
 
-#Preview("Compact") {
+#Preview("Compatto") {
     PazienteSearchView(databasePath: "/tmp/preview.db")
         .frame(width: 420, height: 500)
 }

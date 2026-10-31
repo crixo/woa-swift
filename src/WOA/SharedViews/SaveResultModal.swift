@@ -22,13 +22,13 @@ struct SaveResultModal: View {
     }
 
     private var title: String {
-        isSuccess ? "\(target) saved" : "Unable to save"
+        isSuccess ? "\(target) salvato" : "Impossibile salvare"
     }
 
     private var message: String {
         switch state {
         case .success:
-            return "\(target) was saved successfully."
+            return "\(target) è stato salvato correttamente."
         case .failure(let detail):
             return detail
         }
@@ -49,7 +49,7 @@ struct SaveResultModal: View {
             }
             .padding(.top, 8)
 
-            Button(isSuccess ? "Back to \(parent)" : "Close") {
+            Button(isSuccess ? "Torna a \(parent)" : "Chiudi") {
                 onDismiss()
             }
             .appPrimaryButton()

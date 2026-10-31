@@ -8,7 +8,7 @@ struct DatabaseSelectorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                Label("Database file", systemImage: "externaldrive.fill")
+                Label("File database", systemImage: "externaldrive.fill")
                     .font(.headline)
 
                 if let selectedPath = viewModel.selectedPath {
@@ -18,14 +18,14 @@ struct DatabaseSelectorView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 } else {
-                    Text("No file selected")
+                    Text("Nessun file selezionato")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             }
 
             Toggle(
-                "Copy selected database into Application Support",
+                "Copia il database selezionato in Application Support",
                 isOn: $viewModel.copySelectedDatabaseToApplicationSupport
             )
             .toggleStyle(.checkbox)
@@ -33,21 +33,21 @@ struct DatabaseSelectorView: View {
 
             Text(
                 viewModel.copySelectedDatabaseToApplicationSupport
-                    ? "WOA will use an Application Support copy."
-                    : "WOA will use the selected database file directly and ask permission for its containing folder."
+                    ? "WOA userà una copia in Application Support."
+                    : "WOA userà direttamente il file database selezionato e chiederà il permesso per la cartella contenente."
             )
             .font(.callout)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: AppDesignSystem.spacingSM) {
-                Button("Browse Database File") {
+                Button("Sfoglia file database") {
                     viewModel.selectDatabase()
                 }
                 .appSecondaryButton()
                 .disabled(viewModel.isImporting)
 
-                Button("Import Database") {
+                Button("Importa database") {
                     viewModel.importDatabase()
                 }
                 .appPrimaryButton()
@@ -55,7 +55,7 @@ struct DatabaseSelectorView: View {
             }
 
             if viewModel.isImporting {
-                ProgressView("Validating database...")
+                ProgressView("Validazione database...")
                     .padding(.top, 2)
             }
 

@@ -22,12 +22,12 @@ struct ConsultoAddView: View {
             saveResult: $saveResult
         ) {
             FormField("Data", field: \ConsultoRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("Date", selection: $viewModel.formData.date, displayedComponents: .date)
+                DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
 
-            FormField("Description", field: \ConsultoRequest.initialProblem, form: viewModel, isRequired: false) {
-                TextField("Description", text: $viewModel.formData.initialProblem).textFieldStyle(.plain)
+            FormField("Descrizione", field: \ConsultoRequest.initialProblem, form: viewModel, isRequired: false) {
+                TextField("Descrizione", text: $viewModel.formData.initialProblem).textFieldStyle(.plain)
             }
         }
     }

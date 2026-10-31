@@ -29,11 +29,11 @@ struct AnamnesiRemotaAddView: View {
             saveResult: $saveResult
         ) {
             FormField("Data", field: \RemoteHistoryCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("In che data e' avvenuta la visita?", selection: $viewModel.formData.date, displayedComponents: .date)
+                DatePicker("In che data è avvenuta la visita?", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
             FormField("Tipo", field: \RemoteHistoryCreateRequest.date, form: viewModel, value: viewModel.formData.typeID) {
-                Picker("Type", selection: $viewModel.formData.typeID) {
+                Picker("Tipo", selection: $viewModel.formData.typeID) {
                     ForEach(viewModel.types) { type in
                         Text(type.name).tag(type.id)
                     }
@@ -41,7 +41,7 @@ struct AnamnesiRemotaAddView: View {
             }
             
             FormField("Descrizione", field: \RemoteHistoryCreateRequest.description, form: viewModel, isRequired: true) {
-                TextField("Add a description", text: $viewModel.formData.description).textFieldStyle(.plain)
+                TextField("Aggiungi una descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
         }
     }

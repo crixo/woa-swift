@@ -50,7 +50,7 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
                 HStack(spacing: AppDesignSystem.spacingSM) {
                     Text("WOA")
                         .font(.headline.weight(.bold))
-                    Text("patients database … \(appVersionLabel)")
+                    Text("database pazienti … \(appVersionLabel)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -61,7 +61,7 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
 
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(action: onSearch) {
-                    Label("Patients Search", systemImage: "person.3.fill")
+                    Label("Ricerca pazienti", systemImage: "person.3.fill")
                 }
                 .labelStyle(.titleAndIcon)
                 .disabled(!isConfigured)

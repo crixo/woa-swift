@@ -59,11 +59,11 @@ struct LaunchScreenView: View {
 
     private var tablePanel: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-            Label("Database connection", systemImage: "network")
+            Label("Connessione database", systemImage: "network")
                 .font(.headline)
 
             if let lastValidated = settings.databaseConnection.lastValidated {
-                Text("Last validated: \(lastValidated.formatted())")
+                Text("Ultima validazione: \(lastValidated.formatted())")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -87,10 +87,10 @@ struct LaunchScreenView: View {
     private var migrationsPanel: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             HStack {
-                Label("Migrations applied this session", systemImage: "clock.arrow.circlepath")
+                Label("Migrazioni applicate in questa sessione", systemImage: "clock.arrow.circlepath")
                     .font(.headline)
                 Spacer()
-                Button("Migration History", systemImage: "list.bullet") {
+                Button("Cronologia migrazioni", systemImage: "list.bullet") {
                     onMigrationHistory()
                 }
                 .appSecondaryButton()
@@ -98,12 +98,12 @@ struct LaunchScreenView: View {
 
             Group {
                 if let migrationHistoryError {
-                    Text("Unable to load migration history: \(migrationHistoryError)")
+                    Text("Impossibile caricare la cronologia migrazioni: \(migrationHistoryError)")
                         .font(.callout)
                         .foregroundStyle(.red)
                         .textSelection(.enabled)
                 } else if sessionMigrations.isEmpty {
-                    Text("No migrations applied")
+                    Text("Nessuna migrazione applicata")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
@@ -124,7 +124,7 @@ struct LaunchScreenView: View {
                         }
                     }
                     .frame(height: min(CGFloat(sessionMigrations.count) * 32, 96))
-                    .accessibilityLabel("Migrations applied this session")
+                    .accessibilityLabel("Migrazioni applicate in questa sessione")
                 }
             }
 

@@ -24,7 +24,7 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
                         if isEditMode {
                             VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-                                Label("Edit \(entityName)", systemImage: "square.and.pencil")
+                                Label("Modifica \(entityName)", systemImage: "square.and.pencil")
                                     .font(.headline)
                                 Form {
                                     editContent()
@@ -82,8 +82,8 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
                 }
             )
         }
-        .confirmationDialog("Delete this \(entityName.lowercased())?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
+        .confirmationDialog("Eliminare questo \(entityName.lowercased())?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Elimina", role: .destructive) {
                 Task { if await viewModel.delete() { onBack() } }
             }
         }
@@ -91,15 +91,15 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
 
     private var actionButtons: some View {
         Group {
-            Button("Cancel") { isEditMode = false }
+            Button("Annulla") { isEditMode = false }
                 .appSecondaryButton()
             Spacer()
-            Button("Save") {
+            Button("Salva") {
                 Task {
                     let didSave = await viewModel.save()
                     saveResult = didSave
                         ? .success
-                    : .failure(viewModel.shortErrorMessage ?? "Unable to save \(entityName.lowercased()). Please try again.")
+                    : .failure(viewModel.shortErrorMessage ?? "Impossibile salvare \(entityName.lowercased()). Riprova.")
                 }
             }
             .appPrimaryButton()

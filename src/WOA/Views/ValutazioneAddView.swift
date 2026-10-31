@@ -23,14 +23,14 @@ struct ValutazioneAddView: View {
             onSuccess: onSuccess,
             saveResult: $saveResult
         ) {
-            FormField("Structural", field: \EvaluationCreateRequest.structural, form: viewModel, isRequired: false) {
+            FormField("Strutturale", field: \EvaluationCreateRequest.structural, form: viewModel, isRequired: false) {
                 TextField("Strutturale", text: $viewModel.formData.structural).textFieldStyle(.plain)
             }
-            FormField("Cranio-Sacrale", field: \EvaluationCreateRequest.cranioSacral, form: viewModel, isRequired: false) {
-                TextField("Cranio-Sacrale", text: $viewModel.formData.cranioSacral).textFieldStyle(.plain)
+            FormField("Cranio-sacrale", field: \EvaluationCreateRequest.cranioSacral, form: viewModel, isRequired: false) {
+                TextField("Cranio-sacrale", text: $viewModel.formData.cranioSacral).textFieldStyle(.plain)
             }
-            FormField("AK Orthodontic", field: \EvaluationCreateRequest.akOrthodontic, form: viewModel, isRequired: false) {
-                TextField("AK Orthodontic", text: $viewModel.formData.akOrthodontic).textFieldStyle(.plain)
+            FormField("AK Ortodontico", field: \EvaluationCreateRequest.akOrthodontic, form: viewModel, isRequired: false) {
+                TextField("AK Ortodontico", text: $viewModel.formData.akOrthodontic).textFieldStyle(.plain)
             }
         }
     }

@@ -23,13 +23,13 @@ struct TrattamentoAddView: View {
             onSuccess: onSuccess,
             saveResult: $saveResult
         ) {
-            FormField("Date", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
+            FormField("Data", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
                 DatePicker("", selection: $viewModel.formData.date, displayedComponents: .date)
                     .labelsHidden()
             }
             
-            FormField("Description", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {
-                TextField("Add a description", text: $viewModel.formData.description).textFieldStyle(.plain)
+            FormField("Descrizione", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {
+                TextField("Aggiungi una descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
         }
     }

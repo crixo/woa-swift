@@ -11,14 +11,14 @@ struct TableStatusView: View {
 
     init(tables: [TableInfo], onContinue: @escaping () -> Void) {
         self.tables = tables
-        self.title = "Database Import Successful"
+        self.title = "Importazione database completata"
         self.onContinue = onContinue
         self.onReselectDatabase = nil
     }
 
     init(tables: [TableInfo], onReselectDatabase: @escaping () -> Void) {
         self.tables = tables
-        self.title = "Database Tables"
+        self.title = "Tabelle del database"
         self.onContinue = nil
         self.onReselectDatabase = onReselectDatabase
     }
@@ -34,7 +34,7 @@ struct TableStatusView: View {
                     .font(.title2.weight(.semibold))
                 Spacer()
                 if let onContinue {
-                    Button("Continue") {
+                    Button("Continua") {
                         onContinue()
                     }
                     .appPrimaryButton()
@@ -47,9 +47,9 @@ struct TableStatusView: View {
                     Image(systemName: "tablecells.fill")
                         .font(.title2)
                         .foregroundStyle(.secondary)
-                    Text("No tables available")
+                    Text("Nessuna tabella disponibile")
                         .font(.headline)
-                    Text("The selected database does not expose any readable tables.")
+                    Text("Il database selezionato non contiene tabelle leggibili.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ struct TableStatusView: View {
                             Label(table.name, systemImage: "tablecells")
                                 .font(.body)
                             Spacer()
-                            Text("\(table.recordCount) rows")
+                            Text("\(table.recordCount) righe")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -73,26 +73,26 @@ struct TableStatusView: View {
                 }
             }
 
-            Text("\(tables.count) tables found with \(totalRecords) total records")
+            Text("\(tables.count) tabelle trovate con \(totalRecords) record totali")
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
             if let onReselectDatabase {
-                Button("Re-select Database", role: .destructive) {
+                Button("Ridisponi database", role: .destructive) {
                     isShowingReselectConfirmation = true
                 }
                 .appSecondaryButton()
                 .confirmationDialog(
-                    "Re-select Database?",
+                    "Ridisponi database?",
                     isPresented: $isShowingReselectConfirmation,
                     titleVisibility: .visible
                 ) {
-                    Button("Re-select Database", role: .destructive) {
+                    Button("Ridisponi database", role: .destructive) {
                         onReselectDatabase()
                     }
-                    Button("Cancel", role: .cancel) {}
+                    Button("Annulla", role: .cancel) {}
                 } message: {
-                    Text("The current database connection will be cleared.")
+                    Text("La connessione al database corrente verrà eliminata.")
                 }
             }
         }

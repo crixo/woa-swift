@@ -20,9 +20,9 @@ struct PatientDetail: Identifiable, Hashable {
     }
 
     var ageText: String {
-        guard let dataNascita else { return "Not available" }
+        guard let dataNascita else { return "Non disponibile" }
         let years = Calendar.current.dateComponents([.year], from: dataNascita, to: Date()).year ?? 0
-        return years >= 0 ? "\(years)" : "Not available"
+        return years >= 0 ? "\(years)" : "Non disponibile"
     }
 
     var formData: PatientCreateRequest {

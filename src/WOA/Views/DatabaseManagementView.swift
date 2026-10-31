@@ -9,7 +9,7 @@ struct DatabaseManagementView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingXL) {
             if viewModel.isLoading {
-                ProgressView("Loading configuration...")
+                ProgressView("Caricamento configurazione...")
                     .appCard(padding: AppDesignSystem.spacingLG)
             } else if let migrationError = viewModel.migrationError {
                 migrationFailureContent(
@@ -43,7 +43,7 @@ struct DatabaseManagementView: View {
 
     private var notConfiguredContent: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-            Text("Database Configuration Required")
+            Text("Configurazione database richiesta")
                 .font(.title2.weight(.semibold))
 
             DatabaseSelectorView(viewModel: viewModel)
@@ -60,11 +60,11 @@ struct DatabaseManagementView: View {
         onReselectDatabase: @escaping () -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-            Label("Database Migration Required", systemImage: "exclamationmark.triangle.fill")
+            Label("Migrazione database richiesta", systemImage: "exclamationmark.triangle.fill")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.orange)
 
-            Text("The database could not be updated. WOA cannot continue until the migration succeeds.")
+            Text("Il database non è stato aggiornato. WOA non può continuare finché la migrazione non riesce.")
                 .font(.body)
 
             Text(message)
@@ -72,36 +72,36 @@ struct DatabaseManagementView: View {
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 
-            Button("Retry Migrations", systemImage: "arrow.clockwise") {
+            Button("Riprova migrazioni", systemImage: "arrow.clockwise") {
                 viewModel.retryMigrations()
             }
             .appPrimaryButton()
 
             if canGrantFolderAccess {
-                Text("SQLite needs permission to the database's containing folder to create or open sibling journal files.")
+                Text("SQLite necessita di autorizzazione alla cartella contenente il database per creare o aprire i file journal secondari.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Button("Grant Database Folder Access and Retry", systemImage: "folder.badge.gearshape") {
+                Button("Concedi accesso alla cartella del database e riprova", systemImage: "folder.badge.gearshape") {
                     onGrantFolderAccess()
                 }
                 .appSecondaryButton()
             }
 
             if canCopyToApplicationSupport {
-                Text("If macOS blocks SQLite from accessing journal files beside the selected database, copy it into Application Support and retry.")
+                Text("Se macOS blocca SQLite dall'accesso ai file journal accanto al database selezionato, copialo in Application Support e riprova.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Button("Copy to Application Support and Retry", systemImage: "doc.on.doc") {
+                Button("Copia in Application Support e riprova", systemImage: "doc.on.doc") {
                     onCopyToApplicationSupport()
                 }
                 .appSecondaryButton()
             }
 
-            Button("Choose Another Database", systemImage: "folder") {
+            Button("Scegli un altro database", systemImage: "folder") {
                 onReselectDatabase()
             }
             .appSecondaryButton()

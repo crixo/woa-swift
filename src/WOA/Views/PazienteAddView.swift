@@ -85,7 +85,7 @@ struct PazienteAddView: View {
         Button {
             onCancel()
         } label: {
-            Label("Cancel", systemImage: "xmark")
+            Label("Annulla", systemImage: "xmark")
                 .frame(maxWidth: .infinity)
         }
         .appSecondaryButton()
@@ -95,10 +95,10 @@ struct PazienteAddView: View {
                 let didSave = await viewModel.save()
                 saveResult = didSave
                     ? .success
-                    : .failure("Creazione nuovo paziente non riuscita. Please try again.")
+                    : .failure("Creazione nuovo paziente non riuscita. Riprova.")
             }
         } label: {
-            Label(viewModel.isSaving ? "Adding..." : "Add Patient", systemImage: "person.badge.plus")
+            Label(viewModel.isSaving ? "Salvataggio..." : "Aggiungi paziente", systemImage: "person.badge.plus")
                 .frame(maxWidth: .infinity)
         }
         .appAddButton()

@@ -16,32 +16,32 @@ struct MigrationHistoryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             HStack {
-                Text("Migration History")
+                Text("Cronologia migrazioni")
                     .font(.title2.weight(.semibold))
                 Spacer()
                 Button {
                     Task { await viewModel.load() }
                 } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Label("Aggiorna", systemImage: "arrow.clockwise")
                 }
                 .appSecondaryButton()
                 .disabled(viewModel.isLoading)
             }
 
             if viewModel.isLoading {
-                ProgressView("Loading migration history...")
+                ProgressView("Caricamento cronologia migrazioni...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let errorMessage = viewModel.errorMessage {
                 ContentUnavailableView(
-                    "Unable to Load Migration History",
+                    "Impossibile caricare la cronologia migrazioni",
                     systemImage: "exclamationmark.triangle",
                     description: Text(errorMessage)
                 )
             } else if viewModel.migrations.isEmpty {
                 ContentUnavailableView(
-                    "No Migrations Applied",
+                    "Nessuna migrazione applicata",
                     systemImage: "externaldrive",
-                    description: Text("Applied database migrations will appear here.")
+                    description: Text("Le migrazioni del database applicate appariranno qui.")
                 )
             } else {
                 List(viewModel.migrations) { migration in
@@ -53,7 +53,7 @@ struct MigrationHistoryView: View {
         .padding(AppDesignSystem.spacingLG)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task { await viewModel.load() }
-        .navigationTitle("Migration History")
+        .navigationTitle("Cronologia migrazioni")
     }
 
     private func migrationRow(_ migration: DatabaseMigration) -> some View {
@@ -73,7 +73,7 @@ struct MigrationHistoryView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 if migration.appliedInCurrentSession {
-                    Label("Applied this session", systemImage: "checkmark.circle.fill")
+                    Label("Applicata in questa sessione", systemImage: "checkmark.circle.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.green)
                 }

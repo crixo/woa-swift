@@ -17,7 +17,7 @@ struct FormActionBar: View {
 
     var body: some View {
         HStack(spacing: AppDesignSystem.spacingSM) {
-            Button("Cancel", action: onCancel)
+            Button("Annulla", action: onCancel)
                 .appSecondaryButton()
 
             Spacer()

@@ -24,19 +24,19 @@ struct EsameAddView: View {
             saveResult: $saveResult
         ) {
             FormField("Data", field: \ExamCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("Date", selection: $viewModel.formData.date, displayedComponents: .date)
+                DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
             FormField("Tipo", field: \ExamCreateRequest.date, form: viewModel, value: viewModel.formData.typeID) {
-                Picker("Type", selection: $viewModel.formData.typeID) {
+                Picker("Tipo", selection: $viewModel.formData.typeID) {
                     ForEach(viewModel.types) { type in
                         Text(type.name).tag(type.id)
                     }
                 }
             }
 
-            FormField("Description", field: \ExamCreateRequest.description, form: viewModel, isRequired: false) {
-                TextField("Description", text: $viewModel.formData.description).textFieldStyle(.plain)
+            FormField("Descrizione", field: \ExamCreateRequest.description, form: viewModel, isRequired: false) {
+                TextField("Descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
         }
     }

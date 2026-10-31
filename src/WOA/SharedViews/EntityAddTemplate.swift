@@ -23,7 +23,7 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
             Section{
                 addContent()
             } header: {
-                Label("Add \(entityNameFLU)", systemImage: "doc.badge.plus")
+                Label("Aggiungi \(entityNameFLU)", systemImage: "doc.badge.plus")
             }
             
             if let errorMessage = viewModel.errorMessage {
@@ -35,25 +35,25 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
             Section {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                        Label("Ready to save?", systemImage: "doc.text.fill").font(.headline)
-                        Text("Review the \(entityName) details before creating this record.")
+                        Label("Pronto a salvare?", systemImage: "doc.text.fill").font(.headline)
+                        Text("Controlla i dettagli di \(entityName) prima di creare questo record.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     
                     HStack(spacing: AppDesignSystem.spacingSM) {
-                        Button("Cancel", action: onCancel).appSecondaryButton()
+                        Button("Annulla", action: onCancel).appSecondaryButton()
                         Spacer()
                         Button {
                             Task {
                                 let didSave = await viewModel.save()
                                 saveResult = didSave
                                     ? .success
-                                : .failure(viewModel.shortErrorMessage ?? "Unable to create \(entityName). Please try again.")
+                                : .failure(viewModel.shortErrorMessage ?? "Impossibile creare \(entityName). Riprova.")
                             }
                         } label: {
-                            Label("Add \(entityNameFLU)", systemImage: "doc.badge.plus")
+                            Label("Aggiungi \(entityNameFLU)", systemImage: "doc.badge.plus")
                         }
                         .appAddButton()
                         .disabled(viewModel.isSaving)
@@ -63,7 +63,7 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
             }
         }
         .appForm()
-        .navigationTitle("Add \(entityNameFLU)")
+        .navigationTitle("Aggiungi \(entityNameFLU)")
         .sheet(item: $saveResult) { result in
             SaveResultModal(
                 state: result,

@@ -26,7 +26,7 @@ struct PazienteDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.patient == nil {
-                ProgressView("Loading patient...")
+                ProgressView("Caricamento paziente...")
             } else if let patient = viewModel.patient {
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
@@ -65,7 +65,7 @@ struct PazienteDetailView: View {
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "person.crop.circle.badge.questionmark")
-                    Text("Patient not found")
+                    Text("Paziente non trovato")
                 }
             }
         }
@@ -73,14 +73,14 @@ struct PazienteDetailView: View {
         .onAppear {
             Task { await viewModel.load() }
         }
-        .confirmationDialog("Delete this patient?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete Patient", role: .destructive) {
+        .confirmationDialog("Eliminare questo paziente?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Elimina paziente", role: .destructive) {
                 Task {
                     if await viewModel.delete() { onDeleted() }
                 }
             }
         } message: {
-            Text("This action removes the patient record. Related records are not automatically deleted.")
+            Text("Questa azione rimuove la scheda del paziente. I record correlati non vengono eliminati automaticamente.")
         }
     }
     
@@ -91,17 +91,17 @@ struct PazienteDetailView: View {
                 GridItem(.flexible(minimum: 180), alignment: .leading),
                 GridItem(.flexible(minimum: 180), alignment: .leading)
             ], alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                detailRow("First name", patient.nome)
-                detailRow("Last name", patient.cognome)
-                detailRow("Profession", patient.professione)
-                detailRow("Address", patient.indirizzo)
-                detailRow("City", patient.citta)
-                detailRow("Province", patient.provincia ?? patient.prov)
-                detailRow("Postal code", patient.cap)
-                detailRow("Phone", patient.telefono)
-                detailRow("Mobile", patient.cellulare)
+                detailRow("Nome", patient.nome)
+                detailRow("Cognome", patient.cognome)
+                detailRow("Professione", patient.professione)
+                detailRow("Indirizzo", patient.indirizzo)
+                detailRow("Città", patient.citta)
+                detailRow("Provincia", patient.provincia ?? patient.prov)
+                detailRow("CAP", patient.cap)
+                detailRow("Telefono", patient.telefono)
+                detailRow("Cellulare", patient.cellulare)
                 detailRow("Email", patient.email)
-                detailRow("Date of birth", patient.dataNascita?.formatted(date: .abbreviated, time: .omitted))
+                detailRow("Data di nascita", patient.dataNascita?.formatted(date: .abbreviated, time: .omitted))
             }
             .padding(.top, AppDesignSystem.spacingSM)
         }
@@ -115,7 +115,7 @@ struct PazienteDetailView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
             
-            Text(value?.isEmpty == false ? value! : "Not available")
+            Text(value?.isEmpty == false ? value! : "Non disponibile")
                 .font(.body)
         }
         .padding(.vertical, AppDesignSystem.spacingXS)
@@ -134,7 +134,7 @@ struct PatientHeaderView: View {
     var body: some View {
         ResponsiveHeader {
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                Label("Paziente overview", systemImage: "person.fill")
+                Label("Panoramica paziente", systemImage: "person.fill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
@@ -146,10 +146,10 @@ struct PatientHeaderView: View {
                 HStack(spacing: AppDesignSystem.spacingSM) {
                     Text("ID \(patient.id)")
                     Text("•")
-                    Text("Age \(patient.ageText)")
+                    Text("Età \(patient.ageText)")
                     if patient.professione?.isEmpty == false {
                         Text("•")
-                        Text(patient.professione ?? "Profession not available")
+                        Text(patient.professione ?? "Professione non disponibile")
                     }
                 }
                 .font(.subheadline)
@@ -162,12 +162,12 @@ struct PatientHeaderView: View {
                     //TODO: open PazienteEditView
                     onEditPatient()
                 } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label("Modifica", systemImage: "pencil")
                 }
                 .appEditButton()
                 
                 Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label("Elimina", systemImage: "trash")
                 }
                 .appDeleteButton()
                 .disabled(isDeleting)
@@ -207,7 +207,7 @@ struct ConsultiList: View {
                 } else {
                     ForEach(consultations) { item in
                         Button { onOpenConsultation(item.id) } label: {
-                            SummaryRow(date: item.date, text: item.initialProblem ?? "Reason not available")
+                            SummaryRow(date: item.date, text: item.initialProblem ?? "Motivo non disponibile")
                         }
                         .buttonStyle(.plain)
                     }
@@ -255,7 +255,7 @@ struct AnamnesiRemoteList: View {
     }
     
     private func historySummary(_ item: RemoteHistorySummary) -> String {
-        let type = item.typeName?.isEmpty == false ? item.typeName! : "Type not available"
+        let type = item.typeName?.isEmpty == false ? item.typeName! : "Tipo non disponibile"
         let description = item.description?.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard let description, !description.isEmpty else {

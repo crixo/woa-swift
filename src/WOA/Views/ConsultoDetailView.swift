@@ -34,7 +34,7 @@ struct ConsultoDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.consultation == nil {
-                ProgressView("Loading consultation...")
+                ProgressView("Caricamento consulto...")
             } else if let consultation = viewModel.consultation {
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
@@ -54,7 +54,7 @@ struct ConsultoDetailView: View {
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "calendar.badge.exclamationmark")
-                    Text("Consultation not found")
+                    Text("Consulto non trovato")
                 }
             }
         }
@@ -76,18 +76,18 @@ struct ConsultoDetailView: View {
     private func header(_ consultation: ConsultationDetail) -> some View {
         ResponsiveHeader {
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                Label("Appointment overview", systemImage: "calendar.badge.clock")
+                Label("Panoramica appuntamento", systemImage: "calendar.badge.clock")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
 
-                Text(consultation.initialProblem ?? "No problem recorded")
+                Text(consultation.initialProblem ?? "Nessun problema registrato")
                     .font(.title2)
                     .fontWeight(.bold)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: AppDesignSystem.spacingSM) {
-                    Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "No date")
+                    Text(consultation.date?.formatted(date: .long, time: .omitted) ?? "Nessuna data")
                     Text("•")
                     Text("ID \(consultation.id)")
                 }
@@ -100,14 +100,14 @@ struct ConsultoDetailView: View {
                     //viewModel.beginEditing()
                     onEditConsulto()
                 } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label("Modifica", systemImage: "pencil")
                 }
                 .appEditButton()
 
                 Button(role: .destructive) {
                     viewModel.showDeleteConfirmation = true
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label("Elimina", systemImage: "trash")
                 }
                 .appDeleteButton()
                 .disabled(viewModel.isDeleting)
@@ -122,7 +122,7 @@ struct ConsultoDetailView: View {
         DisclosureGroup(isExpanded: $viewModel.isTreatmentsExpanded) {
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 if viewModel.treatments.isEmpty {
-                    ContentUnavailableView("Nessun trattamento registrato", systemImage: "cross.case", description: Text("Add a treatment to keep the appointment record complete."))
+                    ContentUnavailableView("Nessun trattamento registrato", systemImage: "cross.case", description: Text("Aggiungi un trattamento per mantenere completo il record dell'appuntamento."))
                 } else {
                     ForEach(viewModel.treatments) { treatment in
                         Button(action: { onOpenTreatment(treatment.id) }) {
@@ -132,10 +132,10 @@ struct ConsultoDetailView: View {
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(treatment.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
+                                    Text(treatment.date?.formatted(date: .abbreviated, time: .omitted) ?? "Nessuna data")
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
-                                    Text(treatment.description ?? "No description")
+                                    Text(treatment.description ?? "Nessuna descrizione")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
@@ -173,7 +173,7 @@ struct ConsultoDetailView: View {
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(evaluation.structural ?? "No structural notes")
+                                    Text(evaluation.structural ?? "Nessuna nota strutturale")
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
                                         .lineLimit(1)
@@ -215,10 +215,10 @@ struct ConsultoDetailView: View {
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(exam.date?.formatted(date: .abbreviated, time: .omitted) ?? "No date")
+                                    Text(exam.date?.formatted(date: .abbreviated, time: .omitted) ?? "Nessuna data")
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
-                                    Text((exam.typeName ?? "No type") + " • " + (exam.description ?? "No description"))
+                                    Text((exam.typeName ?? "Nessun tipo") + " • " + (exam.description ?? "Nessuna descrizione"))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)

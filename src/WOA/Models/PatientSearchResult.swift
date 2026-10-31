@@ -25,8 +25,8 @@ struct PatientSearchResult: Identifiable, Equatable, Hashable {
     }
 
     var ageText: String {
-        guard let age else { return "Age unavailable" }
-        return "\(age) years"
+        guard let age else { return "Età non disponibile" }
+        return "\(age) anni"
     }
 
     var address: String {
@@ -41,15 +41,15 @@ struct PatientSearchResult: Identifiable, Equatable, Hashable {
 
     var details: [String] {
         [
-            "Name: \(fullName)",
-            "Age: \(ageText)",
-            "Address: \(address.isEmpty ? "Not available" : address)",
-            "Birth date: \(birthDateText)"
+            "Nome: \(fullName)",
+            "Età: \(ageText)",
+            "Indirizzo: \(address.isEmpty ? "Non disponibile" : address)",
+            "Data di nascita: \(birthDateText)"
         ]
     }
 
     private var birthDateText: String {
-        guard let dataNascita else { return "Not available" }
+        guard let dataNascita else { return "Non disponibile" }
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
