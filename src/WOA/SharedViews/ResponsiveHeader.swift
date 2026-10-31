@@ -50,4 +50,25 @@ struct ResponsiveHeaderActions: View {
             .disabled(isDeleting)
         }
     }
+
+
+}
+
+#Preview("Responsive header") {
+    ResponsiveHeader {
+        Text("Informazioni paziente")
+            .font(.headline)
+    } actions: {
+        Button("Modifica") {}
+    }
+    .padding()
+}
+
+#Preview("Responsive header actions") {
+    ResponsiveHeaderActions(
+        isEditMode: .constant(false),
+        showDeleteConfirmation: .constant(false),
+        isDeleting: false
+    )
+    .padding()
 }

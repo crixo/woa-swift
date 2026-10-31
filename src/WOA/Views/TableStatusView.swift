@@ -42,6 +42,7 @@ struct TableStatusView: View {
                 }
             }
 
+
             if tables.isEmpty {
                 VStack(spacing: AppDesignSystem.spacingSM) {
                     Image(systemName: "tablecells.fill")
@@ -97,4 +98,15 @@ struct TableStatusView: View {
             }
         }
     }
+}
+
+#Preview {
+    TableStatusView(
+        tables: [
+            TableInfo(name: "pazienti", recordCount: 12),
+            TableInfo(name: "consulti", recordCount: 8)
+        ],
+        onContinue: {}
+    )
+    .padding()
 }

@@ -83,6 +83,9 @@ struct PazienteAddView: View {
 
 }
 
- #Preview {
-     PazienteAddView(databaseFileURL: URL(fileURLWithPath: "/tmp/test.db"), dataChangeCoordinator: DataChangeCoordinator())
- }
+#Preview {
+    PazienteAddView(
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator()
+    )
+}

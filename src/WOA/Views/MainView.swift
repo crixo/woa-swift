@@ -251,6 +251,7 @@ struct MainView: View {
         }
 
     }
+
     /// Bundle version from Info.plist (`CFBundleVersion`). Debug builds append `(next)`.
     private var appVersionLabel: String {
         let version = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
@@ -261,4 +262,8 @@ struct MainView: View {
         #endif
     }
 
+}
+
+#Preview {
+    MainView()
 }

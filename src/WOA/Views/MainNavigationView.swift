@@ -34,6 +34,7 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
                     destinationContent(route)
                 }
         }
+
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {
@@ -70,5 +71,18 @@ struct MainNavigationView<RootContent: View, DestinationContent: View>: View {
             }
         }
         .frame(minWidth: 420, minHeight: 320)
+    }
+}
+
+#Preview {
+    MainNavigationView(
+        path: .constant([]),
+        isConfigured: true,
+        appVersionLabel: "Preview",
+        onSearch: {}
+    ) {
+        Text("Home")
+    } destinationContent: { route in
+        Text(String(describing: route))
     }
 }

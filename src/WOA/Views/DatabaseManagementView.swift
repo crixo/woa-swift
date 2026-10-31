@@ -37,6 +37,7 @@ struct DatabaseManagementView: View {
                 notConfiguredContent
             }
         }
+
         .padding()
         .onAppear(perform: viewModel.loadSettings)
     }
@@ -111,4 +112,19 @@ struct DatabaseManagementView: View {
         .appCard(padding: AppDesignSystem.spacingLG)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+#Preview {
+    let settingsStore = AppSettingsStore()
+    let viewModel = DatabaseManagementViewModel(
+        settingsStore: settingsStore,
+        migrationService: DatabaseMigrationService()
+    )
+
+    DatabaseManagementView(
+        viewModel: viewModel,
+        settingsStore: settingsStore,
+        onMigrationHistory: {},
+        onResetConfiguration: {}
+    )
 }

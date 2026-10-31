@@ -33,6 +33,7 @@ struct EsameAddView: View {
                         Text(type.name).tag(type.id)
                     }
                 }
+
             }
 
             FormField("Descrizione", field: \ExamCreateRequest.description, form: viewModel, isRequired: false) {
@@ -40,4 +41,15 @@ struct EsameAddView: View {
             }
         }
     }
+}
+
+#Preview {
+    EsameAddView(
+        consultoID: 1,
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onCancel: {},
+        onSuccess: {}
+    )
 }

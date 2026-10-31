@@ -33,6 +33,7 @@ struct EsameDetailEditView: View {
                         Text(type.name).tag(type.id)
                     }
                 }
+
             }
 
             FormField("Descrizione", field: \ExamCreateRequest.description, form: viewModel, isRequired: false) {
@@ -47,4 +48,13 @@ struct EsameDetailEditView: View {
             }
         }
     }
+}
+
+#Preview {
+    EsameDetailEditView(
+        examID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onBackToConsulto: {}
+    )
 }

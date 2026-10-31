@@ -68,7 +68,7 @@ struct AnamnesiRemotaDetailEditView: View {
 #Preview("Compact") {
     AnamnesiRemotaDetailEditView(
         historyID: 1,
-        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
         dataChangeCoordinator: DataChangeCoordinator(),
         onBackToPatient: {}
     )
@@ -78,7 +78,7 @@ struct AnamnesiRemotaDetailEditView: View {
 #Preview("Wide") {
     AnamnesiRemotaDetailEditView(
         historyID: 1,
-        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
         dataChangeCoordinator: DataChangeCoordinator(),
         onBackToPatient: {}
     )

@@ -31,5 +31,17 @@ struct TrattamentoAddView: View {
                 TextField("Aggiungi una descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
         }
+
     }
+}
+
+#Preview {
+    TrattamentoAddView(
+        consultoID: 1,
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onCancel: {},
+        onSuccess: {}
+    )
 }

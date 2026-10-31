@@ -240,16 +240,16 @@ struct PazienteSearchView: View {
 }
 
 #Preview("Compatto") {
-    PazienteSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db").path)
         .frame(width: 420, height: 500)
 }
 
 #Preview("Standard") {
-    PazienteSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db").path)
         .frame(width: 700, height: 600)
 }
 
 #Preview("Wide") {
-    PazienteSearchView(databasePath: "/tmp/preview.db")
+    PazienteSearchView(databasePath: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db").path)
         .frame(width: 1100, height: 700)
 }

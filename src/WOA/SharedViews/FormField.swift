@@ -55,6 +55,7 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
                     .accessibilityLabel("Error: \(errorMessage)")
             }
         }
+
         .animation(.easeInOut(duration: 0.15), value: errorMessage)
         .onChange(of: value) { form.fieldDidChange(field) }
     }
@@ -87,4 +88,16 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+}
+
+#Preview {
+    FormField(
+        "Nome",
+        field: "nome",
+        form: FormValidator<String>(),
+        value: "Maria"
+    ) {
+        TextField("Nome", text: .constant("Maria"))
+    }
+    .padding()
 }

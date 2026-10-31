@@ -76,6 +76,7 @@ struct LaunchScreenView: View {
         }
     }
 
+
     private var settingsPanel: some View {
         ApplicationSettingsView(
             settings: settings,
@@ -131,4 +132,16 @@ struct LaunchScreenView: View {
             .appCard(padding: AppDesignSystem.spacingLG)
         }
     }
+}
+
+#Preview {
+    LaunchScreenView(
+        tables: [],
+        sessionMigrations: [],
+        migrationHistoryError: nil,
+        settings: .default,
+        settingsFilePath: "Preview configuration",
+        onMigrationHistory: {},
+        onReselectDatabase: {}
+    )
 }

@@ -31,6 +31,7 @@ struct ApplicationSettingsView: View {
                     settingRow(label: "Tema", value: settings.theme.rawValue)
                 }
             }
+
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -60,4 +61,11 @@ struct ApplicationSettingsView: View {
         .padding(.horizontal, AppDesignSystem.spacingSM)
         .background(Color.primary.opacity(0.02), in: RoundedRectangle(cornerRadius: AppDesignSystem.controlRadius, style: .continuous))
     }
+}
+
+#Preview {
+    ApplicationSettingsView(
+        settings: .default,
+        settingsFilePath: "Preview configuration"
+    )
 }

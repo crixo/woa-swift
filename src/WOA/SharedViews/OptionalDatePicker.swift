@@ -37,5 +37,14 @@ struct OptionalDatePicker: View {
                 .foregroundStyle(.secondary)
             }
         }
+
     }
+}
+
+#Preview {
+    OptionalDatePicker(
+        title: "Data di nascita",
+        date: .constant(Date())
+    )
+    .padding()
 }

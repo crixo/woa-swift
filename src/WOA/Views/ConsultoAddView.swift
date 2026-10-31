@@ -30,5 +30,16 @@ struct ConsultoAddView: View {
                 TextField("Descrizione", text: $viewModel.formData.initialProblem).textFieldStyle(.plain)
             }
         }
+
     }
+}
+
+#Preview {
+    ConsultoAddView(
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onCancel: {},
+        onSuccess: {}
+    )
 }

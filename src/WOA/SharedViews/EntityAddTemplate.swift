@@ -24,6 +24,7 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
                 }
             }
 
+
             Section {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
@@ -66,5 +67,22 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
                 }
             )
         }
+    }
+}
+
+#Preview {
+    EntityAddTemplate(
+        viewModel: ConsultoAddViewModel(
+            patientID: 1,
+            databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+            dataChangeCoordinator: DataChangeCoordinator()
+        ),
+        entityName: "consulto",
+        parentName: "paziente",
+        onCancel: {},
+        onSuccess: {},
+        saveResult: .constant(nil)
+    ) {
+        TextField("Descrizione", text: .constant("Visita di controllo"))
     }
 }

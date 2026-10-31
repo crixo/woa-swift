@@ -58,6 +58,7 @@ struct ConsultoDetailView: View {
                 )
             }
         }
+
         .navigationTitle("Scheda Consulto")
         .onAppear {
             Task { await viewModel.load() }
@@ -265,4 +266,21 @@ struct ConsultoDetailView: View {
             .appAddButton()
         }
     }
+}
+
+#Preview {
+    ConsultoDetailView(
+        consultoID: 1,
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onOpenTreatment: { _ in },
+        onAddTreatment: {},
+        onOpenEvaluation: { _ in },
+        onAddEvaluation: {},
+        onOpenExam: { _ in },
+        onAddExam: {},
+        onDeleted: {},
+        onEditConsulto: {}
+    )
 }

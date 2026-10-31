@@ -24,6 +24,7 @@ struct DatabaseSelectorView: View {
                 }
             }
 
+
             Toggle(
                 "Copia il database selezionato in Application Support",
                 isOn: $viewModel.copySelectedDatabaseToApplicationSupport
@@ -72,4 +73,15 @@ struct DatabaseSelectorView: View {
             }
         }
     }
+}
+
+#Preview {
+    let settingsStore = AppSettingsStore()
+    let viewModel = DatabaseManagementViewModel(
+        settingsStore: settingsStore,
+        migrationService: DatabaseMigrationService()
+    )
+
+    DatabaseSelectorView(viewModel: viewModel)
+        .padding()
 }

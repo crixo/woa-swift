@@ -33,6 +33,7 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
                                             Text(em).appErrorText()
                                         }
                                     }
+
                                     Section {
                                         actionBar
                                             .appSection()
@@ -102,4 +103,28 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
             }
         )
     }
+}
+
+#Preview {
+    EntityDetailEditTemplate(
+        viewModel: TrattamentoDetailEditViewModel(
+            treatmentID: 1,
+            databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+            dataChangeCoordinator: DataChangeCoordinator()
+        ),
+        entityName: "trattamento",
+        parentName: "consulto",
+        loadingMessage: "Caricamento trattamento...",
+        notFoundMessage: "trattamento non trovato",
+        navigationTitle: "trattamento",
+        onBack: {},
+        isEditMode: .constant(false),
+        saveResult: .constant(nil),
+        editContent: {
+            TextField("Descrizione", text: .constant("Trattamento di esempio"))
+        },
+        displayContent: { treatment in
+            Text(treatment.description ?? "Trattamento di esempio")
+        }
+    )
 }

@@ -27,6 +27,7 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                                         Text(em).appErrorText()
                                     }
                                 }
+
                                 Section {
                                     actionBar
                                         .appSection()
@@ -75,5 +76,21 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                     : .failure(viewModel.shortErrorMessage ?? "Impossibile salvare \(entityName.lowercased()). Riprova.")
             }
         )
+    }
+}
+
+#Preview {
+    EntityEditTemplate(
+        viewModel: PazienteEditViewModel(
+            patientID: 1,
+            databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+            dataChangeCoordinator: DataChangeCoordinator()
+        ),
+        entityName: "Paziente",
+        parentName: "scheda paziente",
+        onBack: {},
+        saveResult: .constant(nil)
+    ) {
+        TextField("Nome", text: .constant("Maria"))
     }
 }

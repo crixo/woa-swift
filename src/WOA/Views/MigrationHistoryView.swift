@@ -50,6 +50,7 @@ struct MigrationHistoryView: View {
                 .listStyle(.inset)
             }
         }
+
         .padding(AppDesignSystem.spacingLG)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task { await viewModel.load() }
@@ -88,4 +89,11 @@ struct MigrationHistoryView: View {
         }
         .padding(.vertical, AppDesignSystem.spacingSM)
     }
+}
+
+#Preview {
+    MigrationHistoryView(
+        databaseURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        migrationService: DatabaseMigrationService()
+    )
 }

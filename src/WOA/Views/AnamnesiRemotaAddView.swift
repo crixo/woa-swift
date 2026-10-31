@@ -38,6 +38,7 @@ struct AnamnesiRemotaAddView: View {
                         Text(type.name).tag(type.id)
                     }
                 }
+
             }
             
             FormField("Descrizione", field: \RemoteHistoryCreateRequest.description, form: viewModel, isRequired: true) {
@@ -45,4 +46,14 @@ struct AnamnesiRemotaAddView: View {
             }
         }
     }
+}
+
+#Preview {
+    AnamnesiRemotaAddView(
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onCancel: {},
+        onSuccess: {}
+    )
 }

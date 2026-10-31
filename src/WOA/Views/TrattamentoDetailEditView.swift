@@ -37,5 +37,15 @@ struct TrattamentoDetailEditView: View {
                 Text(treatment.description ?? "Nessuna descrizione").appOverviewText()
             }
         }
+
     }
+}
+
+#Preview {
+    TrattamentoDetailEditView(
+        treatmentID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onBackToConsulto: {}
+    )
 }

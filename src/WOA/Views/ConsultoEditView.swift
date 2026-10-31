@@ -36,3 +36,12 @@ struct ConsultoEditView: View {
     }
 
 }
+
+#Preview {
+    ConsultoEditView(
+        consultoID: 1,
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator()
+    )
+}

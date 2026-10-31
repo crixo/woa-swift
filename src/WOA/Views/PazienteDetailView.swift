@@ -273,12 +273,59 @@ struct AnamnesiRemoteList: View {
     }
     
 }
-    
+
+#Preview("Patient header") {
+    PatientHeaderView(
+        patient: PatientDetail(
+            id: 1,
+            cognome: "Rossi",
+            nome: "Maria",
+            professione: "Fisioterapista",
+            indirizzo: nil,
+            citta: "Milano",
+            telefono: nil,
+            cellulare: nil,
+            prov: nil,
+            cap: nil,
+            email: nil,
+            dataNascita: nil,
+            provincia: nil
+        ),
+        isDeleting: false,
+        showDeleteConfirmation: .constant(false),
+        onEditPatient: {}
+    )
+    .padding()
+}
+
+#Preview("Consultations list") {
+    ConsultiList(
+        isConsultationsExpanded: .constant(true),
+        consultations: [
+            ConsultationSummary(id: 1, date: .now, initialProblem: "Valutazione iniziale")
+        ],
+        onAddConsultation: {},
+        onOpenConsultation: { _ in }
+    )
+    .padding()
+}
+
+#Preview("Remote history list") {
+    AnamnesiRemoteList(
+        isHistoryExpanded: .constant(true),
+        remoteHistory: [
+            RemoteHistorySummary(id: 1, date: .now, typeID: 1, typeName: "Anamnesi", description: "Visita di controllo")
+        ],
+        onAddHistory: {},
+        onOpenHistory: { _ in }
+    )
+    .padding()
+}
 
 #Preview("Compact") {
     PazienteDetailView(
         patientID: 1,
-        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
         dataChangeCoordinator: DataChangeCoordinator(),
         onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}, onEditPatient: {}
     )
@@ -288,7 +335,7 @@ struct AnamnesiRemoteList: View {
 #Preview("Standard") {
     PazienteDetailView(
         patientID: 1,
-        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
         dataChangeCoordinator: DataChangeCoordinator(),
         onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}, onEditPatient: {}
     )
@@ -298,27 +345,9 @@ struct AnamnesiRemoteList: View {
 #Preview("Wide") {
     PazienteDetailView(
         patientID: 1,
-        databaseFileURL: URL(fileURLWithPath: "/tmp/preview.db"),
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
         dataChangeCoordinator: DataChangeCoordinator(),
         onOpenConsultation: { _ in }, onAddConsultation: {}, onOpenHistory: { _ in }, onAddHistory: {}, onDeleted: {}, onEditPatient: {}
     )
     .frame(width: 1100, height: 800)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

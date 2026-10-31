@@ -22,4 +22,10 @@ struct EntityLabelForEdit : View {
                 .foregroundStyle(.secondary)
         }
     }
+
+}
+
+#Preview {
+    EntityLabelForEdit(name: "Paziente", id: 42)
+        .padding()
 }

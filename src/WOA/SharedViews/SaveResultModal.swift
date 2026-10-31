@@ -34,6 +34,7 @@ struct SaveResultModal: View {
         }
     }
 
+
     var body: some View {
         VStack(spacing: 20) {
             VStack(spacing: 10) {
@@ -59,4 +60,13 @@ struct SaveResultModal: View {
         .frame(width: 420)
         .background(isSuccess ? Color.green.opacity(0.12) : Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: AppDesignSystem.cardRadius, style: .continuous))
     }
+}
+
+#Preview {
+    SaveResultModal(
+        state: .success,
+        target: "Paziente",
+        parent: "scheda paziente",
+        onDismiss: {}
+    )
 }

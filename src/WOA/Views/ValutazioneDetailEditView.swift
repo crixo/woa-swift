@@ -47,5 +47,15 @@ struct ValutazioneDetailEditView: View {
                 Text("AK Ortodontico: \(evaluation.akOrthodontic ?? "-")")
             }
         }
+
     }
+}
+
+#Preview {
+    ValutazioneDetailEditView(
+        evaluationID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onBackToConsulto: {}
+    )
 }

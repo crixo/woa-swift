@@ -33,5 +33,17 @@ struct ValutazioneAddView: View {
                 TextField("AK Ortodontico", text: $viewModel.formData.akOrthodontic).textFieldStyle(.plain)
             }
         }
+
     }
+}
+
+#Preview {
+    ValutazioneAddView(
+        consultoID: 1,
+        patientID: 1,
+        databaseFileURL: FileManager.default.temporaryDirectory.appendingPathComponent("woa-preview.db"),
+        dataChangeCoordinator: DataChangeCoordinator(),
+        onCancel: {},
+        onSuccess: {}
+    )
 }

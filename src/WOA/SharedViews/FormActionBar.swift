@@ -71,4 +71,17 @@ private struct SubmissionButtonStyle: ViewModifier {
             content.appPrimaryButton()
         }
     }
+
+}
+
+#Preview {
+    FormActionBar(
+        title: "Aggiungi paziente",
+        systemImage: "person.badge.plus",
+        submissionStyle: .add,
+        isLoading: false,
+        onCancel: {},
+        onSubmit: {}
+    )
+    .padding()
 }
