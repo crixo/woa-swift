@@ -24,6 +24,7 @@ implementation details live in the guides below.
 - [Database selection, storage, and App Sandbox permissions](docs/database-lifecycle.md)
 - [Database migrations and audit history](docs/migrations.md)
 - [Application architecture, navigation, forms, and change notifications](docs/architecture.md)
+- [Testing strategy, current coverage, and test guidelines](docs/testing.md)
 - [Local builds, release publishing, CI, and installation](docs/build-and-release.md)
 - [Working with GitHub Copilot and repository guidance](docs/github-copilot.md)
 - [SQLite schema reference](data/woa-schema.sql)

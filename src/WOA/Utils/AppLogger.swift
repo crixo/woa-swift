@@ -1,3 +1,10 @@
+#if SWIFT_PACKAGE
+enum AppLogger {
+    static func info(_ message: String) {}
+    static func warning(_ message: String) {}
+    static func error(_ message: String) {}
+}
+#else
 import Foundation
 import OSLog
 
@@ -77,3 +84,4 @@ enum AppLogger {
         try FileManager.default.moveItem(at: fileURL, to: firstRotated)
     }
 }
+#endif

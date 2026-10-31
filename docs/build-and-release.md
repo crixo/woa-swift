@@ -34,6 +34,19 @@ For a signed build, configure the signing team and omit
 substitute for a normal local build; it synchronizes Git branches and prepares
 release artifacts.
 
+## Run automated tests
+
+The focused regression harness runs with Swift Package Manager and does not
+launch the app. Use the wrapper to keep test builds separate from editor
+indexing:
+
+```bash
+bash scripts/test.sh
+```
+
+See the [testing strategy](testing.md) for covered behavior and guidelines for
+adding tests with new features.
+
 ## Automated release script
 
 [`scripts/build-tag-release.sh`](../scripts/build-tag-release.sh) builds a
