@@ -39,11 +39,10 @@ enum DatabaseValidator {
             }
         }
 
-        removeStaleJournalFiles(for: fileURL)
-
         let connection: SQLiteConnection
         do {
-            connection = try SQLiteConnection(fileURL: fileURL, readOnly: true)
+            // SQLite may need write access to initialize a WAL-mode database when its sidecars are absent.
+            connection = try SQLiteConnection(fileURL: fileURL, readOnly: false, createIfMissing: false)
         } catch {
             throw DatabaseValidationError.unreadable(error.localizedDescription)
         }
@@ -65,18 +64,4 @@ enum DatabaseValidator {
         }
     }
 
-    private static func removeStaleJournalFiles(for fileURL: URL) {
-        let walURL = fileURL.deletingPathExtension().appendingPathExtension("db-wal")
-        let shmURL = fileURL.deletingPathExtension().appendingPathExtension("db-shm")
-
-        let manager = FileManager.default
-        for url in [walURL, shmURL] {
-            guard manager.fileExists(atPath: url.path) else { continue }
-            do {
-                try manager.removeItem(at: url)
-            } catch {
-                AppLogger.warning("Unable to remove stale SQLite journal at \(url.path): \(error.localizedDescription)")
-            }
-        }
-    }
 }

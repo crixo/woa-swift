@@ -10,6 +10,8 @@ struct DatabaseConnection: Codable, Equatable {
     }
 
     var path: String
+    var securityScopedBookmark: Data? = nil
+    var securityScopedDirectoryBookmark: Data? = nil
     var lastValidated: Date?
     var status: Status
 

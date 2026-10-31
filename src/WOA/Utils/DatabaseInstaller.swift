@@ -12,13 +12,14 @@ enum DatabaseInstaller {
                 sourceURL.stopAccessingSecurityScopedResource()
             }
         }
-
         let destinationURL = try AppPaths.databaseFileURL()
 
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-            try FileManager.default.removeItem(at: destinationURL)
+        if sourceURL.standardizedFileURL != destinationURL.standardizedFileURL {
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
         }
-        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
         try DatabaseMigrator.migrateIfNeeded(fileURL: destinationURL)
         try DatabaseValidator.validate(fileURL: destinationURL)

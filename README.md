@@ -19,10 +19,10 @@ A macOS SwiftUI application with a sandboxed, user-selected SQLite database.
 On first launch, no database is configured. The app shows a **Database Configuration Required** screen:
 
 1. Click **Browse Database File** and select a SQLite database (e.g. [data/woa-schema.sql](data/woa-schema.sql) after creating a `.db` from it).
-2. Click **Import Database**. The file is validated against the core tables (`paziente`, `consulto`, `esame`, `trattamento`, `valutazione`, `anamnesi_remota`, `anamnesi_prossima`).
-3. On success, the database is copied into the app's sandboxed Application Support directory and a summary of imported tables is shown.
+2. Optionally select **Copy selected database into Application Support**. When unchecked, WOA uses the selected database file directly and asks you to grant access to its containing folder so SQLite can manage sibling journal files; when checked, WOA uses an app-owned copy. The checkbox is unchecked by default and is not saved separately.
+3. Click **Import Database**. The selected database is validated against the core tables (`paziente`, `consulto`, `esame`, `trattamento`, `valutazione`, `anamnesi_remota`, `anamnesi_prossima`), and a summary of its tables is shown.
 
-Subsequent launches read the stored configuration and connect automatically.
+Subsequent launches use the saved active database path and connect automatically. For a database used directly, WOA saves a security-scoped bookmark for the selected containing folder and restores that permission. The folder grant is limited to the folder the user chooses, not the entire home directory. SQLite may create or check optional journal sidecars beside a directly used database; the user does not need to supply a pre-existing `.db-wal` file. If macOS denies access to required sidecars, choose the copy option so SQLite can manage them in Application Support.
 
 ## App Sandbox
 
@@ -30,13 +30,13 @@ App Sandbox is enabled ([src/WOA/Resources/WOA.entitlements](src/WOA/Resources/W
 
 - `com.apple.security.files.user-selected.read-write` — required so the user can pick a database file via `NSOpenPanel`.
 
-The application's own data (database copy, configuration, logs) is stored under:
+The application's own data (optional database copy, configuration, logs) is stored under:
 
 ```swift
 FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
 ```
 
-No entitlements are granted for unrestricted access to Documents, Downloads, or the user's home directory.
+The app does not receive unrestricted filesystem access. Direct access uses a security-scoped bookmark for the user-approved database folder; the copy option stores SQLite's database and journal files in Application Support. See [database folder permissions](docs/database-folder-permissions.md) for details.
 
 ## Project Structure
 

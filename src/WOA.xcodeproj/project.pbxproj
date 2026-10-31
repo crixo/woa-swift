@@ -7,12 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA0100000000000000000001 /* DatabaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000002 /* DatabaseMigration.swift */; };
-		AA0200000000000000000001 /* DatabaseMigrationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000002 /* DatabaseMigrationRepository.swift */; };
-		AA0300000000000000000001 /* DatabaseMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000002 /* DatabaseMigrationService.swift */; };
-		AA0400000000000000000001 /* MigrationHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0400000000000000000002 /* MigrationHistoryViewModel.swift */; };
-		AA0500000000000000000001 /* MigrationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000002 /* MigrationHistoryView.swift */; };
-		AA0600000000000000000001 /* migrations in Resources */ = {isa = PBXBuildFile; fileRef = AA0600000000000000000002 /* migrations */; };
 		119F943034C191E5532E5C34 /* PazienteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBD0B2AEF01C055EF0C0EF9 /* PazienteDetailView.swift */; };
 		179192BC85E5CC13E9F3F943 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 366EDD381EF36E0F559F36DD /* DatabaseMigrator.swift */; };
 		18D9B5A5C3F23FE544CF9A52 /* ApplicationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C17D29FFBC97B690B9BED19 /* ApplicationSettingsView.swift */; };
@@ -84,6 +78,12 @@
 		A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */; };
 		A7B6C5D4E3F2A1B0C9D8E7F6 /* AnamnesiRemotaDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */; };
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
+		AA0100000000000000000001 /* DatabaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000002 /* DatabaseMigration.swift */; };
+		AA0200000000000000000001 /* DatabaseMigrationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000002 /* DatabaseMigrationRepository.swift */; };
+		AA0300000000000000000001 /* DatabaseMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000002 /* DatabaseMigrationService.swift */; };
+		AA0400000000000000000001 /* MigrationHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0400000000000000000002 /* MigrationHistoryViewModel.swift */; };
+		AA0500000000000000000001 /* MigrationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000002 /* MigrationHistoryView.swift */; };
+		AA0600000000000000000001 /* migrations in Resources */ = {isa = PBXBuildFile; fileRef = AA0600000000000000000002 /* migrations */; };
 		AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */; };
 		C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */; };
 		C2A1C0DE0000000000000001 /* DatabaseManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */; };
@@ -97,12 +97,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		AA0100000000000000000002 /* DatabaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigration.swift; sourceTree = "<group>"; };
-		AA0200000000000000000002 /* DatabaseMigrationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationRepository.swift; sourceTree = "<group>"; };
-		AA0300000000000000000002 /* DatabaseMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationService.swift; sourceTree = "<group>"; };
-		AA0400000000000000000002 /* MigrationHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationHistoryViewModel.swift; sourceTree = "<group>"; };
-		AA0500000000000000000002 /* MigrationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationHistoryView.swift; sourceTree = "<group>"; };
-		AA0600000000000000000002 /* migrations */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ../../data/migrations; sourceTree = "<group>"; };
 		077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		131B6E7AB7533E00FFAA6399 /* ConfigurationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationService.swift; sourceTree = "<group>"; };
 		13BE1399DE8EF7E36603D099 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
@@ -175,6 +169,12 @@
 		A11CE0000000000000000003 /* MainNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNavigationView.swift; sourceTree = "<group>"; };
 		A11CE0000000000000000004 /* DatabaseManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManagementView.swift; sourceTree = "<group>"; };
 		A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnamnesiRemotaDetailViewModel.swift; sourceTree = "<group>"; };
+		AA0100000000000000000002 /* DatabaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigration.swift; sourceTree = "<group>"; };
+		AA0200000000000000000002 /* DatabaseMigrationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationRepository.swift; sourceTree = "<group>"; };
+		AA0300000000000000000002 /* DatabaseMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationService.swift; sourceTree = "<group>"; };
+		AA0400000000000000000002 /* MigrationHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationHistoryViewModel.swift; sourceTree = "<group>"; };
+		AA0500000000000000000002 /* MigrationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationHistoryView.swift; sourceTree = "<group>"; };
+		AA0600000000000000000002 /* migrations */ = {isa = PBXFileReference; lastKnownFileType = folder; name = migrations; path = ../../../data/migrations; sourceTree = "<group>"; };
 		B34CB7CFAFD6C7DAF10B2EAD /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		B6F0B83E842A9D8E705D14D6 /* PatientRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientRepository.swift; sourceTree = "<group>"; };
 		C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManagementViewModel.swift; sourceTree = "<group>"; };
@@ -350,7 +350,6 @@
 				011BB6DBE231C444B4E050DA /* Repositories */,
 				BC92EE4195E9ABB3D51AB189 /* Utils */,
 				A0D77648BEA47C0A11EDD63D /* Resources */,
-				AA0600000000000000000002 /* migrations */,
 			);
 			path = WOA;
 			sourceTree = "<group>";
@@ -360,6 +359,7 @@
 			children = (
 				D95FA83BAAA928615472A6D1 /* Info.plist */,
 				CAA83F52316EFEEE760B83B4 /* WOA.entitlements */,
+				AA0600000000000000000002 /* migrations */,
 			);
 			path = Resources;
 			sourceTree = "<group>";

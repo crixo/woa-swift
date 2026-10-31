@@ -24,6 +24,22 @@ struct DatabaseSelectorView: View {
                 }
             }
 
+            Toggle(
+                "Copy selected database into Application Support",
+                isOn: $viewModel.copySelectedDatabaseToApplicationSupport
+            )
+            .toggleStyle(.checkbox)
+            .disabled(viewModel.isImporting)
+
+            Text(
+                viewModel.copySelectedDatabaseToApplicationSupport
+                    ? "WOA will use an Application Support copy."
+                    : "WOA will use the selected database file directly and ask permission for its containing folder."
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+
             HStack(spacing: AppDesignSystem.spacingSM) {
                 Button("Browse Database File") {
                     viewModel.selectDatabase()
@@ -47,6 +63,14 @@ struct DatabaseSelectorView: View {
                 Text(validationError)
                     .font(.callout)
                     .foregroundStyle(.red)
+            }
+
+            if let connectionError = viewModel.connectionError,
+               viewModel.validationError == nil {
+                Text(connectionError)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
             }
         }
     }
