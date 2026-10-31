@@ -21,8 +21,8 @@ struct ValutazioneDetailEditView: View {
     var body: some View {
         EntityDetailEditTemplate(
             viewModel: viewModel,
-            entityName: "Evaluation",
-            parentName: "Consultation",
+            entityName: "valutazione",
+            parentName: "consulto",
             loadingMessage: "Caricamento valutazione...",
             notFoundMessage: "Valutazione non trovata",
             navigationTitle: "Valutazione",

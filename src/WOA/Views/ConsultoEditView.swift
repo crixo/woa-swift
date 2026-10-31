@@ -21,13 +21,12 @@ struct ConsultoEditView: View {
         EntityEditTemplate(
             viewModel: viewModel,
             entityName: "Consulto",
-            parentName: "Consulto Details",
+            parentName: "paziente",
             onBack: onCancel,
             saveResult: $saveResult
         ) {
             FormField("Data", field: \ConsultoRequest.date, form: viewModel, value: viewModel.formData.date, isRequired: true) {
-                DatePicker("In che data è avvenuto il consulto?", selection: $viewModel.formData.date, displayedComponents: .date)
-                    .labelsHidden()
+                DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
             FormField("Problema iniziale", field: \.initialProblem, form: viewModel, isRequired: true) {

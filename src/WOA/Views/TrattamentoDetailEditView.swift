@@ -24,7 +24,7 @@ struct TrattamentoDetailEditView: View {
             saveResult: $saveResult
         ) {
             FormField("Data", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("In che data è avvenuto questo trattamento?", selection: $viewModel.formData.date, displayedComponents: .date)//.labelsHidden()
+                DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
             FormField("Descrizione", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {

@@ -61,15 +61,13 @@ struct DatabaseSelectorView: View {
 
             if let validationError = viewModel.validationError {
                 Text(validationError)
-                    .font(.callout)
-                    .foregroundStyle(.red)
+                    .appErrorText()
             }
 
             if let connectionError = viewModel.connectionError,
                viewModel.validationError == nil {
                 Text(connectionError)
-                    .font(.callout)
-                    .foregroundStyle(.red)
+                    .appErrorText()
                     .textSelection(.enabled)
             }
         }

@@ -16,7 +16,7 @@ struct ConsultoAddView: View {
         EntityAddTemplate(
             viewModel: viewModel,
             entityName: "consulto",
-            parentName: "paziente detail",
+            parentName: "paziente",
             onCancel: onCancel,
             onSuccess: onSuccess,
             saveResult: $saveResult

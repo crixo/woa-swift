@@ -22,12 +22,13 @@ struct LastModifiedPatientsView: View {
                 ProgressView("Caricamento modifiche recenti...")
             } else if let errorMessage {
                 Text(errorMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .appErrorText()
             } else if patients.isEmpty {
-                Text("Nessuna modifica recente dei pazienti trovata.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView(
+                    "Nessuna modifica recente dei pazienti trovata",
+                    systemImage: "clock",
+                    description: Text("I pazienti aggiornati di recente appariranno qui.")
+                )
             } else {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
                     Text("Tocca un paziente per aprire la sua scheda")

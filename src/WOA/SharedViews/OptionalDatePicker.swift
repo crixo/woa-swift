@@ -6,13 +6,10 @@ struct OptionalDatePicker: View {
     var placeholder: String = "Non impostata"
 
     var body: some View {
-        HStack {
-            Text(title)
-            Spacer()
-
-            if let current = date {
+        if let current = date {
+            HStack(spacing: AppDesignSystem.spacingSM) {
                 DatePicker(
-                    "",
+                    title,
                     selection: Binding(
                         get: { current },
                         set: { date = $0 }
@@ -20,7 +17,6 @@ struct OptionalDatePicker: View {
                     in: ...Date(),
                     displayedComponents: .date
                 )
-                .labelsHidden()
 
                 Button {
                     date = nil
@@ -29,7 +25,12 @@ struct OptionalDatePicker: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-            } else {
+            }
+        } else {
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+
                 Button(placeholder) {
                     date = Date()
                 }

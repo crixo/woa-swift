@@ -17,8 +17,8 @@ struct EsameAddView: View {
     var body: some View {
         EntityAddTemplate(
             viewModel: viewModel,
-            entityName: "exam",
-            parentName: "Consultation",
+            entityName: "esame",
+            parentName: "consulto",
             onCancel: onCancel,
             onSuccess: onSuccess,
             saveResult: $saveResult
@@ -27,7 +27,7 @@ struct EsameAddView: View {
                 DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
-            FormField("Tipo", field: \ExamCreateRequest.date, form: viewModel, value: viewModel.formData.typeID) {
+            FormField("Tipo", field: \ExamCreateRequest.typeID, form: viewModel, value: viewModel.formData.typeID) {
                 Picker("Tipo", selection: $viewModel.formData.typeID) {
                     ForEach(viewModel.types) { type in
                         Text(type.name).tag(type.id)

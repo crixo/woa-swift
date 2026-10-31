@@ -24,7 +24,7 @@ struct PazienteEditView: View {
         EntityEditTemplate(
             viewModel: viewModel,
             entityName: "Paziente",
-            parentName: "Paziente Details",
+            parentName: "scheda paziente",
             onBack: onCancel,
             saveResult: $saveResult
         ) {
@@ -45,7 +45,7 @@ struct PazienteEditView: View {
             }
             
             FormField("Città", field: \PatientCreateRequest.citta, form: viewModel, isRequired: false) {
-                TextField("Citta", text: $viewModel.formData.citta.withDefault()).textFieldStyle(.plain)
+                TextField("Città", text: $viewModel.formData.citta.withDefault()).textFieldStyle(.plain)
             }
             
             FormField("Telefono", field: \PatientCreateRequest.telefono, form: viewModel, isRequired: false) {
@@ -64,20 +64,22 @@ struct PazienteEditView: View {
                 TextField("Email", text: $viewModel.formData.email.withDefault()).textFieldStyle(.plain)
             }
             
-            FormField("Province", field: \PatientCreateRequest.prov, form: viewModel, value: viewModel.formData.prov, isRequired: false) {
-                Picker("Province", selection: $viewModel.formData.prov) {
-                    Text("Select…").tag(String?.none)
-                    ForEach(viewModel.allProvinces) { province in
-                        Text(province.descrizione).tag(Optional(province.sigla))
+            FormField("Provincia", field: \PatientCreateRequest.prov, form: viewModel, value: viewModel.formData.prov, isRequired: false, showsLabel: false) {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                    Text("Provincia")
+                        .font(.subheadline.weight(.medium))
+
+                    Picker("Provincia", selection: $viewModel.formData.prov) {
+                        Text("Seleziona…").tag(String?.none)
+                        ForEach(viewModel.allProvinces) { province in
+                            Text(province.descrizione).tag(Optional(province.sigla))
+                        }
                     }
+                    .pickerStyle(.menu)
                 }
-                .pickerStyle(.menu)
-                .labelsHidden()
             }
             
-            FormField("Data di nascita", field: \PatientCreateRequest.data_nascita, form: viewModel, value: viewModel.formData.data_nascita) {
-//                DatePicker("", selection: $viewModel.formData.data_nascita.withDefault(), displayedComponents: .date)
-//                    .labelsHidden()
+            FormField("Data di nascita", field: \PatientCreateRequest.data_nascita, form: viewModel, value: viewModel.formData.data_nascita, showsLabel: false) {
                 OptionalDatePicker(title: "Data di nascita", date: $viewModel.formData.data_nascita)
             }
         }

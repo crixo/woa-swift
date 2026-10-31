@@ -17,6 +17,7 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
     private let value: Value
     private let isRequired: Bool
     private let boxed: Bool
+    private let showsLabel: Bool
     private let content: Content
 
     init(_ label: String,
@@ -25,6 +26,7 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
          value: Value,
          isRequired: Bool = false,
          boxed: Bool = true,
+         showsLabel: Bool = true,
          @ViewBuilder content: () -> Content) {
         self.label = label
         self.field = field
@@ -32,6 +34,7 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
         self.value = value
         self.isRequired = isRequired
         self.boxed = boxed
+        self.showsLabel = showsLabel
         self.content = content()
     }
 
@@ -39,7 +42,9 @@ struct FormField<ID: Hashable, Value: Equatable, Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: style.spacing) {
-            labelView
+            if showsLabel {
+                labelView
+            }
             controlView
             if let errorMessage {
                 Text(errorMessage)

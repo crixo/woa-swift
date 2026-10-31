@@ -63,10 +63,10 @@ struct PazienteDetailView: View {
                     .frame(maxWidth: LayoutMetrics.readableContentMaxWidth, alignment: .leading)
                 }
             } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle.badge.questionmark")
-                    Text("Paziente non trovato")
-                }
+                ContentUnavailableView(
+                    "Paziente non trovato",
+                    systemImage: "person.crop.circle.badge.questionmark"
+                )
             }
         }
         .navigationTitle("Scheda Paziente")
@@ -79,6 +79,7 @@ struct PazienteDetailView: View {
                     if await viewModel.delete() { onDeleted() }
                 }
             }
+            Button("Annulla", role: .cancel) {}
         } message: {
             Text("Questa azione rimuove la scheda del paziente. I record correlati non vengono eliminati automaticamente.")
         }
@@ -202,8 +203,11 @@ struct ConsultiList: View {
                 }
                 
                 if consultations.isEmpty {
-                    Text("Nessun consulto registrato.")
-                        .foregroundStyle(.secondary)
+                    ContentUnavailableView(
+                        "Nessun consulto registrato",
+                        systemImage: "calendar",
+                        description: Text("I consulti del paziente appariranno qui.")
+                    )
                 } else {
                     ForEach(consultations) { item in
                         Button { onOpenConsultation(item.id) } label: {
@@ -238,8 +242,11 @@ struct AnamnesiRemoteList: View {
                 }
                 
                 if remoteHistory.isEmpty {
-                    Text("Nessuna anamnesi remota registrata.")
-                        .foregroundStyle(.secondary)
+                    ContentUnavailableView(
+                        "Nessuna anamnesi remota registrata",
+                        systemImage: "heart.text.square",
+                        description: Text("L'anamnesi remota del paziente apparirà qui.")
+                    )
                 } else {
                     ForEach(remoteHistory) { item in
                         Button { onOpenHistory(item.id) } label: {
@@ -297,7 +304,6 @@ struct AnamnesiRemoteList: View {
     )
     .frame(width: 1100, height: 800)
 }
-
 
 
 

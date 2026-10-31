@@ -7,7 +7,6 @@ struct PazienteAddView: View {
     let onSuccess: () -> Void
     @StateObject private var viewModel: PazienteAddViewModel
     @State private var saveResult: SaveResultState?
-    @State private var manualDateText: String = ""
 
 
     init(databaseFileURL: URL, dataChangeCoordinator: DataChangeCoordinator, onCancel: @escaping () -> Void = {}, onSuccess: @escaping () -> Void = {}) {
@@ -20,7 +19,7 @@ struct PazienteAddView: View {
         EntityAddTemplate(
             viewModel: viewModel,
             entityName: "paziente",
-            parentName: "search",
+            parentName: "ricerca pazienti",
             onCancel: onCancel,
             onSuccess: onSuccess,
             saveResult: $saveResult
@@ -42,7 +41,7 @@ struct PazienteAddView: View {
             }
             
             FormField("Città", field: \PatientCreateRequest.citta, form: viewModel, isRequired: false) {
-                TextField("Citta", text: $viewModel.formData.citta.withDefault()).textFieldStyle(.plain)
+                TextField("Città", text: $viewModel.formData.citta.withDefault()).textFieldStyle(.plain)
             }
             
             FormField("Telefono", field: \PatientCreateRequest.telefono, form: viewModel, isRequired: false) {
@@ -61,49 +60,27 @@ struct PazienteAddView: View {
                 TextField("Email", text: $viewModel.formData.email.withDefault()).textFieldStyle(.plain)
             }
             
-            FormField("Province", field: \PatientCreateRequest.prov, form: viewModel, value: viewModel.formData.prov, isRequired: false) {
-                Picker("Province", selection: $viewModel.selectedProvince) {
-                    Text("Select…").tag(LookupProvince?.none)
-                    ForEach(viewModel.allProvinces) { province in
-                        Text(province.descrizione).tag(LookupProvince?(province))
+            FormField("Provincia", field: \PatientCreateRequest.prov, form: viewModel, value: viewModel.formData.prov, isRequired: false, showsLabel: false) {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                    Text("Provincia")
+                        .font(.subheadline.weight(.medium))
+
+                    Picker("Provincia", selection: $viewModel.selectedProvince) {
+                        Text("Seleziona…").tag(LookupProvince?.none)
+                        ForEach(viewModel.allProvinces) { province in
+                            Text(province.descrizione).tag(LookupProvince?(province))
+                        }
                     }
+                    .pickerStyle(.menu)
                 }
-                .pickerStyle(.menu)
-                .labelsHidden()
             }
             
-            FormField("Data di nascita", field: \PatientCreateRequest.data_nascita, form: viewModel, value: viewModel.formData.data_nascita) {
-//                DatePicker("", selection: $viewModel.formData.data_nascita.withDefault(), displayedComponents: .date)
-//                    .labelsHidden()
+            FormField("Data di nascita", field: \PatientCreateRequest.data_nascita, form: viewModel, value: viewModel.formData.data_nascita, showsLabel: false) {
                 OptionalDatePicker(title: "Data di nascita", date: $viewModel.formData.data_nascita)
             }
         }
     }
 
-    @ViewBuilder
-    private var actionButtons: some View {
-        Button {
-            onCancel()
-        } label: {
-            Label("Annulla", systemImage: "xmark")
-                .frame(maxWidth: .infinity)
-        }
-        .appSecondaryButton()
-
-        Button {
-            Task {
-                let didSave = await viewModel.save()
-                saveResult = didSave
-                    ? .success
-                    : .failure("Creazione nuovo paziente non riuscita. Riprova.")
-            }
-        } label: {
-            Label(viewModel.isSaving ? "Salvataggio..." : "Aggiungi paziente", systemImage: "person.badge.plus")
-                .frame(maxWidth: .infinity)
-        }
-        .appAddButton()
-        .disabled(viewModel.isSaving || viewModel.hasRealValidationErrors)
-    }
 }
 
  #Preview {

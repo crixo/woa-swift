@@ -4,34 +4,26 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
     @ObservedObject var viewModel: ViewModel
     let entityName: String
     let parentName: String
-//    let loadingMessage: String
-//    let navigationTitle: String
-//    let isSaving: Bool//
-//    let errorMessage: String?
-//    let shortErrorMessage: String?
-//    let save: () async -> Bool//
-    let onCancel: () -> Void//
-    let onSuccess: () -> Void//
-    @Binding var saveResult: SaveResultState?//
-    @ViewBuilder let addContent: () -> AddContent//
-    
+    let onCancel: () -> Void
+    let onSuccess: () -> Void
+    @Binding var saveResult: SaveResultState?
+    @ViewBuilder let addContent: () -> AddContent
 
-    
     var body: some View {
         let entityNameFLU = entityName.firstLetterUppercased
         Form {
-            Section{
+            Section {
                 addContent()
             } header: {
                 Label("Aggiungi \(entityNameFLU)", systemImage: "doc.badge.plus")
             }
-            
+
             if let errorMessage = viewModel.errorMessage {
                 Section {
                     Text(errorMessage).appErrorText()
                 }
             }
-            
+
             Section {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
                     VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
@@ -41,23 +33,20 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    
-                    HStack(spacing: AppDesignSystem.spacingSM) {
-                        Button("Annulla", action: onCancel).appSecondaryButton()
-                        Spacer()
-                        Button {
-                            Task {
-                                let didSave = await viewModel.save()
-                                saveResult = didSave
-                                    ? .success
+
+                    FormActionBar(
+                        title: "Aggiungi \(entityNameFLU)",
+                        systemImage: "doc.badge.plus",
+                        submissionStyle: .add,
+                        isLoading: viewModel.isSaving,
+                        onCancel: onCancel,
+                        onSubmit: {
+                            let didSave = await viewModel.save()
+                            saveResult = didSave
+                                ? .success
                                 : .failure(viewModel.shortErrorMessage ?? "Impossibile creare \(entityName). Riprova.")
-                            }
-                        } label: {
-                            Label("Aggiungi \(entityNameFLU)", systemImage: "doc.badge.plus")
                         }
-                        .appAddButton()
-                        .disabled(viewModel.isSaving)
-                    }
+                    )
                 }
                 .appSection()
             }

@@ -99,8 +99,7 @@ struct LaunchScreenView: View {
             Group {
                 if let migrationHistoryError {
                     Text("Impossibile caricare la cronologia migrazioni: \(migrationHistoryError)")
-                        .font(.callout)
-                        .foregroundStyle(.red)
+                        .appErrorText()
                         .textSelection(.enabled)
                 } else if sessionMigrations.isEmpty {
                     Text("Nessuna migrazione applicata")

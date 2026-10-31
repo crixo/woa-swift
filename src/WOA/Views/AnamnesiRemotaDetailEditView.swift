@@ -21,7 +21,6 @@ struct AnamnesiRemotaDetailEditView: View {
     }
     
     var body: some View {
-        let entity = viewModel.history
         EntityDetailEditTemplate(
             viewModel: viewModel,
             entityName: "anamnesi remota",
@@ -48,24 +47,17 @@ struct AnamnesiRemotaDetailEditView: View {
             FormField("Descrizione", field: \RemoteHistoryCreateRequest.description, form: viewModel, isRequired: false) {
                 TextField("Descrizione", text: $viewModel.formData.description).textFieldStyle(.plain)
             }
-        } displayContent: { exam in
+        } displayContent: { history in
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                Label("Panoramica anamnesi", systemImage: "heart.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
+                EntityLabelForEdit(name: "Panoramica anamnesi", id: history.id)
 
-                HStack(spacing: AppDesignSystem.spacingSM) {
-                    infoPill("Scheda #\(entity != nil ? String(entity!.id) : "N/D")")
-
-                    if let typeName = entity?.typeName, !typeName.isEmpty {
-                        infoPill(typeName)
-                    }
+                if let typeName = history.typeName, !typeName.isEmpty {
+                    infoPill(typeName)
                 }
 
-                Text(entity?.date?.formatted(date: .long, time: .omitted) ?? "Nessuna data").appOverviewDate()
+                Text(history.date?.formatted(date: .long, time: .omitted) ?? "Nessuna data").appOverviewDate()
 
-                Text(entity?.description ?? "Nessuna descrizione")
+                Text(history.description ?? "Nessuna descrizione")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

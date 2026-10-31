@@ -6,9 +6,6 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
     @ObservedObject var viewModel: ViewModel
     let entityName: String
     let parentName: String
-//    let loadingMessage: String
-//    let notFoundMessage: String
-//    let navigationTitle: String
     let onBack: () -> Void
     @Binding var saveResult: SaveResultState?
     @ViewBuilder let editContent: () -> EditContent
@@ -31,11 +28,8 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                                     }
                                 }
                                 Section {
-                                    ViewThatFits(in: .horizontal) {
-                                        HStack(spacing: AppDesignSystem.spacingSM) { actionButtons }
-                                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) { actionButtons }
-                                    }
-                                    .appSection()
+                                    actionBar
+                                        .appSection()
                                 }
                             }
                             .appForm(maxWidth: LayoutMetrics.formMaxWidth)
@@ -46,10 +40,10 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                     .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                 }
             } else {
-                VStack(spacing: AppDesignSystem.spacingSM) {
-                    Image(systemName: "exclamationmark.circle")
-                    Text("\(entityName.capitalized) non trovato")
-                }
+                ContentUnavailableView(
+                    "\(entityName.capitalized) non trovato",
+                    systemImage: "exclamationmark.magnifyingglass"
+                )
             }
         }
         .navigationTitle(entityName.capitalized)
@@ -67,21 +61,19 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
         }
     }
 
-    private var actionButtons: some View {
-        Group {
-            Button("Annulla") { onBack()}
-                .appSecondaryButton()
-            Spacer()
-            Button("Salva") {
-                Task {
-                    let didSave = await viewModel.save()
-                    saveResult = didSave
-                        ? .success
+    private var actionBar: some View {
+        FormActionBar(
+            title: "Salva",
+            systemImage: nil,
+            submissionStyle: .save,
+            isLoading: viewModel.isSaving,
+            onCancel: onBack,
+            onSubmit: {
+                let didSave = await viewModel.save()
+                saveResult = didSave
+                    ? .success
                     : .failure(viewModel.shortErrorMessage ?? "Impossibile salvare \(entityName.lowercased()). Riprova.")
-                }
             }
-            .appPrimaryButton()
-            .disabled(viewModel.isSaving)
-        }
+        )
     }
 }

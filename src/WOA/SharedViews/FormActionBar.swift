@@ -7,30 +7,68 @@
 
 import SwiftUI
 
+enum FormActionSubmissionStyle {
+    case add
+    case save
+}
+
 struct FormActionBar: View {
     let title: String
-    let systemImage: String
+    let systemImage: String?
+    let submissionStyle: FormActionSubmissionStyle
     let isLoading: Bool
 
     let onCancel: () -> Void
     let onSubmit: () async -> Void
 
     var body: some View {
-        HStack(spacing: AppDesignSystem.spacingSM) {
-            Button("Annulla", action: onCancel)
-                .appSecondaryButton()
-
-            Spacer()
-
-            Button {
-                Task {
-                    await onSubmit()
-                }
-            } label: {
-                Label(title, systemImage: systemImage)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppDesignSystem.spacingSM) {
+                cancelButton
+                Spacer(minLength: AppDesignSystem.spacingSM)
+                submitButton
             }
-            .appAddButton()
-            .disabled(isLoading)
+
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                cancelButton
+                submitButton
+            }
+        }
+    }
+
+    private var cancelButton: some View {
+        Button("Annulla", action: onCancel)
+            .appSecondaryButton()
+    }
+
+    @ViewBuilder
+    private var submitButton: some View {
+        Button {
+            Task {
+                await onSubmit()
+            }
+        } label: {
+            if let systemImage {
+                Label(title, systemImage: systemImage)
+            } else {
+                Text(title)
+            }
+        }
+        .disabled(isLoading)
+        .modifier(SubmissionButtonStyle(style: submissionStyle))
+    }
+}
+
+private struct SubmissionButtonStyle: ViewModifier {
+    let style: FormActionSubmissionStyle
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        switch style {
+        case .add:
+            content.appAddButton()
+        case .save:
+            content.appPrimaryButton()
         }
     }
 }

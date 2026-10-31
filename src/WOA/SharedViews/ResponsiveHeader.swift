@@ -12,21 +12,18 @@ struct ResponsiveHeader<Info: View, Actions: View>: View {
     @ViewBuilder let actions: () -> Actions
 
     var body: some View {
-        //ViewThatFits(in: .horizontal) {
+        ViewThatFits(in: .horizontal) {
             HStack(alignment: .top) {
                 info()
                 Spacer()
                 actions()
             }
 
-        //     VStack(alignment: .leading, spacing: 8) {
-        //         info()
-
-        //         HStack {
-        //             actions()
-        //         }
-        //     }
-        // }
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                info()
+                actions()
+            }
+        }
     }
 }
 

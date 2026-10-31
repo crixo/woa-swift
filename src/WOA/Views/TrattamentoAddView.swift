@@ -18,14 +18,13 @@ struct TrattamentoAddView: View {
         EntityAddTemplate(
             viewModel: viewModel,
             entityName: "trattamento",
-            parentName: "Consultation",
+            parentName: "consulto",
             onCancel: onCancel,
             onSuccess: onSuccess,
             saveResult: $saveResult
         ) {
             FormField("Data", field: \TreatmentCreateRequest.date, form: viewModel, value: viewModel.formData.date) {
-                DatePicker("", selection: $viewModel.formData.date, displayedComponents: .date)
-                    .labelsHidden()
+                DatePicker("Data", selection: $viewModel.formData.date, displayedComponents: .date)
             }
             
             FormField("Descrizione", field: \TreatmentCreateRequest.description, form: viewModel, isRequired: true) {

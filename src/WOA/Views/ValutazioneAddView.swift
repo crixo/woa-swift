@@ -17,8 +17,8 @@ struct ValutazioneAddView: View {
     var body: some View {
         EntityAddTemplate(
             viewModel: viewModel,
-            entityName: "exam",
-            parentName: "Consultation",
+            entityName: "valutazione",
+            parentName: "consulto",
             onCancel: onCancel,
             onSuccess: onSuccess,
             saveResult: $saveResult

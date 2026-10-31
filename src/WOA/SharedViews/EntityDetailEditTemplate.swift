@@ -34,11 +34,8 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
                                         }
                                     }
                                     Section {
-                                        ViewThatFits(in: .horizontal) {
-                                            HStack(spacing: AppDesignSystem.spacingSM) { actionButtons }
-                                            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) { actionButtons }
-                                        }
-                                        .appSection()
+                                        actionBar
+                                            .appSection()
                                     }
                                 }
                                 .appForm(maxWidth: LayoutMetrics.formMaxWidth)
@@ -63,10 +60,10 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
                     .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
                 }
             } else {
-                VStack(spacing: AppDesignSystem.spacingSM) {
-                    Image(systemName: "exclamationmark.circle")
-                    Text(notFoundMessage)
-                }
+                ContentUnavailableView(
+                    notFoundMessage,
+                    systemImage: "exclamationmark.magnifyingglass"
+                )
             }
         }
         .navigationTitle(navigationTitle)
@@ -83,27 +80,26 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
             )
         }
         .confirmationDialog("Eliminare questo \(entityName.lowercased())?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Elimina", role: .destructive) {
+            Button("Elimina \(entityName.lowercased())", role: .destructive) {
                 Task { if await viewModel.delete() { onBack() } }
             }
+            Button("Annulla", role: .cancel) {}
         }
     }
 
-    private var actionButtons: some View {
-        Group {
-            Button("Annulla") { isEditMode = false }
-                .appSecondaryButton()
-            Spacer()
-            Button("Salva") {
-                Task {
-                    let didSave = await viewModel.save()
-                    saveResult = didSave
-                        ? .success
+    private var actionBar: some View {
+        FormActionBar(
+            title: "Salva",
+            systemImage: nil,
+            submissionStyle: .save,
+            isLoading: viewModel.isSaving,
+            onCancel: { isEditMode = false },
+            onSubmit: {
+                let didSave = await viewModel.save()
+                saveResult = didSave
+                    ? .success
                     : .failure(viewModel.shortErrorMessage ?? "Impossibile salvare \(entityName.lowercased()). Riprova.")
-                }
             }
-            .appPrimaryButton()
-            .disabled(viewModel.isSaving)
-        }
+        )
     }
 }

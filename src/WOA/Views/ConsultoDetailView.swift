@@ -52,22 +52,23 @@ struct ConsultoDetailView: View {
                     .frame(maxWidth: LayoutMetrics.readableContentMaxWidth, alignment: .leading)
                 }
             } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "calendar.badge.exclamationmark")
-                    Text("Consulto non trovato")
-                }
+                ContentUnavailableView(
+                    "Consulto non trovato",
+                    systemImage: "calendar.badge.exclamationmark"
+                )
             }
         }
         .navigationTitle("Scheda Consulto")
         .onAppear {
             Task { await viewModel.load() }
         }
-        .confirmationDialog("Vuoi cancellare il consulto?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Cancella il Consulto", role: .destructive) {
+        .confirmationDialog("Eliminare questo consulto?", isPresented: $viewModel.showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Elimina consulto", role: .destructive) {
                 Task {
                     if await viewModel.delete() { onDeleted() }
                 }
             }
+            Button("Annulla", role: .cancel) {}
         } message: {
             Text("Questa azione cancella il consulto e i dati collegati.\nQuesta operazione e' irreversibile.")
         }
