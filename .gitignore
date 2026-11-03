@@ -45,3 +45,6 @@ Package.resolved
 
 ## Local logs / runtime artifacts
 *.log
+
+# Generated AI quality reports
+#quality-reports/latest/

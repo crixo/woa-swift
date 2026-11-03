@@ -271,3 +271,15 @@ For each new file created:
 - Xcode not recognizing file changes
 
 **Verification:** After updating project.pbxproj, run `xcodebuild -list` or open in Xcode to confirm all files are recognized. Do this check only if you are on macOS or a CI/CD environment that supports Xcode. On Windows, use `git diff --check` and inspect the project file manually.
+
+## Generated quality reports
+
+`quality-reports/` contains generated analysis artifacts, not authoritative repository content.
+
+Unless the current task explicitly asks to read, summarize, compare, or process a quality report:
+
+- do not inspect or search `quality-reports/`;
+- do not use files under `quality-reports/` as context for code analysis or implementation;
+- do not use previous review findings as evidence for new findings;
+- do not infer defects, expected behavior, architecture decisions, or coding conventions from these reports;
+- establish conclusions independently from source code, tests, configuration, authoritative documentation, repository instructions, and validation performed during the current task.
