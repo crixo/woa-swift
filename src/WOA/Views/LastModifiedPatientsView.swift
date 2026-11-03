@@ -51,7 +51,7 @@ struct LastModifiedPatientsView: View {
 
                                 Spacer()
 
-                                Label("Apri", systemImage: "chevron.right.circle.fill")
+                                Label("Vedi dettagli", systemImage: "chevron.right.circle.fill")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.blue)
                             }

@@ -16,8 +16,8 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                 ProgressView("Caricamento \(entityName.capitalized)...")
             } else if viewModel.entity != nil {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
-                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                    //VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
                             Label("Modifica \(entityName)", systemImage: "square.and.pencil")
                                 .font(.headline)
                             Form {
@@ -30,7 +30,7 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
 
                                 Section {
                                     actionBar
-                                        .appSection()
+                                        //.appSection()
                                 }
                             }
                             .appForm(maxWidth: LayoutMetrics.formMaxWidth)
@@ -39,7 +39,7 @@ struct EntityEditTemplate<ViewModel: EntityEditViewModel, EditContent: View>: Vi
                     }
                     .padding()
                     .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
-                }
+                //}
             } else {
                 ContentUnavailableView(
                     "\(entityName.capitalized) non trovato",

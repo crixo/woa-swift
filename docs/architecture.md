@@ -112,3 +112,8 @@ The migration ledger (`woa_migration`) is separate from this entity audit table.
 
 See [Database migrations and audit history](migrations.md) for ledger behavior,
 the migration authoring process, and the audit table's schema.
+
+## Views
+
+### Preview
+Database used for preview is located at `~/Library/Containers/com.woa.application/Data/tmp/woa-preview.db`

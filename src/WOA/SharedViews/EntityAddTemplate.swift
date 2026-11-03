@@ -10,62 +10,76 @@ struct EntityAddTemplate<ViewModel: EntityAddViewModel, AddContent: View>: View 
     @ViewBuilder let addContent: () -> AddContent
 
     var body: some View {
-        let entityNameFLU = entityName.firstLetterUppercased
-        Form {
-            Section {
-                addContent()
-            } header: {
-                Label("Aggiungi \(entityNameFLU)", systemImage: "doc.badge.plus")
-            }
+        Group {
 
-            if let errorMessage = viewModel.errorMessage {
-                Section {
-                    Text(errorMessage).appErrorText()
-                }
-            }
+                ScrollView {
+                    //VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+                        VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                            Label("Aggiungi \(entityName)", systemImage: "square.and.pencil")
+                                .font(.headline)
+                            Form {
+                                addContent()
+                                if let em = viewModel.errorMessage {
+                                    Section {
+                                        Text(em).appErrorText()
+                                    }
+                                }
 
-
-            Section {
-                VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
-                    VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
-                        Label("Pronto a salvare?", systemImage: "doc.text.fill").font(.headline)
-                        Text("Controlla i dettagli di \(entityName) prima di creare questo record.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    FormActionBar(
-                        title: "Aggiungi \(entityNameFLU)",
-                        systemImage: "doc.badge.plus",
-                        submissionStyle: .add,
-                        isLoading: viewModel.isSaving,
-                        onCancel: onCancel,
-                        onSubmit: {
-                            let didSave = await viewModel.save()
-                            saveResult = didSave
-                                ? .success
-                                : .failure(viewModel.shortErrorMessage ?? "Impossibile creare \(entityName). Riprova.")
+                                Section {
+                                    actionBar
+                                        //.appSection()
+                                }
+                            }
+                            .appForm(maxWidth: LayoutMetrics.formMaxWidth)
                         }
-                    )
-                }
-                .appSection()
-            }
+                        .appCard(padding: AppDesignSystem.spacingLG)
+                    }
+                    .padding()
+                    .frame(maxWidth: LayoutMetrics.formMaxWidth, alignment: .leading)
+                //}
+
         }
-        .appForm()
-        .navigationTitle("Aggiungi \(entityNameFLU)")
+        .navigationTitle(entityName.capitalized)
         .sheet(item: $saveResult) { result in
             SaveResultModal(
                 state: result,
-                target: entityNameFLU,
+                target: entityName,
                 parent: parentName,
                 onDismiss: {
                     saveResult = nil
-                    if case .success = result {
-                        onSuccess()
-                    }
+                    if case .success = result { onCancel() }
                 }
             )
+        }
+    }
+    
+    private var actionBar: some View {
+        
+        Section {
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingMD) {
+                VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {
+                    Label("Pronto a salvare?", systemImage: "doc.text.fill").font(.headline)
+                    Text("Controlla i dettagli di \(entityName) prima di creare questo record.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                FormActionBar(
+                    title: "Aggiungi \(entityName.firstLetterUppercased)",
+                    systemImage: "doc.badge.plus",
+                    submissionStyle: .add,
+                    isLoading: viewModel.isSaving,
+                    onCancel: onCancel,
+                    onSubmit: {
+                        let didSave = await viewModel.save()
+                        saveResult = didSave
+                            ? .success
+                            : .failure(viewModel.shortErrorMessage ?? "Impossibile creare \(entityName). Riprova.")
+                    }
+                )
+            }
+            //.appSection()
         }
     }
 }

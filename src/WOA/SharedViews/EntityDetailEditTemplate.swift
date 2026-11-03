@@ -36,7 +36,7 @@ struct EntityDetailEditTemplate<ViewModel: EntityDetailEditViewModel, EditConten
 
                                     Section {
                                         actionBar
-                                            .appSection()
+                                            //.appSection()
                                     }
                                 }
                                 .appForm(maxWidth: LayoutMetrics.formMaxWidth)

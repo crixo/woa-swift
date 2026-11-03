@@ -22,17 +22,10 @@ struct FormActionBar: View {
     let onSubmit: () async -> Void
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: AppDesignSystem.spacingSM) {
-                cancelButton
-                Spacer(minLength: AppDesignSystem.spacingSM)
-                submitButton
-            }
-
-            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                cancelButton
-                submitButton
-            }
+        HStack(spacing: AppDesignSystem.spacingSM) {
+            cancelButton
+            Spacer(minLength: AppDesignSystem.spacingSM)
+            submitButton
         }
     }
 

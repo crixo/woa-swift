@@ -152,9 +152,9 @@ extension View {
         self
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)
-            .background(Color.primary.opacity(0.025))
-            .frame(maxWidth: maxWidth)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            //.background(Color.primary.opacity(0.025))
+            //.frame(maxWidth: maxWidth)
+            //.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     func appErrorText() -> some View {
