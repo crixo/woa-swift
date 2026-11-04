@@ -12,6 +12,10 @@ enum DatabaseInstaller {
                 sourceURL.stopAccessingSecurityScopedResource()
             }
         }
+
+        // Checkpoint the source database to ensure all WAL data is written to the main file
+        try checkpointDatabase(at: sourceURL)
+
         let destinationURL = try AppPaths.databaseFileURL()
 
         if sourceURL.standardizedFileURL != destinationURL.standardizedFileURL {
@@ -26,5 +30,15 @@ enum DatabaseInstaller {
 
         AppLogger.info("✅ Import Database succeeded. Copied database to: \(destinationURL.path)")
         return destinationURL
+    }
+
+    /// Checkpoints the database to ensure all committed WAL data is written to the main file.
+    /// This guarantees that the main database file contains all committed changes before it is copied.
+    private static func checkpointDatabase(at fileURL: URL) throws {
+        let connection = try SQLiteConnection(fileURL: fileURL, readOnly: false)
+        defer { try? connection.close() }
+
+        // Run a RESTART checkpoint to move all data from WAL to the main database file
+        try connection.execute("PRAGMA wal_checkpoint(RESTART);")
     }
 }

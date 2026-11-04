@@ -37,9 +37,12 @@ final class PazienteSearchViewModel: ObservableObject {
         Task {
             do {
                 let url = URL(fileURLWithPath: databasePath)
-                let matches = try PatientRepository.searchPatients(query: trimmed, databaseFileURL: url)
+                // Run the blocking database query on a background thread
+                let matches = try await Task.detached(priority: .userInitiated) {
+                    try PatientRepository.searchPatients(query: trimmed, databaseFileURL: url)
+                }.value
                 results = matches
-                AppLogger.info("✅ Patient search returned \(matches.count) matches for query: \(trimmed)")
+                AppLogger.info("✅ Patient search returned \(matches.count) matches")
             } catch {
                 results = []
                 errorMessage = error.localizedDescription

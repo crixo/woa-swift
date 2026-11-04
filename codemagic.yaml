@@ -59,8 +59,11 @@ workflows:
             -scheme "$XCODE_SCHEME"
       - name: Build, archive and export via release script
         script: |
-          chmod +x build_release.sh
-          ./build_release.sh
+          chmod +x scripts/build-tag-release.sh
+          ./scripts/build-tag-release.sh \
+            --scheme "$XCODE_SCHEME" \
+            --project "$XCODE_PROJECT" \
+            --app-name "WOA"
     artifacts:
       - build/*.pkg
       - build/*.dmg

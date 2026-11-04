@@ -471,15 +471,19 @@ final class DatabaseManagementViewModel: ObservableObject {
 
         Task {
             do {
-                let destinationURL: URL
-                let isExternal: Bool
-                if copySelectedDatabaseToApplicationSupport {
-                    destinationURL = try DatabaseInstaller.install(from: sourceURL)
-                    isExternal = false
-                } else {
-                    destinationURL = sourceURL
-                    isExternal = try !isApplicationSupportDatabase(sourceURL)
-                }
+                // Run heavy I/O operations on a background thread
+                let (destinationURL, isExternal): (URL, Bool) = try await Task.detached(priority: .userInitiated) {
+                    let dest: URL
+                    let external: Bool
+                    if self.copySelectedDatabaseToApplicationSupport {
+                        dest = try DatabaseInstaller.install(from: sourceURL)
+                        external = false
+                    } else {
+                        dest = sourceURL
+                        external = try !self.isApplicationSupportDatabase(sourceURL)
+                    }
+                    return (dest, external)
+                }.value
 
                 let directoryBookmark: Data?
                 let authorizedDirectoryURL: URL?
@@ -520,8 +524,13 @@ final class DatabaseManagementViewModel: ObservableObject {
                 }
 
                 await refreshSessionMigrations(for: destinationURL)
-                try DatabaseValidator.validate(fileURL: destinationURL)
-                let tables = try TableRepository.fetchTableStats(fileURL: destinationURL)
+                
+                // Run validation and stats fetching on background thread
+                let tables = try await Task.detached(priority: .userInitiated) {
+                    try DatabaseValidator.validate(fileURL: destinationURL)
+                    return try TableRepository.fetchTableStats(fileURL: destinationURL)
+                }.value
+                
                 settings.databaseConnection.lastValidated = Date()
                 settings.databaseConnection.status = .connected
                 try settingsStore.save(settings)
