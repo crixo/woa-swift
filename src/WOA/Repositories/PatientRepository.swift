@@ -252,7 +252,7 @@ enum PatientRepository {
         _ request: PatientCreateRequest,
         databaseFileURL: URL
     ) throws -> Int {
-        AppLogger.info("Adding patient: \(request.nome) \(request.cognome)")
+        AppLogger.info("Adding patient")
 
         let dateString: String? = request.data_nascita.map { date in
             let formatter = DateFormatter()

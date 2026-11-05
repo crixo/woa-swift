@@ -36,9 +36,10 @@ import Foundation
     
     private func subscribeToChanges() {
         changeEventTask?.cancel()
-        changeEventTask = Task {
+        changeEventTask = Task { [weak self] in
+            guard let self else { return }
             for await _ in dataChangeCoordinator.subscribeToPatientChanges(patientID: patientID, databaseURL: databaseFileURL) {
-                await load()
+                await self.load()
             }
         }
     }

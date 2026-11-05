@@ -52,6 +52,9 @@ adding tests with new features.
 [`scripts/build-tag-release.sh`](../scripts/build-tag-release.sh) builds a
 Release archive, validates the app bundle, and creates a ZIP and DMG. It also
 supports creating and publishing the Git tag and GitHub Release.
+The archive step is shared with [`scripts/build-in-release.sh`](../scripts/build-in-release.sh),
+which defaults to the Release configuration and can also be run directly with
+an Xcode scheme and project or workspace.
 
 Before running it:
 
@@ -98,13 +101,11 @@ the archive.
 
 [`codemagic.yaml`](../codemagic.yaml) defines a Debug CI build and release
 workflows. The `woa-ci-build` workflow resolves Swift packages and builds the
-WOA scheme unsigned for macOS. `woa-release-standard` archives unsigned,
-extracts the app, and creates a DMG.
-
-The `woa-release-build` workflow currently calls `./build_release.sh`, but
-there is no root-level script with that name in this checkout; the available
-release script is `scripts/build-tag-release.sh` and has a different interface.
-Fix or verify this workflow path before relying on that release workflow.
+WOA scheme unsigned for macOS. Both release workflows use
+[`scripts/build-in-release.sh`](../scripts/build-in-release.sh) for archiving:
+`woa-release-standard` then extracts the app and creates a DMG, while
+`woa-release-build` invokes the tag-release script to prepare and publish
+release artifacts.
 
 ## Install a published release
 

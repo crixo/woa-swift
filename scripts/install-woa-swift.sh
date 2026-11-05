@@ -320,7 +320,8 @@ ls -lh "$LIVE_APP/Contents/MacOS/$FINAL_EXECUTABLE"
 #
 # Remove quarantine attributes
 #
-UNLOCK_SCRIPT="./unlock-woa.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UNLOCK_SCRIPT="$SCRIPT_DIR/unlock-woa.sh"
 
 if [[ -x "$UNLOCK_SCRIPT" ]]; then
     echo
@@ -328,7 +329,8 @@ if [[ -x "$UNLOCK_SCRIPT" ]]; then
     "$UNLOCK_SCRIPT" "$LIVE_APP"
 else
     echo
-    echo "WARNING: unlock-woa.sh not found or not executable."
+    echo "ERROR: unlock-woa.sh not found at $UNLOCK_SCRIPT or not executable."
+    echo "Expected location: $SCRIPT_DIR/unlock-woa.sh"
     echo "Skipping Gatekeeper unlock step."
 fi
 

@@ -575,9 +575,10 @@ fi
 # Calculate the next version
 # ==============================================================================
 
+
 LATEST_TAG="$(
+        # --merged "$MAIN_BRANCH" \ # will let the script consider any tag even if not following the main branch
     git tag \
-        --merged "$MAIN_BRANCH" \
         --list 'v[0-9]*.[0-9]*.[0-9]*' \
         --sort=-v:refname |
     grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
@@ -656,20 +657,21 @@ mkdir -p \
 # Build the Xcode archive
 # ==============================================================================
 
-log "Building ${SCHEME} in ${CONFIGURATION} configuration..."
+ARCHIVE_ARGUMENTS=(
+    --scheme "$SCHEME"
+    --configuration "$CONFIGURATION"
+    --archive-path "$ARCHIVE_PATH"
+    --version "$VERSION"
+)
 
-xcodebuild \
-    "${XCODE_CONTAINER_ARGUMENTS[@]}" \
-    -scheme "$SCHEME" \
-    -configuration "$CONFIGURATION" \
-    -destination 'generic/platform=macOS' \
-    -archivePath "$ARCHIVE_PATH" \
-    MARKETING_VERSION="$VERSION" \
-    CURRENT_PROJECT_VERSION="$VERSION" \
-    clean archive
+if [[ -n "$WORKSPACE_PATH" ]]; then
+    ARCHIVE_ARGUMENTS+=(--workspace "$WORKSPACE_PATH")
+else
+    ARCHIVE_ARGUMENTS+=(--project "$PROJECT_PATH")
+fi
 
-[[ -d "$ARCHIVE_PATH" ]] ||
-    die "Xcode archive was not created: ${ARCHIVE_PATH}"
+"$(dirname -- "${BASH_SOURCE[0]}")/build-in-release.sh" \
+    "${ARCHIVE_ARGUMENTS[@]}"
 
 # ==============================================================================
 # Obtain the application bundle

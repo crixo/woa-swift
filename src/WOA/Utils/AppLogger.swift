@@ -18,17 +18,17 @@ enum AppLogger {
     private static let queue = DispatchQueue(label: "\(subsystem).logger")
 
     static func info(_ message: String) {
-        osLog.info("\(message, privacy: .public)")
+        osLog.info("\(message, privacy: .private)")
         write(level: "INFO", message: message)
     }
 
     static func warning(_ message: String) {
-        osLog.warning("\(message, privacy: .public)")
+        osLog.warning("\(message, privacy: .private)")
         write(level: "WARNING", message: message)
     }
 
     static func error(_ message: String) {
-        osLog.error("\(message, privacy: .public)")
+        osLog.error("\(message, privacy: .private)")
         write(level: "ERROR", message: message)
     }
 
