@@ -6,5 +6,17 @@
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+
+	<!-- Sparkle (sandboxed app): fetch the appcast and download updates. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Sparkle (sandboxed app): talk to its installer XPC services. -->
+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spks</string>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spki</string>
+	</array>
+	<!-- Sparkle -->
 </dict>
 </plist>
