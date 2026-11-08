@@ -1,379 +1,337 @@
 #!/usr/bin/env bash
+# ==============================================================================
+# sparkle-appcast.sh
+#
+# Publishes the Sparkle update feed (appcast.xml) for a release that was
+# already built and published by build-tag-release.sh.
+#
+# Run it AFTER build-tag-release.sh, from anywhere inside the repository:
+#
+#     ./sparkle-appcast.sh
+#
+# With no options it releases the latest vX.Y.Z tag, using the artifacts that
+# build-tag-release.sh left in the dist directory.
+#
+# WHAT IT DOES, IN ORDER
+#   1. Checks tools, git state (on main, up to date) and GitHub access.
+#   2. Resolves the version (latest tag) and finds the .app and .app.zip.
+#   3. PREPARE  Validates the app for Sparkle (keys, feed URL, framework),
+#               signs the zip with generate_appcast and stages the new
+#               appcast.xml under <build-dir>/sparkle-<version>/.
+#               Nothing in the repository or on the remote is touched.
+#   4. VERIFY   Checks that the GitHub Release and its zip asset exist, so the
+#               appcast never points apps at a missing file.
+#   5. PUBLISH  Commits appcast.xml to the main branch and pushes it.
+#               With --dry-run only the push is simulated.
+#
+# REHEARSAL BEFORE A REAL RELEASE
+#   build-tag-release.sh --dry-run leaves a built app and zip in dist/.
+#   You can check the Sparkle side against them before releasing:
+#
+#     ./sparkle-appcast.sh --version 0.4.0 --dry-run
+#
+#   Because the GitHub Release does not exist yet, step 4 only warns.
+#
+# RE-RUNNING
+#   If the push failed after the appcast was committed, run the script again:
+#   it detects the unpushed commit and just pushes it.
+#   If the version is already published, it stops without changing anything.
+# ==============================================================================
 
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-# Sparkle appcast helper, invoked by build-tag-release.sh.
-#
-# Two phases, because the appcast must go live only AFTER the GitHub Release
-# (and its zip asset) exists:
-#
-#   prepare   Validate the app, sign the zip with generate_appcast and stage an
-#             updated appcast.xml under <build-dir>/sparkle-<version>/.
-#             Touches nothing in the repository and nothing on the remote, so it
-#             is safe to run during --dry-run.
-#
-#   publish   Commit the staged appcast.xml to the release branch and push it.
-#             With --dry-run it only simulates the push and prints the commands.
-#
-# Standalone example (paths are relative to the repository root):
-#
-#   ./scripts/sparkle-appcast.sh prepare \
-#       --version 1.1.0 --tag v1.1.0 --repository crixo/woa-swift \
-#       --app-path dist/WOA.app --zip-path dist/WOA-1.1.0.app.zip
 
 # ==============================================================================
-# Default parameter values
+# 1. CONFIGURATION (defaults, overridable by command-line options)
 # ==============================================================================
 
-MODE=""
+# --- What to release ---------------------------------------------------------
+VERSION=""                  # --version (default: latest vX.Y.Z tag)
+APP_PATH=""                 # --app-path (default: the single .app in dist)
+ZIP_PATH=""                 # --zip-path (default: dist/*-<version>.app.zip)
+DIST_DIR="dist"             # --dist-dir
 
-VERSION=""
-TAG=""
-REPOSITORY_NAME=""
+# --- Git / GitHub ------------------------------------------------------------
+REPOSITORY_NAME=""          # --repository (default: detected with gh)
 REMOTE="origin"
 MAIN_BRANCH="main"
-BUILD_DIR="build"
-APP_PATH=""
-ZIP_PATH=""
-APPCAST_PATH="appcast.xml"
-FEED_URL=""
-ED_KEY_FILE=""
+
+# --- Sparkle -----------------------------------------------------------------
+BUILD_DIR="build"           # intermediate files live in <build-dir>/sparkle-<version>
+APPCAST_PATH="appcast.xml"  # location of the appcast in the repository
+FEED_URL=""                 # --feed-url (default: raw.githubusercontent URL)
+ED_KEY_FILE=""              # --ed-key-file (default: login Keychain)
 SPARKLE_BIN="${SPARKLE_BIN:-}"
 PLISTBUDDY="${PLISTBUDDY:-/usr/libexec/PlistBuddy}"
 
-DRY_RUN=false
+# --- Behaviour flags ---------------------------------------------------------
+DRY_RUN=false               # --dry-run
+
+# --- Runtime state (derived while the script runs; do not set by hand) -------
+TAG=""                      # v<version>
+ZIP_NAME=""                 # file name of the zip = asset name on the Release
+WORK_DIR=""
+INPUT_DIR=""
+GENERATED_APPCAST=""        # what generate_appcast produced (one <item>)
+NEW_ITEM_FILE=""            # the extracted new <item>
+STAGED_APPCAST=""           # the full appcast that will be committed
+DOWNLOAD_PREFIX=""          # where GitHub serves the Release assets
+ENCLOSURE_URL=""            # download URL found in the generated entry
+
 
 # ==============================================================================
-# Logging
+# 2. LOGGING AND ERROR HANDLING
 # ==============================================================================
 
-log() {
-    printf '\033[1;34m[INFO]\033[0m %s\n' "$*"
-}
-
-success() {
-    printf '\033[1;32m[SUCCESS]\033[0m %s\n' "$*"
-}
-
-warning() {
-    printf '\033[1;33m[WARNING]\033[0m %s\n' "$*" >&2
-}
-
-error() {
-    printf '\033[1;31m[ERROR]\033[0m %s\n' "$*" >&2
-}
+log()     { printf '\033[1;34m[INFO]\033[0m %s\n'    "$*"; }
+success() { printf '\033[1;32m[SUCCESS]\033[0m %s\n' "$*"; }
+warning() { printf '\033[1;33m[WARNING]\033[0m %s\n' "$*" >&2; }
+error()   { printf '\033[1;31m[ERROR]\033[0m %s\n'   "$*" >&2; }
 
 die() {
     error "$*"
     exit 1
 }
 
+# Runs when any command fails (set -e). Reports where, then exits.
 handle_error() {
     local exit_code=$?
-    local line_number="${1:-unknown}"
-
-    error "Sparkle ${MODE:-script} failed at line ${line_number} with exit code ${exit_code}."
+    error "Sparkle appcast failed at line ${1:-unknown} with exit code ${exit_code}."
     exit "$exit_code"
 }
-
 trap 'handle_error "$LINENO"' ERR
 
+
 # ==============================================================================
-# Help
+# 3. COMMAND-LINE PARSING AND VALIDATION
 # ==============================================================================
 
 show_help() {
     cat <<'HELP'
-Usage:
+Usage: ./sparkle-appcast.sh [options]
 
-  ./scripts/sparkle-appcast.sh <prepare|publish> [options]
+Run it after build-tag-release.sh. With no options it publishes the appcast
+for the latest vX.Y.Z tag, using the artifacts left in the dist directory.
 
-Modes:
+What to release
+  --version <x.y.z>       Version without the leading "v"
+                          (default: latest vX.Y.Z git tag).
+  --app-path <path>       Application bundle
+                          (default: the single .app in --dist-dir).
+  --zip-path <path>       Application zip uploaded to the GitHub Release; its
+                          file name must be the asset name on the Release
+                          (default: <dist-dir>/*-<version>.app.zip).
+  --dist-dir <path>       Where build-tag-release.sh left the artifacts
+                          (default: dist).
 
-  prepare
-      Validate the app, sign the zip and stage an updated appcast.xml in
-      <build-dir>/sparkle-<version>/. Publishes nothing.
+Git / GitHub
+  --repository <o/name>   GitHub repository hosting the Release
+                          (default: detected with gh).
+  --remote <name>         Git remote (default: origin).
+  --main-branch <name>    Branch that holds appcast.xml (default: main).
 
-  publish
-      Commit the staged appcast.xml to the release branch and push it.
-      Run it only after the GitHub Release with the zip asset exists.
+Sparkle
+  --build-dir <path>      Intermediate files (default: build).
+  --appcast-path <path>   appcast.xml location in the repo (default: appcast.xml).
+  --feed-url <url>        Expected SUFeedURL (default:
+                          https://raw.githubusercontent.com/<repo>/<branch>/<appcast-path>).
+  --sparkle-bin <dir>     Folder containing generate_appcast. If omitted:
+                          $SPARKLE_BIN, then PATH, then Xcode's DerivedData.
+  --ed-key-file <path>    Exported EdDSA private key (CI). If omitted the key
+                          is read from the login Keychain.
 
-Required parameters:
-
-  --version <x.y.z>
-      Release version without the leading "v".
-
-  --tag <vx.y.z>
-      Release tag. Must be "v" + --version.
-
-  --repository <owner/name>
-      GitHub repository that hosts the Release assets.
-
-  --zip-path <path>
-      Application zip that is uploaded to the GitHub Release.
-      Its file name must be the asset name on the Release.
-
-  --app-path <path>
-      Application bundle (prepare only). Used to validate the Sparkle setup.
-
-Optional parameters:
-
-  --remote <name>
-      Git remote. Default: origin
-
-  --main-branch <name>
-      Branch that holds appcast.xml. Default: main
-
-  --build-dir <path>
-      Intermediate files directory. Default: build
-
-  --appcast-path <path>
-      Location of appcast.xml in the repository. Default: appcast.xml
-
-  --feed-url <url>
-      Expected SUFeedURL. Default:
-      https://raw.githubusercontent.com/<repository>/<main-branch>/<appcast-path>
-
-  --sparkle-bin <dir>
-      Directory containing generate_appcast. If omitted the script looks at
-      $SPARKLE_BIN, then PATH, then Xcode's DerivedData Sparkle artifacts.
-
-  --ed-key-file <path>
-      File with the exported EdDSA private key (CI use). If omitted the key is
-      read from the login Keychain, where generate_keys stored it.
-
-  --dry-run
-      publish only: simulate the push and print the commands, change nothing.
-
-  -h, --help
-      Display this help.
+Execution
+  --dry-run               Validate, sign and stage the appcast, and simulate
+                          the push. Nothing is committed or pushed.
+  -h, --help              Show this help.
 HELP
 }
 
-# ==============================================================================
-# Parameter parsing
-# ==============================================================================
+# Fails if an option that needs a value was given without one.
+need_value() {
+    local option="$1" remaining="$2"
+    [[ "$remaining" -ge 2 ]] || die "Missing value for ${option}"
+}
 
-require_parameter_value() {
-    local parameter_name="$1"
-    local parameter_count="$2"
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --version)       need_value "$1" "$#"; VERSION="$2";         shift 2 ;;
+            --app-path)      need_value "$1" "$#"; APP_PATH="$2";        shift 2 ;;
+            --zip-path)      need_value "$1" "$#"; ZIP_PATH="$2";        shift 2 ;;
+            --dist-dir)      need_value "$1" "$#"; DIST_DIR="$2";        shift 2 ;;
+            --repository)    need_value "$1" "$#"; REPOSITORY_NAME="$2"; shift 2 ;;
+            --remote)        need_value "$1" "$#"; REMOTE="$2";          shift 2 ;;
+            --main-branch)   need_value "$1" "$#"; MAIN_BRANCH="$2";     shift 2 ;;
+            --build-dir)     need_value "$1" "$#"; BUILD_DIR="$2";       shift 2 ;;
+            --appcast-path)  need_value "$1" "$#"; APPCAST_PATH="$2";    shift 2 ;;
+            --feed-url)      need_value "$1" "$#"; FEED_URL="$2";        shift 2 ;;
+            --sparkle-bin)   need_value "$1" "$#"; SPARKLE_BIN="$2";     shift 2 ;;
+            --ed-key-file)   need_value "$1" "$#"; ED_KEY_FILE="$2";     shift 2 ;;
+            --dry-run)       DRY_RUN=true; shift ;;
+            -h|--help)       show_help; exit 0 ;;
+            *) die "Unknown option: $1 (use --help)" ;;
+        esac
+    done
+}
 
-    if [[ "$parameter_count" -lt 2 ]]; then
-        die "Missing value for parameter: ${parameter_name}"
+validate_args() {
+    [[ -n "$REMOTE" ]]       || die "--remote cannot be empty."
+    [[ -n "$MAIN_BRANCH" ]]  || die "--main-branch cannot be empty."
+    [[ -n "$BUILD_DIR" ]]    || die "--build-dir cannot be empty."
+    [[ -n "$DIST_DIR" ]]     || die "--dist-dir cannot be empty."
+    [[ -n "$APPCAST_PATH" ]] || die "--appcast-path cannot be empty."
+
+    # Accept "v1.2.3" as well as "1.2.3".
+    VERSION="${VERSION#v}"
+
+    if [[ "$DRY_RUN" == true ]]; then
+        warning "DRY-RUN: the appcast is staged and checked, nothing is committed or pushed."
     fi
 }
 
-case "${1:-}" in
-    prepare|publish)
-        MODE="$1"
-        shift
-        ;;
-
-    -h|--help)
-        show_help
-        exit 0
-        ;;
-
-    "")
-        die "Missing mode. Use: prepare or publish. See --help."
-        ;;
-
-    *)
-        die "Unknown mode: $1. Use: prepare or publish. See --help."
-        ;;
-esac
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --version)
-            require_parameter_value "$1" "$#"
-            VERSION="$2"
-            shift 2
-            ;;
-
-        --tag)
-            require_parameter_value "$1" "$#"
-            TAG="$2"
-            shift 2
-            ;;
-
-        --repository)
-            require_parameter_value "$1" "$#"
-            REPOSITORY_NAME="$2"
-            shift 2
-            ;;
-
-        --remote)
-            require_parameter_value "$1" "$#"
-            REMOTE="$2"
-            shift 2
-            ;;
-
-        --main-branch)
-            require_parameter_value "$1" "$#"
-            MAIN_BRANCH="$2"
-            shift 2
-            ;;
-
-        --build-dir)
-            require_parameter_value "$1" "$#"
-            BUILD_DIR="$2"
-            shift 2
-            ;;
-
-        --app-path)
-            require_parameter_value "$1" "$#"
-            APP_PATH="$2"
-            shift 2
-            ;;
-
-        --zip-path)
-            require_parameter_value "$1" "$#"
-            ZIP_PATH="$2"
-            shift 2
-            ;;
-
-        --appcast-path)
-            require_parameter_value "$1" "$#"
-            APPCAST_PATH="$2"
-            shift 2
-            ;;
-
-        --feed-url)
-            require_parameter_value "$1" "$#"
-            FEED_URL="$2"
-            shift 2
-            ;;
-
-        --sparkle-bin)
-            require_parameter_value "$1" "$#"
-            SPARKLE_BIN="$2"
-            shift 2
-            ;;
-
-        --ed-key-file)
-            require_parameter_value "$1" "$#"
-            ED_KEY_FILE="$2"
-            shift 2
-            ;;
-
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-
-        *)
-            die "Unknown parameter: $1. Use --help to display supported parameters."
-            ;;
-    esac
-done
 
 # ==============================================================================
-# Parameter validation
+# 4. PRE-FLIGHT CHECKS (tools, git, GitHub)
 # ==============================================================================
 
-[[ -n "$VERSION" ]] ||
-    die "The required --version parameter was not provided."
+require_tools() {
+    local tool
+    for tool in git gh awk grep sed tr find; do
+        command -v "$tool" >/dev/null 2>&1 || die "Required command not found: ${tool}"
+    done
 
-[[ -n "$TAG" ]] ||
-    die "The required --tag parameter was not provided."
-
-[[ "$TAG" == "v${VERSION}" ]] ||
-    die "--tag must be 'v${VERSION}', got '${TAG}'."
-
-[[ -n "$REPOSITORY_NAME" ]] ||
-    die "The required --repository parameter was not provided."
-
-[[ -n "$ZIP_PATH" ]] ||
-    die "The required --zip-path parameter was not provided."
-
-[[ -n "$REMOTE" ]] ||
-    die "--remote cannot be empty."
-
-[[ -n "$MAIN_BRANCH" ]] ||
-    die "--main-branch cannot be empty."
-
-[[ -n "$BUILD_DIR" ]] ||
-    die "--build-dir cannot be empty."
-
-[[ -n "$APPCAST_PATH" ]] ||
-    die "--appcast-path cannot be empty."
-
-if [[ "$MODE" == "prepare" ]]; then
-    [[ -n "$APP_PATH" ]] ||
-        die "The --app-path parameter is required for prepare."
-
-    [[ "$DRY_RUN" == false ]] ||
-        warning "--dry-run has no effect on prepare: it never publishes anything."
-fi
-
-# ==============================================================================
-# Dependency validation
-# ==============================================================================
-
-require_command() {
-    local command_name="$1"
-
-    command -v "$command_name" >/dev/null 2>&1 ||
-        die "Required command not found: ${command_name}"
+    [[ "$(uname -s)" == "Darwin" ]] || die "Sparkle's tools run on macOS only."
 }
 
-require_command git
-require_command awk
-require_command grep
-require_command sed
-require_command tr
+# Moves to the repo root and requires to be on an up-to-date main branch.
+# Every relative path (dist, build, appcast) is relative to the repo root.
+check_git_state() {
+    local current_branch
 
-if [[ "$MODE" == "prepare" ]]; then
-    [[ "$(uname -s)" == "Darwin" ]] ||
-        die "Sparkle's tools run on macOS only."
-fi
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+        die "Not inside a Git repository."
 
-if [[ "$MODE" == "publish" && "$DRY_RUN" == false ]]; then
-    require_command gh
-fi
+    cd "$(git rev-parse --show-toplevel)"
 
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
-    die "The current directory is not inside a Git repository."
+    git remote get-url "$REMOTE" >/dev/null 2>&1 ||
+        die "Git remote '${REMOTE}' is not configured."
 
-# Like build-tag-release.sh: every relative path is relative to the repo root.
-cd "$(git rev-parse --show-toplevel)"
+    current_branch="$(git branch --show-current)"
+    [[ "$current_branch" == "$MAIN_BRANCH" ]] ||
+        die "The appcast must be committed on ${MAIN_BRANCH}, but the current branch is '${current_branch}'."
+
+    # Only the appcast itself must be clean: the commit is limited to that file.
+    [[ -z "$(git status --porcelain -- "$APPCAST_PATH")" ]] ||
+        die "${APPCAST_PATH} has uncommitted changes. Commit or discard them first."
+
+    log "Fetching ${MAIN_BRANCH} and tags from ${REMOTE}..."
+    git fetch "$REMOTE" "$MAIN_BRANCH" --tags --prune
+    git pull --ff-only "$REMOTE" "$MAIN_BRANCH"
+}
+
+# Requires an authenticated gh; detects the repository if not given.
+check_github_access() {
+    log "Verifying GitHub access..."
+
+    gh auth status >/dev/null 2>&1 || die "GitHub CLI not authenticated. Run: gh auth login"
+
+    if [[ -z "$REPOSITORY_NAME" ]]; then
+        REPOSITORY_NAME="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
+    fi
+
+    [[ -n "$REPOSITORY_NAME" ]] || die "Unable to determine the GitHub repository."
+    log "GitHub repository: ${REPOSITORY_NAME}"
+}
+
 
 # ==============================================================================
-# Derived values
+# 5. RESOLVE WHAT TO RELEASE (version, artifacts, derived paths)
 # ==============================================================================
 
-ZIP_NAME="$(basename -- "$ZIP_PATH")"
+# Sets VERSION (latest vX.Y.Z tag unless --version was given) and TAG.
+resolve_version() {
+    local latest_tag
 
-WORK_DIR="${BUILD_DIR}/sparkle-${VERSION}"
-INPUT_DIR="${WORK_DIR}/input"
-GENERATED_APPCAST="${INPUT_DIR}/appcast.xml"
-NEW_ITEM_FILE="${WORK_DIR}/new-item.xml"
-STAGED_APPCAST="${WORK_DIR}/appcast.xml"
+    if [[ -z "$VERSION" ]]; then
+        latest_tag="$(
+            git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname |
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+            head -n 1 || true
+        )"
 
-# GitHub always serves Release assets from this location. The asset name is the
-# file name of the uploaded file (a "#label" suffix on `gh release create` only
-# changes the display label), which is why ZIP_NAME must match the uploaded file.
-DOWNLOAD_PREFIX="https://github.com/${REPOSITORY_NAME}/releases/download/${TAG}/"
+        [[ -n "$latest_tag" ]] ||
+            die "No vX.Y.Z tag found. Pass --version, or run build-tag-release.sh first."
 
-if [[ -z "$FEED_URL" ]]; then
-    FEED_URL="https://raw.githubusercontent.com/${REPOSITORY_NAME}/${MAIN_BRANCH}/${APPCAST_PATH}"
-fi
+        VERSION="${latest_tag#v}"
+    fi
+
+    [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+        die "Version '${VERSION}' is not in the form X.Y.Z."
+
+    TAG="v${VERSION}"
+    log "Version: ${VERSION} (tag ${TAG})"
+}
+
+# Finds exactly one match in DIST_DIR for the given find arguments.
+# Prints it; dies with a clear message otherwise.
+find_single_artifact() {
+    local description="$1" option="$2"
+    shift 2
+
+    local found count
+    found="$(find "$DIST_DIR" -maxdepth 1 "$@" 2>/dev/null || true)"
+    count="$(printf '%s\n' "$found" | grep -c . || true)"
+
+    [[ "$count" -eq 1 ]] ||
+        die "Expected exactly one ${description} in ${DIST_DIR}, found ${count}. Use ${option}."
+
+    printf '%s\n' "$found"
+}
+
+# Sets APP_PATH and ZIP_PATH from the dist directory unless given.
+resolve_artifacts() {
+    if [[ -z "$APP_PATH" ]]; then
+        APP_PATH="$(find_single_artifact "application bundle" "--app-path" -type d -name '*.app')"
+    fi
+
+    if [[ -z "$ZIP_PATH" ]]; then
+        ZIP_PATH="$(find_single_artifact "zip for version ${VERSION}" "--zip-path" -type f -name "*-${VERSION}.app.zip")"
+    fi
+
+    log "App: ${APP_PATH}"
+    log "Zip: ${ZIP_PATH}"
+}
+
+# Fills every path and URL derived from the values above.
+derive_paths() {
+    ZIP_NAME="$(basename -- "$ZIP_PATH")"
+
+    WORK_DIR="${BUILD_DIR}/sparkle-${VERSION}"
+    INPUT_DIR="${WORK_DIR}/input"
+    GENERATED_APPCAST="${INPUT_DIR}/appcast.xml"
+    NEW_ITEM_FILE="${WORK_DIR}/new-item.xml"
+    STAGED_APPCAST="${WORK_DIR}/appcast.xml"
+
+    # GitHub always serves Release assets from this location. The asset name is
+    # the file name of the uploaded file (a "#label" suffix on `gh release
+    # create` only changes the display label), which is why ZIP_NAME must match
+    # the uploaded file.
+    DOWNLOAD_PREFIX="https://github.com/${REPOSITORY_NAME}/releases/download/${TAG}/"
+
+    if [[ -z "$FEED_URL" ]]; then
+        FEED_URL="https://raw.githubusercontent.com/${REPOSITORY_NAME}/${MAIN_BRANCH}/${APPCAST_PATH}"
+    fi
+}
+
 
 # ==============================================================================
-# Helpers
+# 6. HELPERS
 # ==============================================================================
 
 plist_value() {
-    local plist="$1"
-    local key="$2"
-
+    local plist="$1" key="$2"
     "$PLISTBUDDY" -c "Print :${key}" "$plist" 2>/dev/null || true
 }
 
@@ -388,9 +346,9 @@ appcast_has_version() {
         grep -Fq "sparkle:version=\"${VERSION}\"" "$appcast"
 }
 
+# Prints the path of a Sparkle command-line tool, or returns 1 if not found.
 find_sparkle_tool() {
-    local tool="$1"
-    local candidate
+    local tool="$1" candidate
 
     if [[ -n "$SPARKLE_BIN" ]]; then
         candidate="${SPARKLE_BIN}/${tool}"
@@ -420,34 +378,79 @@ find_sparkle_tool() {
     return 1
 }
 
+# Pushes the main branch. On failure the appcast commit stays local and the
+# way to recover is printed.
+push_main_branch() {
+    log "Pushing ${MAIN_BRANCH} to ${REMOTE}..."
+
+    if ! git push "$REMOTE" "$MAIN_BRANCH"; then
+        error "Pushing the appcast commit failed."
+
+        warning "The appcast commit exists locally on ${MAIN_BRANCH} but was NOT pushed."
+        warning "Installed apps will not see ${TAG} until it is pushed."
+        warning "If ${MAIN_BRANCH} is protected, push the commit through a pull request instead."
+
+        printf '\nAfter resolving the problem, just run this script again (or: git push %q %q).\n' \
+            "$REMOTE" "$MAIN_BRANCH"
+
+        exit 1
+    fi
+}
+
+
 # ==============================================================================
-# prepare
+# 7. ALREADY-PUBLISHED CHECK (makes the script safe to re-run)
 # ==============================================================================
 
+# Does nothing if the appcast does not contain this version yet.
+# Otherwise it never builds a second entry:
+#   - committed locally but not pushed -> pushes it and finishes
+#   - already pushed                   -> stops with an explanation
+check_not_already_published() {
+    local unpushed
+
+    [[ -f "$APPCAST_PATH" ]] || return 0
+    appcast_has_version "$APPCAST_PATH" || return 0
+
+    unpushed="$(git log --format=%H "${REMOTE}/${MAIN_BRANCH}..${MAIN_BRANCH}" -- "$APPCAST_PATH")"
+
+    [[ -n "$unpushed" ]] ||
+        die "${APPCAST_PATH} already contains version ${VERSION} and it is already pushed. Nothing to do."
+
+    warning "${APPCAST_PATH} already has version ${VERSION} in a local commit that was never pushed."
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log "Dry run: a real run would push ${MAIN_BRANCH} now."
+        exit 0
+    fi
+
+    push_main_branch
+    print_published_summary
+    exit 0
+}
+
+
+# ==============================================================================
+# 8. PREPARE: VALIDATE, SIGN AND STAGE THE APPCAST (publishes nothing)
+# ==============================================================================
+
+# The app must be correctly set up for Sparkle, or updates would silently fail.
 validate_app_for_sparkle() {
+    local info_plist="${APP_PATH}/Contents/Info.plist"
+    local bundle_version public_key feed_url
+
     log "Validating the application for Sparkle..."
 
-    [[ -d "$APP_PATH" ]] ||
-        die "Application bundle not found: ${APP_PATH}"
-
-    [[ -s "$ZIP_PATH" ]] ||
-        die "Application ZIP not found or empty: ${ZIP_PATH}"
-
-    local info_plist="${APP_PATH}/Contents/Info.plist"
-
-    [[ -f "$info_plist" ]] ||
-        die "Application Info.plist was not found: ${info_plist}"
-
-    local bundle_version
-    bundle_version="$(plist_value "$info_plist" CFBundleVersion)"
+    [[ -d "$APP_PATH" ]]  || die "Application bundle not found: ${APP_PATH}"
+    [[ -s "$ZIP_PATH" ]]  || die "Application ZIP not found or empty: ${ZIP_PATH}"
+    [[ -f "$info_plist" ]] || die "Application Info.plist was not found: ${info_plist}"
 
     # Sparkle compares CFBundleVersion, so it must be the release version.
+    bundle_version="$(plist_value "$info_plist" CFBundleVersion)"
     [[ "$bundle_version" == "$VERSION" ]] ||
         die "CFBundleVersion is '${bundle_version}', expected '${VERSION}'."
 
-    local public_key
     public_key="$(plist_value "$info_plist" SUPublicEDKey)"
-
     [[ -n "$public_key" ]] ||
         die "SUPublicEDKey is missing from the app's Info.plist. Run Sparkle's generate_keys and add the printed public key to the app target."
 
@@ -455,9 +458,7 @@ validate_app_for_sparkle() {
     [[ "$public_key" =~ ^[A-Za-z0-9+/]{43}=$ ]] ||
         die "SUPublicEDKey ('${public_key}') is not a valid Sparkle public key. Replace the placeholder with the key printed by generate_keys."
 
-    local feed_url
     feed_url="$(plist_value "$info_plist" SUFeedURL)"
-
     [[ -n "$feed_url" ]] ||
         die "SUFeedURL is missing from the app's Info.plist. Expected: ${FEED_URL}"
 
@@ -477,15 +478,16 @@ validate_app_for_sparkle() {
     fi
 }
 
+# Checks what generate_appcast produced. Sets ENCLOSURE_URL.
 validate_generated_item() {
+    local item_count enclosure_name
+
     log "Validating the generated appcast entry..."
 
     [[ -s "$GENERATED_APPCAST" ]] ||
         die "generate_appcast did not produce ${GENERATED_APPCAST}."
 
-    local item_count
     item_count="$(count_items "$GENERATED_APPCAST")"
-
     [[ "$item_count" == "1" ]] ||
         die "Expected exactly one <item> in the generated appcast, found ${item_count}."
 
@@ -506,19 +508,19 @@ validate_generated_item() {
     [[ -n "$ENCLOSURE_URL" ]] ||
         die "Unable to read the enclosure URL from the generated appcast."
 
-    if [[ "$ENCLOSURE_URL" != "${DOWNLOAD_PREFIX}"* ]]; then
+    [[ "$ENCLOSURE_URL" == "${DOWNLOAD_PREFIX}"* ]] ||
         die "Enclosure URL '${ENCLOSURE_URL}' does not start with '${DOWNLOAD_PREFIX}'."
-    fi
 
-    local enclosure_name="${ENCLOSURE_URL#"$DOWNLOAD_PREFIX"}"
+    enclosure_name="${ENCLOSURE_URL#"$DOWNLOAD_PREFIX"}"
     enclosure_name="${enclosure_name//%20/ }"
 
     [[ "$enclosure_name" == "$ZIP_NAME" ]] ||
         die "Enclosure file name '${enclosure_name}' does not match the uploaded asset '${ZIP_NAME}'."
 }
 
+# Builds STAGED_APPCAST: the existing appcast plus the new entry on top.
 merge_into_existing_appcast() {
-    local existing_items=0
+    local existing_items=0 merged_items
 
     if [[ ! -f "$APPCAST_PATH" ]]; then
         log "No existing ${APPCAST_PATH}: this is the first appcast entry."
@@ -531,10 +533,6 @@ merge_into_existing_appcast() {
     if command -v xmllint >/dev/null 2>&1; then
         xmllint --noout "$APPCAST_PATH" ||
             die "The existing ${APPCAST_PATH} is not well-formed XML."
-    fi
-
-    if appcast_has_version "$APPCAST_PATH"; then
-        die "${APPCAST_PATH} already contains an entry for version ${VERSION}."
     fi
 
     existing_items="$(count_items "$APPCAST_PATH")"
@@ -560,17 +558,18 @@ merge_into_existing_appcast() {
         { print }
     ' "$APPCAST_PATH" >"$STAGED_APPCAST"
 
-    local merged_items
     merged_items="$(count_items "$STAGED_APPCAST")"
-
     [[ "$merged_items" == "$((existing_items + 1))" ]] ||
         die "Merge check failed: expected $((existing_items + 1)) items, found ${merged_items}."
 }
 
-run_prepare() {
+# The whole PREPARE phase. Leaves the finished appcast in STAGED_APPCAST.
+prepare_appcast() {
+    local generate_appcast
+    local generate_arguments
+
     validate_app_for_sparkle
 
-    local generate_appcast
     generate_appcast="$(find_sparkle_tool generate_appcast)" ||
         die "generate_appcast not found. Use --sparkle-bin <dir>, set SPARKLE_BIN, or add Sparkle's bin directory to PATH."
 
@@ -583,20 +582,17 @@ run_prepare() {
     # and merged afterwards.
     cp "$ZIP_PATH" "${INPUT_DIR}/${ZIP_NAME}"
 
-    local generate_arguments=(
+    generate_arguments=(
         "$INPUT_DIR"
         --download-url-prefix "$DOWNLOAD_PREFIX"
     )
 
     if [[ -n "$ED_KEY_FILE" ]]; then
-        [[ -f "$ED_KEY_FILE" ]] ||
-            die "EdDSA key file not found: ${ED_KEY_FILE}"
-
+        [[ -f "$ED_KEY_FILE" ]] || die "EdDSA key file not found: ${ED_KEY_FILE}"
         generate_arguments+=(--ed-key-file "$ED_KEY_FILE")
     fi
 
     log "Signing ${ZIP_NAME} and generating its appcast entry..."
-
     "$generate_appcast" "${generate_arguments[@]}"
 
     validate_generated_item
@@ -611,87 +607,96 @@ run_prepare() {
         die "The staged appcast does not contain the new download URL."
 
     success "Sparkle appcast prepared: ${STAGED_APPCAST}"
-
-    printf '\n'
-    printf 'Sparkle appcast:\n'
-    printf '  Staged file:  %s\n' "$STAGED_APPCAST"
-    printf '  Entries:      %s\n' "$(count_items "$STAGED_APPCAST")"
-    printf '  Version:      %s\n' "$VERSION"
-    printf '  Download URL: %s\n' "$ENCLOSURE_URL"
-    printf '  Feed URL:     %s\n' "$FEED_URL"
-    printf '\n'
+    printf '\n  Entries:      %s\n  Version:      %s\n  Download URL: %s\n  Feed URL:     %s\n\n' \
+        "$(count_items "$STAGED_APPCAST")" "$VERSION" "$ENCLOSURE_URL" "$FEED_URL"
 }
 
+
 # ==============================================================================
-# publish
+# 9. VERIFY: THE GITHUB RELEASE AND ITS ASSET MUST EXIST
 # ==============================================================================
 
-print_publish_commands() {
-    local commit_message="Update appcast for ${TAG}"
-
-    printf '  cp %q %q\n' "$STAGED_APPCAST" "$APPCAST_PATH"
-    printf '  git add -- %q\n' "$APPCAST_PATH"
-    printf '  git commit -m %q -- %q\n' "$commit_message" "$APPCAST_PATH"
-    printf '  git push %q %q\n' "$REMOTE" "$MAIN_BRANCH"
-}
-
-run_publish() {
-    [[ -f "$STAGED_APPCAST" ]] ||
-        die "Staged appcast not found: ${STAGED_APPCAST}. Run 'prepare' first."
-
-    local current_branch
-    current_branch="$(git branch --show-current)"
-
-    [[ "$current_branch" == "$MAIN_BRANCH" ]] ||
-        die "The appcast must be committed on ${MAIN_BRANCH}, but the current branch is '${current_branch}'."
-
-    if [[ "$DRY_RUN" == true ]]; then
-        log "Testing whether ${MAIN_BRANCH} could be pushed to ${REMOTE}..."
-
-        if ! git push --dry-run "$REMOTE" "${MAIN_BRANCH}:${MAIN_BRANCH}"; then
-            die "The simulated push of ${MAIN_BRANCH} failed."
-        fi
-
-        printf '\n'
-        printf 'Sparkle commands that would be executed after the GitHub Release is published:\n'
-        printf '\n'
-        print_publish_commands
-        printf '\n'
-
-        warning "No appcast was committed."
-        warning "No appcast was pushed."
-        return 0
-    fi
-
-    local commit_message="Update appcast for ${TAG}"
+# The appcast points apps at the zip on the GitHub Release, so publishing it
+# before the asset exists would break updates.
+# In --dry-run a missing Release only warns: that is expected when rehearsing
+# before the real release.
+verify_release_asset() {
+    local assets problem=""
 
     log "Verifying that ${ZIP_NAME} is attached to GitHub Release ${TAG}..."
 
-    local release_assets
-    release_assets="$(
-        gh release view "$TAG" \
-            --repo "$REPOSITORY_NAME" \
-            --json assets \
-            --jq '.assets[].name'
-    )" || die "Unable to read GitHub Release ${TAG}. The appcast must not be published before the Release exists."
-
-    if ! grep -Fxq -- "$ZIP_NAME" <<<"$release_assets"; then
-        die "Asset '${ZIP_NAME}' is not attached to Release ${TAG}. Publishing the appcast now would point apps at a missing file."
+    if ! assets="$(gh release view "$TAG" --repo "$REPOSITORY_NAME" --json assets --jq '.assets[].name' 2>/dev/null)"; then
+        problem="GitHub Release ${TAG} was not found."
+    elif ! grep -Fxq -- "$ZIP_NAME" <<<"$assets"; then
+        problem="Asset '${ZIP_NAME}' is not attached to Release ${TAG}."
     fi
 
-    # Best-effort reachability check; a private repository fails here by design.
-    if command -v curl >/dev/null 2>&1; then
-        if ! curl \
-            --fail \
-            --silent \
-            --location \
-            --range 0-0 \
-            --output /dev/null \
-            "${DOWNLOAD_PREFIX}${ZIP_NAME// /%20}"
-        then
-            warning "The download URL did not answer successfully."
-            warning "Sparkle needs it to be publicly downloadable (public repository)."
-        fi
+    if [[ -z "$problem" ]]; then
+        check_download_url
+        return 0
+    fi
+
+    if [[ "$DRY_RUN" == true ]]; then
+        warning "${problem}"
+        warning "Expected when rehearsing before the release exists; a real run would stop here."
+        return 0
+    fi
+
+    die "${problem} Publishing the appcast now would point apps at a missing file."
+}
+
+# Best-effort reachability check; a private repository fails here by design.
+check_download_url() {
+    command -v curl >/dev/null 2>&1 || return 0
+
+    if ! curl --fail --silent --location --range 0-0 --output /dev/null \
+        "${DOWNLOAD_PREFIX}${ZIP_NAME// /%20}"
+    then
+        warning "The download URL did not answer successfully."
+        warning "Sparkle needs it to be publicly downloadable (public repository)."
+    fi
+
+    return 0
+}
+
+
+# ==============================================================================
+# 10. PUBLISH: COMMIT AND PUSH THE APPCAST
+# ==============================================================================
+
+print_publish_commands() {
+    printf '  cp %q %q\n' "$STAGED_APPCAST" "$APPCAST_PATH"
+    printf '  git add -- %q\n' "$APPCAST_PATH"
+    printf '  git commit -m %q -- %q\n' "Update appcast for ${TAG}" "$APPCAST_PATH"
+    printf '  git push %q %q\n' "$REMOTE" "$MAIN_BRANCH"
+}
+
+# --dry-run: simulate the push and show what a real run would do.
+simulate_publish() {
+    log "Testing whether ${MAIN_BRANCH} could be pushed to ${REMOTE}..."
+
+    git push --dry-run "$REMOTE" "${MAIN_BRANCH}:${MAIN_BRANCH}" ||
+        die "The simulated push of ${MAIN_BRANCH} failed."
+
+    printf '\nCommands a real run would execute:\n\n'
+    print_publish_commands
+    printf '\n'
+
+    warning "No appcast was committed."
+    warning "No appcast was pushed."
+}
+
+print_published_summary() {
+    success "Appcast for ${TAG} pushed to ${REMOTE}/${MAIN_BRANCH}."
+    printf '\n  Feed URL: %s\n\n' "$FEED_URL"
+
+    warning "raw.githubusercontent.com caches files for a few minutes before the new appcast is visible."
+}
+
+publish_appcast() {
+    if [[ "$DRY_RUN" == true ]]; then
+        simulate_publish
+        return 0
     fi
 
     log "Updating ${APPCAST_PATH}..."
@@ -701,55 +706,38 @@ run_publish() {
 
     git add -- "$APPCAST_PATH"
 
-    if git diff --cached --quiet -- "$APPCAST_PATH"; then
-        # Nothing new to commit. That is expected when a previous publish
-        # committed the appcast but the push failed: just push it now.
-        if [[ -n "$(git log --format=%H "${REMOTE}/${MAIN_BRANCH}..${MAIN_BRANCH}" -- "$APPCAST_PATH")" ]]; then
-            log "${APPCAST_PATH} is already committed locally but not pushed."
-        else
-            die "${APPCAST_PATH} has no changes to commit."
-        fi
-    else
-        git commit -m "$commit_message" -- "$APPCAST_PATH"
-    fi
+    git diff --cached --quiet -- "$APPCAST_PATH" &&
+        die "${APPCAST_PATH} has no changes to commit."
 
-    log "Pushing ${MAIN_BRANCH} to ${REMOTE}..."
+    git commit -m "Update appcast for ${TAG}" -- "$APPCAST_PATH"
 
-    if ! git push "$REMOTE" "$MAIN_BRANCH"; then
-        error "Pushing the appcast commit failed."
-
-        warning "The appcast commit exists locally on ${MAIN_BRANCH} but was NOT pushed."
-        warning "Installed apps will not see ${TAG} until it is pushed."
-        warning "If ${MAIN_BRANCH} is protected, push the commit through a pull request instead."
-
-        printf '\n'
-        printf 'After resolving the problem, retry with:\n'
-        printf '\n'
-        printf '  git push %q %q\n' "$REMOTE" "$MAIN_BRANCH"
-
-        exit 1
-    fi
-
-    success "Appcast for ${TAG} pushed to ${REMOTE}/${MAIN_BRANCH}."
-
-    printf '\n'
-    printf 'Sparkle feed:\n'
-    printf '  Feed URL: %s\n' "$FEED_URL"
-    printf '\n'
-
-    warning "raw.githubusercontent.com caches files for a few minutes before the new appcast is visible."
+    push_main_branch
+    print_published_summary
 }
 
+
 # ==============================================================================
-# Main
+# 11. MAIN: THE WHOLE FLOW, IN ORDER
 # ==============================================================================
 
-case "$MODE" in
-    prepare)
-        run_prepare
-        ;;
+main() {
+    # Setup and pre-flight checks
+    parse_args "$@"
+    validate_args
+    require_tools
+    check_git_state
+    check_github_access
 
-    publish)
-        run_publish
-        ;;
-esac
+    # What to release
+    resolve_version
+    resolve_artifacts
+    derive_paths
+    check_not_already_published   # safe re-run: pushes a pending commit or stops
+
+    # Prepare (publishes nothing), then verify the Release, then publish
+    prepare_appcast
+    verify_release_asset
+    publish_appcast
+}
+
+main "$@"
