@@ -156,3 +156,32 @@ SUEnableAutomaticChecks = true in Info.plist tells it to check the appcast on it
 The button only does a manual check on demand. It also shows a result even when there’s no update (“You’re up to date”), while automatic checks stay silent unless an update exists.
 
 Automatic checks only look for updates and prompt you. Nothing downloads or installs silently unless you also set SUAutomaticallyUpdate to true, and I didn’t.
+
+## How the auto update works
+`startingUpdater: true` does not mean “check on every launch.” It only starts Sparkle’s scheduler, and the scheduler decides whether a check is due.
+
+What happens
+
+On first launch, Sparkle asks the user for permission to check automatically (unless SUEnableAutomaticChecks is set in Info.plist, as it is in yours).
+After that, it stores the time of the last check in UserDefaults (SULastCheckTime).
+On each later launch, it only checks if more than SUScheduledCheckInterval (86400 s, so 24 h) has passed since that timestamp. Otherwise it waits until the interval expires, even while the app keeps running.
+
+During development you relaunch constantly, so after the first check the next ones are skipped for a day.
+
+Ways to see a check in Debug
+
+Reset the stored state (simplest):
+  defaults delete <your.bundle.identifier> SULastCheckTime
+
+You can also delete SUHasLaunchedBefore and SUSkippedVersion if you’ve skipped a version, or run defaults delete <your.bundle.identifier> to reset everything.
+
+Lower the interval while debugging: Sparkle enforces a minimum of 3600 s (1 hour) for SUScheduledCheckInterval, so this alone won’t give a check on every run.
+
+You could also trigger manually an update using "Check for Updates..." in the application menu
+
+
+## Tools
+
+```bash
+generate_appcast ./release-folder-containing-the-zip-only --download-url-prefix "https://github.com/crixo/woa-swift/releases/download/vx.x.x"
+```
