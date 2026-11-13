@@ -1,1004 +1,673 @@
 #!/usr/bin/env bash
+# ==============================================================================
+# build-tag-release.sh
+#
+# Builds a macOS app, tags a release and publishes it on GitHub.
+# (The Sparkle appcast is NOT handled here: run sparkle-appcast.sh afterwards.)
+#
+# WHAT IT DOES, IN ORDER
+#   1. Checks tools, git state, GitHub access and the Xcode scheme.
+#   2. Calculates the next version from the latest vX.Y.Z git tag.
+#   3. Writes that version into project.pbxproj and commits it locally.
+#   4. Builds the archive, verifies the version baked in Info.plist,
+#      creates the .app.zip and the .dmg in the dist directory.
+#   5. --dry-run stops here and rolls everything back. Otherwise:
+#   6. Pushes the version commit, creates and pushes the tag,
+#      creates the GitHub Release with the zip and the dmg.
+#
+# VERSIONING
+#   project.pbxproj is the single source of truth for the app version.
+#   The app reads it at runtime from CFBundleShortVersionString
+#   (Info.plist must use $(MARKETING_VERSION) and $(CURRENT_PROJECT_VERSION)).
+#   The version commit is pushed BEFORE the tag, so a tag always points at a
+#   commit whose source contains the released version.
+#
+# SAFETY
+#   Until step 6 nothing is published. If anything fails before the version
+#   commit is pushed (or in --dry-run), the version change is rolled back and
+#   the repository is left exactly as it was found.
+#
+# USAGE
+#   Dry run first:
+#     ./build-tag-release.sh --scheme WOA --project src/WOA.xcodeproj \
+#         --app-name WOA --dry-run
+#   Then the real release:
+#     ./build-tag-release.sh --scheme WOA --project src/WOA.xcodeproj \
+#         --app-name WOA
+#   Then, to publish the Sparkle update feed:
+#     ./sparkle-appcast.sh
+#
+#   Run ./build-tag-release.sh --help for all options.
+# ==============================================================================
 
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-# Recommended invocation
-# First, run the complete process without publishing anything:
-# ./swift-build-tag-release.sh \
-#     --scheme WOA \
-#     --project src/WOA.xcodeproj \
-#     --app-name WOA \
-#     --dry-run
-# If the dry run succeeds, execute the actual minor release:
-# ./swift-build-tag-release.sh \
-#     --scheme WOA \
-#     --project src/WOA.xcodeproj \
-#     --app-name WOA    
 
 # ==============================================================================
-# Default parameter values
+# 1. CONFIGURATION (defaults, overridable by command-line options)
 # ==============================================================================
 
-SCHEME=""
-WORKSPACE_PATH=""
-PROJECT_PATH=""
-APP_NAME=""
-EXPORT_OPTIONS_PLIST=""
+# --- Xcode -------------------------------------------------------------------
+SCHEME=""                   # required
+WORKSPACE_PATH=""           # --workspace
+PROJECT_PATH=""             # --project
+APP_NAME=""                 # --app-name (derived from the archive if empty)
+EXPORT_OPTIONS_PLIST=""     # --export-options-plist (optional)
+CONFIGURATION="Release"
 
+# --- Git / GitHub ------------------------------------------------------------
 MAIN_BRANCH="main"
 REMOTE="origin"
-CONFIGURATION="Release"
-DIST_DIR="dist"
-BUILD_DIR="build"
 
-NEW_MAJOR=false
-DRY_RUN=false
-ORIGINAL_BRANCH=""
+# --- Output directories ------------------------------------------------------
+BUILD_DIR="build"           # intermediate files (archive, dmg staging)
+DIST_DIR="dist"             # final artifacts (.app, .zip, .dmg)
+
+# --- Behaviour flags ---------------------------------------------------------
+NEW_MAJOR=false             # --new-major: 1.4.3 -> 2.0.0 instead of 1.5.0
+DRY_RUN=false               # --dry-run
+SKIP_VERSION_BUMP=false     # --skip-version-bump
+
+# --- Runtime state (filled in while the script runs; do not set by hand) -----
+XCODE_CONTAINER_ARGS=()     # -workspace X / -project X for xcodebuild
+PBXPROJ_PATH=""             # project.pbxproj that holds the version
+REPOSITORY_NAME=""          # owner/repo on GitHub
+LATEST_TAG=""
+VERSION=""                  # e.g. 0.4.0
+TAG=""                      # e.g. v0.4.0
+APP_PATH=""                 # dist/<name>.app
+APP_ZIP=""                  # dist/<name>-<version>.app.zip
+DMG_PATH=""                 # dist/<name>-<version>.dmg
+ARCHIVE_PATH=""
+EXPORT_PATH=""
+
+# Version-commit bookkeeping, used by the rollback in section 2.
+VERSION_BUMP_COMMITTED=false
+VERSION_BUMP_PUSHED=false
+PRE_BUMP_COMMIT=""
+
 
 # ==============================================================================
-# Logging
+# 2. LOGGING AND ERROR HANDLING
 # ==============================================================================
 
-log() {
-    printf '\033[1;34m[INFO]\033[0m %s\n' "$*"
-}
-
-success() {
-    printf '\033[1;32m[SUCCESS]\033[0m %s\n' "$*"
-}
-
-warning() {
-    printf '\033[1;33m[WARNING]\033[0m %s\n' "$*" >&2
-}
-
-error() {
-    printf '\033[1;31m[ERROR]\033[0m %s\n' "$*" >&2
-}
+log()     { printf '\033[1;34m[INFO]\033[0m %s\n'    "$*"; }
+success() { printf '\033[1;32m[SUCCESS]\033[0m %s\n' "$*"; }
+warning() { printf '\033[1;33m[WARNING]\033[0m %s\n' "$*" >&2; }
+error()   { printf '\033[1;31m[ERROR]\033[0m %s\n'   "$*" >&2; }
 
 die() {
     error "$*"
     exit 1
 }
 
+# Runs when any command fails (set -e). Reports where, then exits.
 handle_error() {
     local exit_code=$?
-    local line_number="${1:-unknown}"
-
-    error "Release failed at line ${line_number} with exit code ${exit_code}."
-
-    if [[ -n "$ORIGINAL_BRANCH" ]]; then
-        warning "Current branch: $(git branch --show-current 2>/dev/null || printf 'unknown')"
-    fi
-
+    error "Release failed at line ${1:-unknown} with exit code ${exit_code}."
     exit "$exit_code"
 }
-
 trap 'handle_error "$LINENO"' ERR
 
+# Runs on EVERY exit (success, dry-run, die, error).
+# If the version commit was created but never pushed, it is undone here.
+# Once it has been pushed it is never touched.
+rollback_version_bump() {
+    [[ "$VERSION_BUMP_PUSHED" == true ]] && return 0
+
+    if [[ "$VERSION_BUMP_COMMITTED" == true ]]; then
+        warning "Rolling back the local version commit..."
+        if git reset --hard "$PRE_BUMP_COMMIT" >/dev/null 2>&1; then
+            warning "Repository restored to ${PRE_BUMP_COMMIT}."
+        else
+            warning "Automatic rollback failed. Run manually: git reset --hard ${PRE_BUMP_COMMIT}"
+        fi
+    fi
+
+    return 0
+}
+trap rollback_version_bump EXIT
+
+
 # ==============================================================================
-# Help
+# 3. COMMAND-LINE PARSING AND VALIDATION
 # ==============================================================================
 
 show_help() {
     cat <<'HELP'
-Usage:
+Usage: ./build-tag-release.sh --scheme <scheme> [options]
 
-  ./release.sh --scheme <scheme> [options]
+Xcode
+  --scheme <name>               Shared Xcode scheme to build (required).
+  --project <path>              Path to the .xcodeproj.
+  --workspace <path>            Path to the .xcworkspace.
+                                (--project and --workspace are exclusive; if
+                                neither is given, one is auto-detected.)
+  --app-name <name>             App name without ".app" (default: detected).
+  --export-options-plist <path> Use xcodebuild -exportArchive with this plist
+                                (default: copy the .app from the archive).
+  --configuration <name>        Build configuration (default: Release).
 
-Required parameters:
+Git / output
+  --main-branch <name>          Branch to release (default: main).
+  --remote <name>               Git remote (default: origin).
+  --build-dir <path>            Intermediate files (default: build).
+  --dist-dir <path>             Final artifacts (default: dist).
 
-  --scheme <name>
-      Xcode shared scheme to build.
+Version
+  --new-major                   Bump the major version (v1.4.3 -> v2.0.0).
+                                Default bumps the minor (v1.4.3 -> v1.5.0).
+  --skip-version-bump           Do not write the version into project.pbxproj.
 
-Xcode project parameters:
+Execution
+  --dry-run                     Build and validate everything, publish nothing,
+                                roll back the version change.
+  -h, --help                    Show this help.
 
-  --workspace <path>
-      Path to the Xcode workspace.
-
-  --project <path>
-      Path to the Xcode project.
-
-      --workspace and --project are mutually exclusive.
-
-      If neither is specified, the script automatically searches for:
-        1. A .xcworkspace
-        2. A .xcodeproj
-
-Application parameters:
-
-  --app-name <name>
-      Application name without the .app extension.
-
-      If omitted, the name is derived from the application found in the
-      Xcode archive.
-
-  --export-options-plist <path>
-      ExportOptions.plist used by xcodebuild -exportArchive.
-
-      If omitted, the application is copied directly from the Xcode archive.
-
-Git parameters:
-
-  --main-branch <name>
-      Branch to release.
-
-      Default:
-        main
-
-  --remote <name>
-      Git remote to use.
-
-      Default:
-        origin
-
-Build parameters:
-
-  --configuration <name>
-      Xcode build configuration.
-
-      Default:
-        Release
-
-  --build-dir <path>
-      Directory for intermediate build files.
-
-      Default:
-        build
-
-  --dist-dir <path>
-      Directory for final artifacts.
-
-      Default:
-        dist
-
-Version parameters:
-
-  --new-major
-      Increment the major version and reset minor and patch to zero.
-
-      Example:
-        v1.4.3 -> v2.0.0
-
-      If omitted, the minor version is incremented and patch is reset to zero.
-
-      Example:
-        v1.4.3 -> v1.5.0
-
-Execution parameters:
-
-  --dry-run
-      Build and validate everything without creating or pushing a Git tag,
-      creating a GitHub Release, or uploading artifacts.
-
-  -h, --help
-      Display this help.
-
-Examples:
-
-  Standard minor release:
-
-    ./release.sh \
-        --scheme MyApp
-
-  Major release:
-
-    ./release.sh \
-        --scheme MyApp \
-        --new-major
-
-  Dry run:
-
-    ./release.sh \
-        --scheme MyApp \
-        --dry-run
-
-  Major release dry run:
-
-    ./release.sh \
-        --scheme MyApp \
-        --new-major \
-        --dry-run
-
-  Explicit workspace:
-
-    ./release.sh \
-        --scheme MyApp \
-        --workspace MyApp.xcworkspace \
-        --app-name MyApp
-
-  Explicit project:
-
-    ./release.sh \
-        --scheme MyApp \
-        --project MyApp.xcodeproj \
-        --app-name MyApp
-
-  Complete example:
-
-    ./release.sh \
-        --scheme MyApp \
-        --workspace MyApp.xcworkspace \
-        --app-name MyApp \
-        --export-options-plist ExportOptions.plist \
-        --main-branch main \
-        --remote origin \
-        --configuration Release \
-        --build-dir build \
-        --dist-dir dist \
-        --new-major \
-        --dry-run
+The Sparkle appcast is published separately by ./sparkle-appcast.sh.
 HELP
 }
 
-# ==============================================================================
-# Parameter parsing
-# ==============================================================================
+# Fails if an option that needs a value was given without one.
+need_value() {
+    local option="$1" remaining="$2"
+    [[ "$remaining" -ge 2 ]] || die "Missing value for ${option}"
+}
 
-require_parameter_value() {
-    local parameter_name="$1"
-    local parameter_count="$2"
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --scheme)                need_value "$1" "$#"; SCHEME="$2";               shift 2 ;;
+            --project)               need_value "$1" "$#"; PROJECT_PATH="$2";         shift 2 ;;
+            --workspace)             need_value "$1" "$#"; WORKSPACE_PATH="$2";       shift 2 ;;
+            --app-name)              need_value "$1" "$#"; APP_NAME="$2";             shift 2 ;;
+            --export-options-plist)  need_value "$1" "$#"; EXPORT_OPTIONS_PLIST="$2"; shift 2 ;;
+            --configuration)         need_value "$1" "$#"; CONFIGURATION="$2";        shift 2 ;;
+            --main-branch)           need_value "$1" "$#"; MAIN_BRANCH="$2";          shift 2 ;;
+            --remote)                need_value "$1" "$#"; REMOTE="$2";               shift 2 ;;
+            --build-dir)             need_value "$1" "$#"; BUILD_DIR="$2";            shift 2 ;;
+            --dist-dir)              need_value "$1" "$#"; DIST_DIR="$2";             shift 2 ;;
+            --new-major)             NEW_MAJOR=true;         shift ;;
+            --skip-version-bump)     SKIP_VERSION_BUMP=true; shift ;;
+            --dry-run)               DRY_RUN=true;           shift ;;
+            -h|--help)               show_help; exit 0 ;;
+            *) die "Unknown option: $1 (use --help)" ;;
+        esac
+    done
+}
 
-    if [[ "$parameter_count" -lt 2 ]]; then
-        die "Missing value for parameter: ${parameter_name}"
+validate_args() {
+    [[ -n "$SCHEME" ]] || die "--scheme is required."
+
+    if [[ -n "$WORKSPACE_PATH" && -n "$PROJECT_PATH" ]]; then
+        die "--workspace and --project cannot be used together."
+    fi
+
+    [[ "$BUILD_DIR" != "$DIST_DIR" ]] ||
+        die "--build-dir and --dist-dir must be different."
+
+    if [[ "$DRY_RUN" == true ]]; then
+        warning "DRY-RUN: everything is built and validated, nothing is published."
     fi
 }
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --scheme)
-            require_parameter_value "$1" "$#"
-            SCHEME="$2"
-            shift 2
-            ;;
-
-        --workspace)
-            require_parameter_value "$1" "$#"
-            WORKSPACE_PATH="$2"
-            shift 2
-            ;;
-
-        --project)
-            require_parameter_value "$1" "$#"
-            PROJECT_PATH="$2"
-            shift 2
-            ;;
-
-        --app-name)
-            require_parameter_value "$1" "$#"
-            APP_NAME="$2"
-            shift 2
-            ;;
-
-        --export-options-plist)
-            require_parameter_value "$1" "$#"
-            EXPORT_OPTIONS_PLIST="$2"
-            shift 2
-            ;;
-
-        --main-branch)
-            require_parameter_value "$1" "$#"
-            MAIN_BRANCH="$2"
-            shift 2
-            ;;
-
-        --remote)
-            require_parameter_value "$1" "$#"
-            REMOTE="$2"
-            shift 2
-            ;;
-
-        --configuration)
-            require_parameter_value "$1" "$#"
-            CONFIGURATION="$2"
-            shift 2
-            ;;
-
-        --build-dir)
-            require_parameter_value "$1" "$#"
-            BUILD_DIR="$2"
-            shift 2
-            ;;
-
-        --dist-dir)
-            require_parameter_value "$1" "$#"
-            DIST_DIR="$2"
-            shift 2
-            ;;
-
-        --new-major)
-            NEW_MAJOR=true
-            shift
-            ;;
-
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-
-        *)
-            die "Unknown parameter: $1. Use --help to display supported parameters."
-            ;;
-    esac
-done
 
 # ==============================================================================
-# Parameter validation
+# 4. PRE-FLIGHT CHECKS (tools, git, GitHub, Xcode)
 # ==============================================================================
 
-[[ -n "$SCHEME" ]] ||
-    die "The required --scheme parameter was not provided."
+require_tools() {
+    local tool
+    for tool in git gh xcodebuild hdiutil ditto sed grep find; do
+        command -v "$tool" >/dev/null 2>&1 || die "Required command not found: ${tool}"
+    done
 
-if [[ -n "$WORKSPACE_PATH" && -n "$PROJECT_PATH" ]]; then
-    die "--workspace and --project cannot be used together."
-fi
-
-[[ -n "$MAIN_BRANCH" ]] ||
-    die "--main-branch cannot be empty."
-
-[[ -n "$REMOTE" ]] ||
-    die "--remote cannot be empty."
-
-[[ -n "$CONFIGURATION" ]] ||
-    die "--configuration cannot be empty."
-
-[[ -n "$BUILD_DIR" ]] ||
-    die "--build-dir cannot be empty."
-
-[[ -n "$DIST_DIR" ]] ||
-    die "--dist-dir cannot be empty."
-
-if [[ "$BUILD_DIR" == "$DIST_DIR" ]]; then
-    die "--build-dir and --dist-dir must reference different directories."
-fi
-
-if [[ "$DRY_RUN" == true ]]; then
-    warning "DRY-RUN MODE ENABLED"
-    warning "Artifacts will be built and validated, but nothing will be published."
-fi
-
-# ==============================================================================
-# Dependency validation
-# ==============================================================================
-
-require_command() {
-    local command_name="$1"
-
-    command -v "$command_name" >/dev/null 2>&1 ||
-        die "Required command not found: ${command_name}"
+    [[ "$(uname -s)" == "Darwin" ]] || die "This script must run on macOS."
 }
 
-require_command git
-require_command xcodebuild
-require_command hdiutil
-require_command ditto
-require_command gh
-require_command find
-require_command grep
-require_command head
-require_command stat
-require_command uname
+# Moves to the repo root and requires a clean tree on a named branch.
+check_git_state() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+        die "Not inside a Git repository."
 
-[[ "$(uname -s)" == "Darwin" ]] ||
-    die "This script must run on macOS."
+    cd "$(git rev-parse --show-toplevel)"
 
-# ==============================================================================
-# Git repository validation
-# ==============================================================================
+    [[ -n "$(git branch --show-current)" ]] || die "Detached HEAD is not supported."
 
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
-    die "The current directory is not inside a Git repository."
+    git remote get-url "$REMOTE" >/dev/null 2>&1 ||
+        die "Git remote '${REMOTE}' is not configured."
 
-REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPOSITORY_ROOT"
+    [[ -z "$(git status --porcelain)" ]] ||
+        die "Uncommitted changes found. Commit or stash them first."
+}
 
-ORIGINAL_BRANCH="$(git branch --show-current)"
+# Requires an authenticated gh with permission to publish releases.
+check_github_access() {
+    local permission
 
-[[ -n "$ORIGINAL_BRANCH" ]] ||
-    die "Detached HEAD is not supported."
+    log "Verifying GitHub access..."
 
-git remote get-url "$REMOTE" >/dev/null 2>&1 ||
-    die "Git remote '${REMOTE}' is not configured."
+    gh auth status >/dev/null 2>&1 || die "GitHub CLI not authenticated. Run: gh auth login"
 
-if [[ -n "$(git status --porcelain)" ]]; then
-    die "The working tree contains uncommitted changes. Commit or stash them before running the release."
-fi
+    REPOSITORY_NAME="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
+    [[ -n "$REPOSITORY_NAME" ]] || die "Unable to determine the GitHub repository."
 
-# ==============================================================================
-# GitHub validation
-# ==============================================================================
+    permission="$(gh repo view --json viewerPermission --jq '.viewerPermission')"
+    case "$permission" in
+        ADMIN|MAINTAIN|WRITE) log "GitHub repository: ${REPOSITORY_NAME} (${permission})" ;;
+        *) die "GitHub permission '${permission:-unknown}' cannot publish releases." ;;
+    esac
+}
 
-log "Verifying GitHub CLI authentication..."
+# Fills XCODE_CONTAINER_ARGS and PROJECT_PATH / WORKSPACE_PATH.
+resolve_xcode_container() {
+    local found
 
-gh auth status >/dev/null 2>&1 ||
-    die "GitHub CLI is not authenticated. Run: gh auth login"
+    if [[ -n "$WORKSPACE_PATH" ]]; then
+        [[ -d "$WORKSPACE_PATH" && "$WORKSPACE_PATH" == *.xcworkspace ]] ||
+            die "Workspace not found or not a .xcworkspace: ${WORKSPACE_PATH}"
+        XCODE_CONTAINER_ARGS=(-workspace "$WORKSPACE_PATH")
 
-log "Verifying GitHub repository access..."
-
-REPOSITORY_NAME="$(
-    gh repo view \
-        --json nameWithOwner \
-        --jq '.nameWithOwner'
-)"
-
-[[ -n "$REPOSITORY_NAME" ]] ||
-    die "Unable to determine the GitHub repository."
-
-VIEWER_PERMISSION="$(
-    gh repo view \
-        --json viewerPermission \
-        --jq '.viewerPermission'
-)"
-
-case "$VIEWER_PERMISSION" in
-    ADMIN|MAINTAIN|WRITE)
-        log "GitHub repository: ${REPOSITORY_NAME}"
-        log "GitHub permission: ${VIEWER_PERMISSION}"
-        ;;
-
-    READ|TRIAGE)
-        die "The authenticated GitHub account has ${VIEWER_PERMISSION} permission and cannot publish releases."
-        ;;
-
-    *)
-        die "Unable to verify GitHub write permission. Permission returned: ${VIEWER_PERMISSION:-unknown}"
-        ;;
-esac
-
-# ==============================================================================
-# Detect Xcode workspace or project
-# ==============================================================================
-
-XCODE_CONTAINER_ARGUMENTS=()
-
-if [[ -n "$WORKSPACE_PATH" ]]; then
-    [[ -d "$WORKSPACE_PATH" ]] ||
-        die "Workspace not found: ${WORKSPACE_PATH}"
-
-    [[ "$WORKSPACE_PATH" == *.xcworkspace ]] ||
-        die "--workspace must reference a .xcworkspace directory."
-
-    XCODE_CONTAINER_ARGUMENTS=(
-        -workspace "$WORKSPACE_PATH"
-    )
-
-    log "Using workspace: ${WORKSPACE_PATH}"
-
-elif [[ -n "$PROJECT_PATH" ]]; then
-    [[ -d "$PROJECT_PATH" ]] ||
-        die "Project not found: ${PROJECT_PATH}"
-
-    [[ "$PROJECT_PATH" == *.xcodeproj ]] ||
-        die "--project must reference a .xcodeproj directory."
-
-    XCODE_CONTAINER_ARGUMENTS=(
-        -project "$PROJECT_PATH"
-    )
-
-    log "Using project: ${PROJECT_PATH}"
-
-else
-    DETECTED_WORKSPACE="$(
-        find . \
-            -maxdepth 2 \
-            -type d \
-            -name '*.xcworkspace' \
-            ! -path '*/project.xcworkspace' \
-            -print \
-            -quit
-    )"
-
-    DETECTED_PROJECT="$(
-        find . \
-            -maxdepth 2 \
-            -type d \
-            -name '*.xcodeproj' \
-            -print \
-            -quit
-    )"
-
-    if [[ -n "$DETECTED_WORKSPACE" ]]; then
-        WORKSPACE_PATH="${DETECTED_WORKSPACE#./}"
-
-        XCODE_CONTAINER_ARGUMENTS=(
-            -workspace "$WORKSPACE_PATH"
-        )
-
-        log "Automatically detected workspace: ${WORKSPACE_PATH}"
-
-    elif [[ -n "$DETECTED_PROJECT" ]]; then
-        PROJECT_PATH="${DETECTED_PROJECT#./}"
-
-        XCODE_CONTAINER_ARGUMENTS=(
-            -project "$PROJECT_PATH"
-        )
-
-        log "Automatically detected project: ${PROJECT_PATH}"
+    elif [[ -n "$PROJECT_PATH" ]]; then
+        [[ -d "$PROJECT_PATH" && "$PROJECT_PATH" == *.xcodeproj ]] ||
+            die "Project not found or not a .xcodeproj: ${PROJECT_PATH}"
+        XCODE_CONTAINER_ARGS=(-project "$PROJECT_PATH")
 
     else
-        die "No .xcworkspace or .xcodeproj was found."
+        found="$(find . -maxdepth 2 -type d -name '*.xcworkspace' ! -path '*/project.xcworkspace' -print -quit)"
+        if [[ -n "$found" ]]; then
+            WORKSPACE_PATH="${found#./}"
+            XCODE_CONTAINER_ARGS=(-workspace "$WORKSPACE_PATH")
+        else
+            found="$(find . -maxdepth 2 -type d -name '*.xcodeproj' -print -quit)"
+            [[ -n "$found" ]] || die "No .xcworkspace or .xcodeproj found."
+            PROJECT_PATH="${found#./}"
+            XCODE_CONTAINER_ARGS=(-project "$PROJECT_PATH")
+        fi
     fi
-fi
+
+    log "Xcode container: ${WORKSPACE_PATH:-$PROJECT_PATH}"
+}
+
+verify_scheme() {
+    log "Verifying Xcode scheme: ${SCHEME}"
+
+    xcodebuild "${XCODE_CONTAINER_ARGS[@]}" -scheme "$SCHEME" -showBuildSettings >/dev/null ||
+        die "Scheme '${SCHEME}' is not available or not shared."
+}
+
+# Switches to the main branch and requires it to match the remote exactly.
+sync_main_branch() {
+    log "Fetching ${MAIN_BRANCH} and tags from ${REMOTE}..."
+    git fetch "$REMOTE" "$MAIN_BRANCH" --tags --prune
+
+    if [[ "$(git branch --show-current)" != "$MAIN_BRANCH" ]]; then
+        log "Switching to ${MAIN_BRANCH}..."
+        git switch "$MAIN_BRANCH"
+    fi
+
+    git pull --ff-only "$REMOTE" "$MAIN_BRANCH"
+
+    [[ "$(git rev-parse "$MAIN_BRANCH")" == "$(git rev-parse "${REMOTE}/${MAIN_BRANCH}")" ]] ||
+        die "Local ${MAIN_BRANCH} does not match ${REMOTE}/${MAIN_BRANCH}."
+}
+
 
 # ==============================================================================
-# Scheme validation
+# 5. VERSION: CALCULATE THE NEXT ONE AND WRITE IT INTO THE PROJECT
 # ==============================================================================
 
-log "Verifying Xcode scheme: ${SCHEME}"
+# Reads the latest vX.Y.Z tag and sets VERSION and TAG to the next one.
+calculate_next_version() {
+    local major minor patch
 
-if ! xcodebuild \
-    "${XCODE_CONTAINER_ARGUMENTS[@]}" \
-    -scheme "$SCHEME" \
-    -showBuildSettings \
-    >/dev/null
-then
-    die "The Xcode scheme '${SCHEME}' is not available or is not shared."
-fi
-
-# ==============================================================================
-# Synchronize the release branch
-# ==============================================================================
-
-log "Fetching branch and tags from ${REMOTE}..."
-
-git fetch \
-    "$REMOTE" \
-    "$MAIN_BRANCH" \
-    --tags \
-    --prune
-
-if [[ "$ORIGINAL_BRANCH" != "$MAIN_BRANCH" ]]; then
-    log "Switching from ${ORIGINAL_BRANCH} to ${MAIN_BRANCH}..."
-    git switch "$MAIN_BRANCH"
-fi
-
-log "Updating ${MAIN_BRANCH} using fast-forward only..."
-
-git pull \
-    --ff-only \
-    "$REMOTE" \
-    "$MAIN_BRANCH"
-
-LOCAL_MAIN_COMMIT="$(git rev-parse "$MAIN_BRANCH")"
-REMOTE_MAIN_COMMIT="$(git rev-parse "${REMOTE}/${MAIN_BRANCH}")"
-
-if [[ "$LOCAL_MAIN_COMMIT" != "$REMOTE_MAIN_COMMIT" ]]; then
-    die "Local ${MAIN_BRANCH} does not match ${REMOTE}/${MAIN_BRANCH}."
-fi
-
-# ==============================================================================
-# Calculate the next version
-# ==============================================================================
-
-
-LATEST_TAG="$(
-        # --merged "$MAIN_BRANCH" \ # will let the script consider any tag even if not following the main branch
-    git tag \
-        --list 'v[0-9]*.[0-9]*.[0-9]*' \
-        --sort=-v:refname |
-    grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
-    head -n 1 ||
-    true
-)"
-
-if [[ -z "$LATEST_TAG" ]]; then
-    LATEST_TAG="v0.0.0"
-    warning "No semantic version tag was found on ${MAIN_BRANCH}."
-    warning "Using ${LATEST_TAG} as the initial baseline."
-fi
-
-VERSION_WITHOUT_PREFIX="${LATEST_TAG#v}"
-
-IFS='.' read -r \
-    CURRENT_MAJOR \
-    CURRENT_MINOR \
-    CURRENT_PATCH \
-    <<< "$VERSION_WITHOUT_PREFIX"
-
-if [[ "$NEW_MAJOR" == true ]]; then
-    NEXT_MAJOR=$((CURRENT_MAJOR + 1))
-    NEXT_MINOR=0
-    NEXT_PATCH=0
-else
-    NEXT_MAJOR="$CURRENT_MAJOR"
-    NEXT_MINOR=$((CURRENT_MINOR + 1))
-    NEXT_PATCH=0
-fi
-
-VERSION="${NEXT_MAJOR}.${NEXT_MINOR}.${NEXT_PATCH}"
-TAG="v${VERSION}"
-
-log "Previous version: ${LATEST_TAG}"
-log "Next version:     ${TAG}"
-
-# ==============================================================================
-# Tag and release conflict validation
-# ==============================================================================
-
-if git rev-parse "$TAG" >/dev/null 2>&1; then
-    die "Tag already exists locally: ${TAG}"
-fi
-
-if git ls-remote \
-    --exit-code \
-    --tags \
-    "$REMOTE" \
-    "refs/tags/${TAG}" \
-    >/dev/null 2>&1
-then
-    die "Tag already exists on ${REMOTE}: ${TAG}"
-fi
-
-if gh release view "$TAG" >/dev/null 2>&1; then
-    die "A GitHub Release already exists for ${TAG}."
-fi
-
-# ==============================================================================
-# Prepare directories
-# ==============================================================================
-
-ARCHIVE_PATH="${BUILD_DIR}/${SCHEME}-${VERSION}.xcarchive"
-EXPORT_PATH="${BUILD_DIR}/export-${VERSION}"
-DMG_STAGING_DIR="${BUILD_DIR}/dmg-${VERSION}"
-
-rm -rf "$BUILD_DIR" "$DIST_DIR"
-
-mkdir -p \
-    "$BUILD_DIR" \
-    "$DIST_DIR" \
-    "$EXPORT_PATH"
-
-# ==============================================================================
-# Build the Xcode archive
-# ==============================================================================
-
-ARCHIVE_ARGUMENTS=(
-    --scheme "$SCHEME"
-    --configuration "$CONFIGURATION"
-    --archive-path "$ARCHIVE_PATH"
-    --version "$VERSION"
-)
-
-if [[ -n "$WORKSPACE_PATH" ]]; then
-    ARCHIVE_ARGUMENTS+=(--workspace "$WORKSPACE_PATH")
-else
-    ARCHIVE_ARGUMENTS+=(--project "$PROJECT_PATH")
-fi
-
-"$(dirname -- "${BASH_SOURCE[0]}")/build-in-release.sh" \
-    "${ARCHIVE_ARGUMENTS[@]}"
-
-# ==============================================================================
-# Obtain the application bundle
-# ==============================================================================
-
-ARCHIVED_APP="$(
-    find "${ARCHIVE_PATH}/Products/Applications" \
-        -maxdepth 1 \
-        -type d \
-        -name '*.app' \
-        -print \
-        -quit 2>/dev/null ||
-    true
-)"
-
-if [[ -n "$EXPORT_OPTIONS_PLIST" ]]; then
-    [[ -f "$EXPORT_OPTIONS_PLIST" ]] ||
-        die "Export options plist not found: ${EXPORT_OPTIONS_PLIST}"
-
-    log "Exporting archive using ${EXPORT_OPTIONS_PLIST}..."
-
-    xcodebuild \
-        -exportArchive \
-        -archivePath "$ARCHIVE_PATH" \
-        -exportPath "$EXPORT_PATH" \
-        -exportOptionsPlist "$EXPORT_OPTIONS_PLIST"
-
-    EXPORTED_APP="$(
-        find "$EXPORT_PATH" \
-            -maxdepth 2 \
-            -type d \
-            -name '*.app' \
-            -print \
-            -quit
+    LATEST_TAG="$(
+        git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname |
+        grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+        head -n 1 || true
     )"
 
-    [[ -n "$EXPORTED_APP" ]] ||
-        die "No .app bundle was found in the export directory."
+    if [[ -z "$LATEST_TAG" ]]; then
+        LATEST_TAG="v0.0.0"
+        warning "No version tag found; starting from ${LATEST_TAG}."
+    fi
 
-    SOURCE_APP="$EXPORTED_APP"
+    IFS='.' read -r major minor patch <<< "${LATEST_TAG#v}"
 
-else
-    [[ -n "$ARCHIVED_APP" ]] ||
-        die "No .app bundle was found in the Xcode archive."
+    if [[ "$NEW_MAJOR" == true ]]; then
+        VERSION="$((major + 1)).0.0"
+    else
+        VERSION="${major}.$((minor + 1)).0"
+    fi
+    TAG="v${VERSION}"
 
-    SOURCE_APP="$ARCHIVED_APP"
-fi
+    log "Previous version: ${LATEST_TAG}"
+    log "Next version:     ${TAG}"
+}
 
-DETECTED_APP_NAME="$(basename "$SOURCE_APP" .app)"
+# Fails if the tag or release for the next version already exists.
+check_tag_is_free() {
+    git rev-parse "$TAG" >/dev/null 2>&1 &&
+        die "Tag already exists locally: ${TAG}"
 
-if [[ -z "$APP_NAME" ]]; then
-    APP_NAME="$DETECTED_APP_NAME"
-    log "Automatically detected application name: ${APP_NAME}"
-fi
+    git ls-remote --exit-code --tags "$REMOTE" "refs/tags/${TAG}" >/dev/null 2>&1 &&
+        die "Tag already exists on ${REMOTE}: ${TAG}"
 
-APP_PATH="${DIST_DIR}/${APP_NAME}.app"
-APP_ZIP="${DIST_DIR}/${APP_NAME}-${VERSION}.app.zip"
-DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
+    gh release view "$TAG" >/dev/null 2>&1 &&
+        die "A GitHub Release already exists for ${TAG}."
 
-log "Copying application bundle to ${APP_PATH}..."
+    return 0
+}
 
-ditto \
-    "$SOURCE_APP" \
-    "$APP_PATH"
+# Sets PBXPROJ_PATH to the project.pbxproj that holds the version.
+# Derived from --project; with a workspace, the repo must contain exactly one.
+locate_pbxproj() {
+    local found count
 
-[[ -d "$APP_PATH" ]] ||
-    die "Application bundle was not created: ${APP_PATH}"
+    if [[ -n "$PROJECT_PATH" ]]; then
+        PBXPROJ_PATH="${PROJECT_PATH%/}/project.pbxproj"
+    else
+        found="$(
+            find . -maxdepth 3 -type f -path '*.xcodeproj/project.pbxproj' \
+                ! -path './Pods/*' ! -path '*/.build/*' ! -path '*/SourcePackages/*'
+        )"
+        count="$(printf '%s\n' "$found" | grep -c . || true)"
+        [[ "$count" -eq 1 ]] ||
+            die "Found ${count} project.pbxproj files. Use --project, or --skip-version-bump."
+        PBXPROJ_PATH="${found#./}"
+    fi
 
-# ==============================================================================
-# Verify baked Info.plist versions match the release version
-# ==============================================================================
+    [[ -f "$PBXPROJ_PATH" ]] || die "project.pbxproj not found: ${PBXPROJ_PATH}"
+}
 
-APP_INFO_PLIST="${APP_PATH}/Contents/Info.plist"
+# Writes VERSION into MARKETING_VERSION and CURRENT_PROJECT_VERSION (every
+# build configuration, every target) and commits it locally.
+# The commit is pushed later by push_version_commit(); until then it is rolled
+# back automatically on failure or --dry-run.
+apply_version_bump() {
+    if [[ "$SKIP_VERSION_BUMP" == true ]]; then
+        warning "Version bump skipped: the project keeps its current MARKETING_VERSION."
+        return 0
+    fi
 
-[[ -f "$APP_INFO_PLIST" ]] ||
-    die "Application Info.plist was not found: ${APP_INFO_PLIST}"
+    locate_pbxproj
+    log "Writing version ${VERSION} into ${PBXPROJ_PATH}..."
 
-BAKED_SHORT_VERSION="$(
-    /usr/libexec/PlistBuddy \
-        -c 'Print :CFBundleShortVersionString' \
-        "$APP_INFO_PLIST"
-)"
+    grep -qE 'MARKETING_VERSION = ' "$PBXPROJ_PATH" ||
+        die "No MARKETING_VERSION in ${PBXPROJ_PATH}."
 
-BAKED_BUNDLE_VERSION="$(
-    /usr/libexec/PlistBuddy \
-        -c 'Print :CFBundleVersion' \
-        "$APP_INFO_PLIST"
-)"
+    sed -i '' -E "s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = ${VERSION};/g" "$PBXPROJ_PATH"
+    sed -i '' -E "s/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = ${VERSION};/g" "$PBXPROJ_PATH"
 
-if [[ "$BAKED_SHORT_VERSION" != "$VERSION" ]]; then
-    die "CFBundleShortVersionString is '${BAKED_SHORT_VERSION}', expected '${VERSION}'."
-fi
+    # Every MARKETING_VERSION line must now carry the new version.
+    if grep -E 'MARKETING_VERSION = ' "$PBXPROJ_PATH" | grep -qvF "MARKETING_VERSION = ${VERSION};"; then
+        git checkout -- "$PBXPROJ_PATH"
+        die "Some MARKETING_VERSION entries were not updated to ${VERSION}."
+    fi
 
-if [[ "$BAKED_BUNDLE_VERSION" != "$VERSION" ]]; then
-    die "CFBundleVersion is '${BAKED_BUNDLE_VERSION}', expected '${VERSION}'."
-fi
+    if git diff --quiet -- "$PBXPROJ_PATH"; then
+        log "Project is already at ${VERSION}; no version commit needed."
+        return 0
+    fi
 
-log "Verified app versions: CFBundleShortVersionString=${BAKED_SHORT_VERSION}, CFBundleVersion=${BAKED_BUNDLE_VERSION}"
+    PRE_BUMP_COMMIT="$(git rev-parse HEAD)"
+    git add -- "$PBXPROJ_PATH"
+    git commit -m "chore: bump version to ${VERSION}" >/dev/null
+    VERSION_BUMP_COMMITTED=true
 
-# ==============================================================================
-# Create the uploadable application ZIP
-# ==============================================================================
+    log "Created local commit: chore: bump version to ${VERSION}"
+}
 
-log "Creating application ZIP..."
+# Pushes the version commit to the main branch. Called only after the build
+# and every validation succeeded, right before the tag is created.
+push_version_commit() {
+    [[ "$VERSION_BUMP_COMMITTED" == true ]] || return 0
 
-ditto \
-    -c \
-    -k \
-    --sequesterRsrc \
-    --keepParent \
-    "$APP_PATH" \
-    "$APP_ZIP"
+    log "Pushing version commit to ${REMOTE}/${MAIN_BRANCH}..."
 
-[[ -f "$APP_ZIP" ]] ||
-    die "Application ZIP was not created: ${APP_ZIP}"
+    git push "$REMOTE" "$MAIN_BRANCH" ||
+        die "Cannot push the version commit (is ${MAIN_BRANCH} protected?). It will be rolled back."
 
-# ==============================================================================
-# Create the DMG
-# ==============================================================================
+    VERSION_BUMP_PUSHED=true
+}
 
-mkdir -p "$DMG_STAGING_DIR"
-
-ditto \
-    "$APP_PATH" \
-    "${DMG_STAGING_DIR}/${APP_NAME}.app"
-
-ln -s \
-    /Applications \
-    "${DMG_STAGING_DIR}/Applications"
-
-log "Creating DMG..."
-
-hdiutil create \
-    -volname "$APP_NAME" \
-    -srcfolder "$DMG_STAGING_DIR" \
-    -ov \
-    -format UDZO \
-    "$DMG_PATH"
-
-[[ -f "$DMG_PATH" ]] ||
-    die "DMG was not created: ${DMG_PATH}"
-
-log "Verifying DMG integrity..."
-
-hdiutil verify "$DMG_PATH" >/dev/null
 
 # ==============================================================================
-# Validate artifacts
+# 6. BUILD: ARCHIVE, APP BUNDLE, INFO.PLIST CHECK
 # ==============================================================================
 
-log "Validating release artifacts..."
+prepare_directories() {
+    ARCHIVE_PATH="${BUILD_DIR}/${SCHEME}-${VERSION}.xcarchive"
+    EXPORT_PATH="${BUILD_DIR}/export-${VERSION}"
 
-[[ -r "$APP_ZIP" ]] ||
-    die "Application ZIP is not readable: ${APP_ZIP}"
+    rm -rf "$BUILD_DIR" "$DIST_DIR"
+    mkdir -p "$BUILD_DIR" "$DIST_DIR" "$EXPORT_PATH"
+}
 
-[[ -s "$APP_ZIP" ]] ||
-    die "Application ZIP is empty: ${APP_ZIP}"
+# Delegates the archive build to build-in-release.sh.
+build_archive() {
+    local args=(
+        --scheme "$SCHEME"
+        --configuration "$CONFIGURATION"
+        --archive-path "$ARCHIVE_PATH"
+        --version "$VERSION"
+    )
 
-[[ -r "$DMG_PATH" ]] ||
-    die "DMG is not readable: ${DMG_PATH}"
+    if [[ -n "$WORKSPACE_PATH" ]]; then
+        args+=(--workspace "$WORKSPACE_PATH")
+    else
+        args+=(--project "$PROJECT_PATH")
+    fi
 
-[[ -s "$DMG_PATH" ]] ||
-    die "DMG is empty: ${DMG_PATH}"
+    log "Building archive..."
+    "$(dirname -- "${BASH_SOURCE[0]}")/build-in-release.sh" "${args[@]}"
+}
 
-APP_ZIP_SIZE="$(stat -f '%z' "$APP_ZIP")"
-DMG_SIZE="$(stat -f '%z' "$DMG_PATH")"
+# Copies the built .app into DIST_DIR (via export if a plist was given).
+# Sets APP_NAME, APP_PATH, APP_ZIP and DMG_PATH.
+collect_app_bundle() {
+    local source_app
 
-log "Application ZIP size: ${APP_ZIP_SIZE} bytes"
-log "DMG size:             ${DMG_SIZE} bytes"
+    if [[ -n "$EXPORT_OPTIONS_PLIST" ]]; then
+        [[ -f "$EXPORT_OPTIONS_PLIST" ]] || die "Export options plist not found: ${EXPORT_OPTIONS_PLIST}"
+
+        log "Exporting archive..."
+        xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist "$EXPORT_OPTIONS_PLIST"
+
+        source_app="$(find "$EXPORT_PATH" -maxdepth 2 -type d -name '*.app' -print -quit)"
+        [[ -n "$source_app" ]] || die "No .app found in the export directory."
+    else
+        source_app="$(find "${ARCHIVE_PATH}/Products/Applications" -maxdepth 1 -type d -name '*.app' -print -quit 2>/dev/null || true)"
+        [[ -n "$source_app" ]] || die "No .app found in the archive."
+    fi
+
+    [[ -n "$APP_NAME" ]] || APP_NAME="$(basename "$source_app" .app)"
+
+    APP_PATH="${DIST_DIR}/${APP_NAME}.app"
+    APP_ZIP="${DIST_DIR}/${APP_NAME}-${VERSION}.app.zip"
+    DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
+
+    ditto "$source_app" "$APP_PATH"
+    [[ -d "$APP_PATH" ]] || die "App bundle was not created: ${APP_PATH}"
+}
+
+# The version baked into the built app must equal the release version.
+# This proves that the value written into project.pbxproj really ships.
+verify_app_version() {
+    local plist="${APP_PATH}/Contents/Info.plist" short bundle
+
+    [[ -f "$plist" ]] || die "Info.plist not found: ${plist}"
+
+    short="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")"
+    bundle="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")"
+
+    [[ "$short" == "$VERSION" ]]  || die "CFBundleShortVersionString is '${short}', expected '${VERSION}'."
+    [[ "$bundle" == "$VERSION" ]] || die "CFBundleVersion is '${bundle}', expected '${VERSION}'."
+
+    log "Verified app version: ${short} (build ${bundle})"
+}
+
 
 # ==============================================================================
-# Dry-run feasibility validation
+# 7. PACKAGING: ZIP AND DMG
 # ==============================================================================
 
-if [[ "$DRY_RUN" == true ]]; then
-    log "Testing whether ${TAG} could be pushed to ${REMOTE}..."
+package_zip() {
+    log "Creating ${APP_ZIP}..."
+    ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$APP_ZIP"
+}
 
-    # Simulates the creation of the remote tag directly from the current
-    # release branch. No local or remote tag is created.
-    if ! git push \
-        --dry-run \
-        "$REMOTE" \
-        "${MAIN_BRANCH}:refs/tags/${TAG}"
+package_dmg() {
+    local staging="${BUILD_DIR}/dmg-${VERSION}"
+
+    log "Creating ${DMG_PATH}..."
+
+    mkdir -p "$staging"
+    ditto "$APP_PATH" "${staging}/${APP_NAME}.app"
+    ln -s /Applications "${staging}/Applications"
+
+    hdiutil create -volname "$APP_NAME" -srcfolder "$staging" -ov -format UDZO "$DMG_PATH"
+    hdiutil verify "$DMG_PATH" >/dev/null
+}
+
+validate_artifacts() {
+    local file
+    for file in "$APP_ZIP" "$DMG_PATH"; do
+        [[ -s "$file" ]] || die "Artifact missing or empty: ${file}"
+        log "$(basename "$file"): $(stat -f '%z' "$file") bytes"
+    done
+}
+
+
+# ==============================================================================
+# 8. PUBLISH: TAG AND GITHUB RELEASE
+# ==============================================================================
+
+create_and_push_tag() {
+    log "Creating annotated tag ${TAG} on ${MAIN_BRANCH}..."
+    git tag -a "$TAG" -m "Release ${TAG}" "$MAIN_BRANCH"
+
+    log "Pushing ${TAG} to ${REMOTE}..."
+    if ! git push "$REMOTE" "refs/tags/${TAG}"; then
+        git tag -d "$TAG" >/dev/null 2>&1 || true
+
+        if [[ "$VERSION_BUMP_PUSHED" == true ]]; then
+            warning "The version commit is already on ${REMOTE}/${MAIN_BRANCH}."
+            warning "Re-running the script is safe: it will find the project already at ${VERSION}."
+        fi
+
+        die "Unable to push tag ${TAG}."
+    fi
+}
+
+create_github_release() {
+    log "Creating GitHub Release ${TAG}..."
+
+    if ! gh release create "$TAG" \
+        "${APP_ZIP}#${APP_NAME}.app.zip" \
+        "${DMG_PATH}#${APP_NAME}.dmg" \
+        --verify-tag --title "$TAG" --generate-notes
     then
-        die "The simulated tag push failed for ${TAG}."
+        error "GitHub Release creation failed."
+        warning "Tag ${TAG} is already pushed (intentionally not deleted)."
+        printf '\nAfter fixing the problem, retry with:\n\n'
+        printf 'gh release create %q %q %q --verify-tag --title %q --generate-notes\n' \
+            "$TAG" "${APP_ZIP}#${APP_NAME}.app.zip" "${DMG_PATH}#${APP_NAME}.dmg" "$TAG"
+        exit 1
+    fi
+
+    gh release view "$TAG" >/dev/null
+}
+
+
+# ==============================================================================
+# 9. DRY-RUN REPORT AND FINAL SUMMARY
+# ==============================================================================
+
+# Simulates the pushes, prints what would happen, then exits.
+# The EXIT trap rolls the version commit back.
+finish_dry_run() {
+    log "Simulating the tag push..."
+    git push --dry-run "$REMOTE" "${MAIN_BRANCH}:refs/tags/${TAG}" ||
+        die "The simulated tag push failed."
+
+    if [[ "$VERSION_BUMP_COMMITTED" == true ]]; then
+        log "Simulating the version commit push..."
+        git push --dry-run "$REMOTE" "${MAIN_BRANCH}:${MAIN_BRANCH}" ||
+            die "The simulated push of the version commit failed."
     fi
 
     printf '\n'
     success "Dry run completed successfully."
+    printf '\n  Repository: %s\n  Version:    %s (tag %s)\n  App ZIP:    %s\n  DMG:        %s\n\n' \
+        "$REPOSITORY_NAME" "$VERSION" "$TAG" "$APP_ZIP" "$DMG_PATH"
 
-    printf '\n'
-    printf 'Calculated release:\n'
-    printf '  Repository: %s\n' "$REPOSITORY_NAME"
-    printf '  Branch:     %s\n' "$MAIN_BRANCH"
-    printf '  Version:    %s\n' "$VERSION"
-    printf '  Tag:        %s\n' "$TAG"
-
-    printf '\n'
-    printf 'Generated and validated artifacts:\n'
-    printf '  App:     %s\n' "$APP_PATH"
-    printf '  App ZIP: %s\n' "$APP_ZIP"
-    printf '  DMG:     %s\n' "$DMG_PATH"
-
-    printf '\n'
-    printf 'Commands that would be executed:\n'
-
-    printf '\n'
-    printf '  git tag -a %q -m %q %q\n' \
-        "$TAG" \
-        "Release ${TAG}" \
-        "$MAIN_BRANCH"
-
-    printf '\n'
-    printf '  git push %q %q\n' \
-        "$REMOTE" \
-        "refs/tags/${TAG}"
-
-    printf '\n'
-    printf '  gh release create %q %q %q --verify-tag --title %q --generate-notes\n' \
-        "$TAG" \
-        "${APP_ZIP}#${APP_NAME}.app.zip" \
-        "${DMG_PATH}#${APP_NAME}.dmg" \
-        "$TAG"
-
-    printf '\n'
-    printf 'Feasibility checks:\n'
-    printf '  Xcode scheme:                 OK\n'
-    printf '  Xcode Release archive:        OK\n'
-    printf '  Application bundle:           OK\n'
-    printf '  Application ZIP:              OK\n'
-    printf '  DMG creation:                 OK\n'
-    printf '  DMG verification:             OK\n'
-    printf '  Local tag availability:       OK\n'
-    printf '  Remote tag availability:      OK\n'
-    printf '  Simulated remote tag push:    OK\n'
-    printf '  GitHub repository access:     OK\n'
-    printf '  GitHub write permission:      OK\n'
-    printf '  GitHub Release availability:  OK\n'
-
-    printf '\n'
-    warning "No local tag was created."
-    warning "No remote tag was pushed."
-    warning "No GitHub Release was created."
-    warning "No artifacts were uploaded."
+    warning "Nothing was pushed, tagged or released."
+    [[ "$VERSION_BUMP_COMMITTED" != true ]] ||
+        warning "The version commit is being rolled back."
 
     exit 0
-fi
+}
+
+print_summary() {
+    success "Release ${TAG} completed successfully."
+    printf '\n  Repository: %s\n  Tag:        %s\n  App ZIP:    %s\n  DMG:        %s\n  Release:    %s\n' \
+        "$REPOSITORY_NAME" "$TAG" "$APP_ZIP" "$DMG_PATH" \
+        "$(gh release view "$TAG" --json url --jq '.url')"
+
+    [[ "$VERSION_BUMP_PUSHED" != true ]] ||
+        printf '  Version:    %s (committed to %s)\n' "$VERSION" "$MAIN_BRANCH"
+
+    printf '\nNext: publish the Sparkle update feed with ./sparkle-appcast.sh\n'
+
+    return 0
+}
+
 
 # ==============================================================================
-# Create the local Git tag
+# 10. MAIN: THE WHOLE FLOW, IN ORDER
 # ==============================================================================
 
-log "Creating annotated tag ${TAG} on ${MAIN_BRANCH}..."
+main() {
+    # Setup and pre-flight checks
+    parse_args "$@"
+    validate_args
+    require_tools
+    check_git_state
+    check_github_access
+    resolve_xcode_container
+    verify_scheme
+    sync_main_branch
 
-git tag \
-    -a "$TAG" \
-    -m "Release ${TAG}" \
-    "$MAIN_BRANCH"
+    # Version
+    calculate_next_version
+    check_tag_is_free
+    apply_version_bump            # local commit, rolled back on failure
 
-# ==============================================================================
-# Push the Git tag
-# ==============================================================================
+    # Build and package
+    prepare_directories
+    build_archive
+    collect_app_bundle
+    verify_app_version
+    package_zip
+    package_dmg
+    validate_artifacts
 
-log "Pushing ${TAG} to ${REMOTE}..."
+    # --dry-run ends here (and rolls back)
+    if [[ "$DRY_RUN" == true ]]; then
+        finish_dry_run
+    fi
 
-if ! git push "$REMOTE" "refs/tags/${TAG}"; then
-    warning "Tag push failed."
-    warning "Removing local tag ${TAG}."
+    # Publish, in this order: version commit -> tag -> release
+    push_version_commit
+    create_and_push_tag
+    create_github_release
 
-    git tag -d "$TAG" >/dev/null 2>&1 || true
+    print_summary
+}
 
-    die "Unable to push tag ${TAG}."
-fi
-
-# ==============================================================================
-# Create GitHub Release and upload artifacts
-# ==============================================================================
-
-log "Creating GitHub Release ${TAG}..."
-
-if ! gh release create "$TAG" \
-    "$APP_ZIP#${APP_NAME}.app.zip" \
-    "$DMG_PATH#${APP_NAME}.dmg" \
-    --verify-tag \
-    --title "$TAG" \
-    --generate-notes
-then
-    error "GitHub Release creation failed."
-
-    warning "The Git tag ${TAG} has already been pushed to ${REMOTE}."
-    warning "The pushed tag was intentionally not deleted."
-
-    printf '\n'
-    printf 'After resolving the problem, retry with:\n'
-    printf '\n'
-
-    printf 'gh release create %q %q %q --verify-tag --title %q --generate-notes\n' \
-        "$TAG" \
-        "${APP_ZIP}#${APP_NAME}.app.zip" \
-        "${DMG_PATH}#${APP_NAME}.dmg" \
-        "$TAG"
-
-    exit 1
-fi
-
-# ==============================================================================
-# Final release validation
-# ==============================================================================
-
-log "Verifying the published GitHub Release..."
-
-gh release view "$TAG" >/dev/null
-
-RELEASE_URL="$(
-    gh release view "$TAG" \
-        --json url \
-        --jq '.url'
-)"
-
-success "Release ${TAG} completed successfully."
-
-printf '\n'
-printf 'Release details:\n'
-printf '  Repository: %s\n' "$REPOSITORY_NAME"
-printf '  Branch:     %s\n' "$MAIN_BRANCH"
-printf '  Tag:        %s\n' "$TAG"
-printf '  App:        %s\n' "$APP_PATH"
-printf '  App ZIP:    %s\n' "$APP_ZIP"
-printf '  DMG:        %s\n' "$DMG_PATH"
-printf '  Release:    %s\n' "$RELEASE_URL"
+main "$@"

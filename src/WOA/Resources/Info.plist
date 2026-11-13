@@ -25,6 +25,33 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.medical</string>
+	<string>public.app-category.medical</string>	
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+
+	<!-- Sparkle auto-update -->
+
+	<!-- Where installed apps look for new versions. Served from main by
+	     scripts/sparkle-appcast.sh (appcast.xml at the repository root). -->
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/crixo/woa-swift/main/appcast.xml</string>
+
+	<!-- PLACEHOLDER: replace with the public key printed by Sparkle's
+	     generate_keys (44 base64 characters ending in "="). The release script
+	     refuses to run while this is not a valid key. -->
+	<key>SUPublicEDKey</key>
+  <string>6u8PzTo7klksW6z/WjpO81KOYkyOffojopVBRQedh4I=</string>
+
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+
+	<!-- Required because the app is sandboxed: lets Sparkle install updates
+	     through its installer launcher XPC service. Pairs with the mach-lookup
+	     entries in WOA.entitlements. -->
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<!-- Sparkle auto-update -->
 </dict>
 </plist>

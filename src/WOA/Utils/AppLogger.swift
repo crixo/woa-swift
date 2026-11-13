@@ -3,6 +3,7 @@ enum AppLogger {
     static func info(_ message: String) {}
     static func warning(_ message: String) {}
     static func error(_ message: String) {}
+    static func flush() {}
 }
 #else
 import Foundation
@@ -16,6 +17,7 @@ enum AppLogger {
     private static let maxLogFiles = 5
     private static let maxLogSizeBytes: UInt64 = 10 * 1024 * 1024
     private static let queue = DispatchQueue(label: "\(subsystem).logger")
+    private static let formatter = ISO8601DateFormatter() // only touched on `queue`
 
     static func info(_ message: String) {
         osLog.info("\(message, privacy: .private)")
@@ -32,26 +34,33 @@ enum AppLogger {
         write(level: "ERROR", message: message)
     }
 
+    /// Blocks until all queued log lines are written. Call before app termination.
+    static func flush() {
+        queue.sync {}
+    }
+
     private static func write(level: String, message: String) {
+        // Capture the time at call site, not when the queue gets to it.
+        let date = Date()
         queue.async {
             do {
                 let fileURL = try AppPaths.logFileURL()
                 try rotateIfNeeded(fileURL: fileURL)
 
-                let timestamp = ISO8601DateFormatter().string(from: Date())
-                let line = "\(timestamp) [\(level)] \(message)\n"
-                guard let data = line.data(using: .utf8) else { return }
+                let line = "\(formatter.string(from: date)) [\(level)] \(message)\n"
+                let data = Data(line.utf8)
 
-                if FileManager.default.fileExists(atPath: fileURL.path) {
-                    let handle = try FileHandle(forWritingTo: fileURL)
-                    defer { try? handle.close() }
-                    try handle.seekToEnd()
-                    try handle.write(contentsOf: data)
-                } else {
-                    try data.write(to: fileURL)
+                if !FileManager.default.fileExists(atPath: fileURL.path) {
+                    FileManager.default.createFile(atPath: fileURL.path, contents: nil)
                 }
+                let handle = try FileHandle(forWritingTo: fileURL)
+                defer { try? handle.close() }
+                try handle.seekToEnd()
+                try handle.write(contentsOf: data)
+                try handle.synchronize()
             } catch {
-                // Logging failures must never crash the app.
+                // Never crash, but don't fail silently either.
+                NSLog("AppLogger write failed: \(error)")
             }
         }
     }

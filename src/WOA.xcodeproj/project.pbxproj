@@ -56,6 +56,7 @@
 		6BC06D9630647F6C00C86D03 /* FormActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC06D9530647F6C00C86D03 /* FormActionBar.swift */; };
 		6BD4980D3078337400754FB9 /* PazienteEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD4980C3078337400754FB9 /* PazienteEditView.swift */; };
 		6BD4980F307834E900754FB9 /* PazienteEditViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD4980E307834E900754FB9 /* PazienteEditViewModel.swift */; };
+		6BDCCB6730A0F7E9006C4723 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6BDCCB6630A0F7E9006C4723 /* Sparkle */; };
 		6BEBF6B8307591DB00D3B7B7 /* NullUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEBF6B7307591CC00D3B7B7 /* NullUtils.swift */; };
 		6BF9B37C306721000046E378 /* EntityAddTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF9B37B306721000046E378 /* EntityAddTemplate.swift */; };
 		6BF9B37E306723AE0046E378 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF9B37D3067239B0046E378 /* StringExtensions.swift */; };
@@ -73,7 +74,6 @@
 		A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 077D7FBE5F2E24D559E3345A /* libsqlite3.tbd */; };
 		A19D13E40FAE64468A122581 /* AppDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9E1D3A758C4B2B8A695C1D /* AppDesignSystem.swift */; };
 		A5AE86B82384923CB29493F2 /* PazienteSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E64F9AA364459DA7B9AA3 /* PazienteSearchView.swift */; };
-		AFAF2E8B74D9E8F0E1A2B3C4 /* LastModifiedPatientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3A5A7D8F4E9C6B2A1D0E3F /* LastModifiedPatientsView.swift */; };
 		A7B6C5D4E3F2A1B0C9D8E7F6 /* AnamnesiRemotaDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B6C5D4E3F2A1B0C9D8E7F5 /* AnamnesiRemotaDetailViewModel.swift */; };
 		A9CFAEDA4ADCE494DB170B74 /* WOA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E2099FACAFAD0EADBCE07 /* WOA.swift */; };
 		AA0100000000000000000001 /* DatabaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000002 /* DatabaseMigration.swift */; };
@@ -83,6 +83,7 @@
 		AA0500000000000000000001 /* MigrationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000002 /* MigrationHistoryView.swift */; };
 		AA0600000000000000000001 /* migrations in Resources */ = {isa = PBXBuildFile; fileRef = AA0600000000000000000002 /* migrations */; };
 		AA2D41ED2766994608DEF781 /* DatabaseSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB1C136951FAC067E19C11 /* DatabaseSelectorView.swift */; };
+		AFAF2E8B74D9E8F0E1A2B3C4 /* LastModifiedPatientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3A5A7D8F4E9C6B2A1D0E3F /* LastModifiedPatientsView.swift */; };
 		C0F618C80F848254ACB8F010 /* TableStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62778F6D0EA0CB36A487CA /* TableStatusView.swift */; };
 		C2A1C0DE0000000000000001 /* DatabaseManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1C0DE0000000000000002 /* DatabaseManagementViewModel.swift */; };
 		C2A1C0DE0000000000000003 /* AppSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1C0DE0000000000000004 /* AppSettingsStore.swift */; };
@@ -191,6 +192,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A16D1C003258020A677403C3 /* libsqlite3.tbd in Frameworks */,
+				6BDCCB6730A0F7E9006C4723 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -439,6 +441,9 @@
 				Base,
 			);
 			mainGroup = B3881F9FD56BD5BCF6265C15;
+			packageReferences = (
+				6BDCCB6530A0F7E9006C4723 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = 0F3332EFD009FD3B5CCA49F1 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -567,7 +572,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;
@@ -612,7 +617,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;
@@ -672,6 +677,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6BDCCB6530A0F7E9006C4723 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6BDCCB6630A0F7E9006C4723 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6BDCCB6530A0F7E9006C4723 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5E9E5FD09D70E715E56E6038 /* Project object */;
 }
