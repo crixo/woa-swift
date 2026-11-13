@@ -564,7 +564,7 @@
 				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.2.0;
+				CURRENT_PROJECT_VERSION = 0.4.0;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = WOA/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -572,7 +572,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;
@@ -609,7 +609,7 @@
 				CODE_SIGN_ENTITLEMENTS = WOA/Resources/WOA.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.2.0;
+				CURRENT_PROJECT_VERSION = 0.4.0;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = WOA/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -617,7 +617,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.woa.application;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.9;

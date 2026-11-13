@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>WOA</title>
+        <item>
+            <title>0.4.0</title>
+            <pubDate>Sat, 14 Nov 2026 00:12:58 +0100</pubDate>
+            <sparkle:version>0.4.0</sparkle:version>
+            <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.6</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/crixo/woa-swift/releases/download/v0.4.0/WOA-0.4.0.app.zip" length="2080723" type="application/octet-stream" sparkle:edSignature="xhRetq09RuXblm7H2KqCZnN5HZbN2Idp1EsnR+qnUoN7NAoxx1xSxfxcGN/aB1GzQw2sKymLVFVfjfyu+o9+Bw=="/>
+        </item>
+    </channel>
+</rss>
