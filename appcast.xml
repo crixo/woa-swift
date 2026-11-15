@@ -4,11 +4,11 @@
         <title>WOA</title>
         <item>
             <title>0.4.0</title>
-            <pubDate>Sat, 14 Nov 2026 00:12:58 +0100</pubDate>
+            <pubDate>Sun, 15 Nov 2026 13:00:47 +0100</pubDate>
             <sparkle:version>0.4.0</sparkle:version>
             <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.6</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/crixo/woa-swift/releases/download/v0.4.0/WOA-0.4.0.app.zip" length="2080723" type="application/octet-stream" sparkle:edSignature="xhRetq09RuXblm7H2KqCZnN5HZbN2Idp1EsnR+qnUoN7NAoxx1xSxfxcGN/aB1GzQw2sKymLVFVfjfyu+o9+Bw=="/>
+            <enclosure url="https://github.com/crixo/woa-swift/releases/download/v0.4.0/WOA-0.4.0.app.zip" length="2084542" type="application/octet-stream" sparkle:edSignature="4lC1/gjOfiyV09AYiE3BUyg/ARR0kFw5WiZrCTqfm1LX7S/XDJu4RTN557NfHwp8KeeI231cb0bd6IcRZO5GDw=="/>
         </item>
     </channel>
 </rss>
