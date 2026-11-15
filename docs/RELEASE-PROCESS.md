@@ -391,3 +391,15 @@ Because later steps default to the version found in `dist/`, steps 4 to 7 also w
 ## 9. Codemagic
 
 `build-in-release.sh` is unchanged and is the only script `codemagic.yaml` needs. The other scripts are meant for the machine that holds the Sparkle signing key and the GitHub credentials.
+
+## 10. Libraries
+**Root Cause**
+The application failed to launch in Release mode because **Hardened Runtime** (ENABLE_HARDENED_RUNTIME = YES) was enabled while the app and embedded Sparkle framework were only ad-hoc signed. During startup, macOS performs library validation and rejected the embedded Sparkle.framework, reporting a code-signing mismatch ("different Team IDs"), even though the framework was present and correctly embedded in the bundle.
+
+**Resolution**
+Setting ENABLE_HARDENED_RUNTIME = NO for the Release configuration disabled the runtime library validation checks that were blocking the framework from loading. After rebuilding with Hardened Runtime disabled, the application launched successfully and Sparkle.framework was loaded without errors. The setting has been modified in XCode -> Build Settings and in `scripts\build-in-release.sh`
+
+**Note**
+A proper production fix would be to sign the application and all embedded frameworks with a valid Developer ID certificate and keep Hardened Runtime enabled. Disabling Hardened Runtime is acceptable for unsigned internal or development builds but is generally not recommended for public distribution.
+
+

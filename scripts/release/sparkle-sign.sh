@@ -45,6 +45,7 @@ NEW_ITEM_FILE=""
 STAGED_APPCAST=""
 DOWNLOAD_PREFIX=""
 ENCLOSURE_URL=""
+REPLACE_EXISTING=false   # appcast.xml already has an entry for this version
 
 show_help() {
     cat <<'HELP'
@@ -126,13 +127,16 @@ resolve_inputs() {
     log "Zip: ${ZIP_PATH}"
 }
 
-# appcast.xml must be clean and must not already contain this version.
+# appcast.xml must be clean. If it already contains this version (leftover of
+# an earlier attempt), the old entry is replaced by the new one.
 check_appcast_state() {
     [[ -z "$(git status --porcelain -- "$APPCAST_PATH")" ]] ||
         die "${APPCAST_PATH} has uncommitted changes. Commit or discard them first."
 
     if [[ -f "$APPCAST_PATH" ]] && appcast_has_version "$APPCAST_PATH" "$VERSION"; then
-        die "${APPCAST_PATH} already contains version ${VERSION}."
+        REPLACE_EXISTING=true
+        warning "${APPCAST_PATH} already contains version ${VERSION} (leftover of an earlier attempt?)."
+        warning "The old entry will be replaced by the newly signed one."
     fi
 }
 
@@ -219,10 +223,30 @@ validate_generated_item() {
         die "Enclosure file name '${enclosure_name}' does not match the zip '${ZIP_NAME}'."
 }
 
+# Copies appcast $1 to $2 without the <item> blocks that carry version $3.
+drop_items_for_version() {
+    awk -v v="$3" '
+        function carries(s) {
+            return index(s, "sparkle:version>" v "<") ||
+                   index(s, "sparkle:version=\"" v "\"") ||
+                   index(s, "sparkle:shortVersionString>" v "<") ||
+                   index(s, "sparkle:shortVersionString=\"" v "\"")
+        }
+        /<item[ >]/ { inside = 1; buf = "" }
+        inside {
+            buf = buf $0 "\n"
+            if ($0 ~ /<\/item>/) { if (!carries(buf)) printf "%s", buf; inside = 0 }
+            next
+        }
+        { print }
+    ' "$1" >"$2"
+}
+
 # Builds STAGED_APPCAST: the existing appcast plus the new entry on top.
-# Existing entries are kept exactly as they are.
+# Existing entries are kept exactly as they are (except a stale entry for this
+# same version, which is dropped).
 merge_into_existing_appcast() {
-    local existing_items=0 merged_items
+    local existing_items=0 merged_items base="$APPCAST_PATH"
 
     if [[ ! -f "$APPCAST_PATH" ]]; then
         log "No existing ${APPCAST_PATH}: this is the first appcast entry."
@@ -237,7 +261,15 @@ merge_into_existing_appcast() {
             die "The existing ${APPCAST_PATH} is not well-formed XML."
     fi
 
-    existing_items="$(count_items "$APPCAST_PATH")"
+    if [[ "$REPLACE_EXISTING" == true ]]; then
+        base="${WORK_DIR}/appcast-base.xml"
+        drop_items_for_version "$APPCAST_PATH" "$base" "$VERSION"
+
+        [[ "$(count_items "$base")" -lt "$(count_items "$APPCAST_PATH")" ]] ||
+            die "Unable to remove the old entry for ${VERSION} from ${APPCAST_PATH}. Remove it by hand and run again."
+    fi
+
+    existing_items="$(count_items "$base")"
 
     awk '/<item[ >]/ { keep = 1 } keep { print } /<\/item>/ { keep = 0 }' \
         "$GENERATED_APPCAST" >"$NEW_ITEM_FILE"
@@ -255,7 +287,7 @@ merge_into_existing_appcast() {
         !inserted && /<item[ >]/    { emit() }
         !inserted && /<\/channel>/  { emit() }
         { print }
-    ' "$APPCAST_PATH" >"$STAGED_APPCAST"
+    ' "$base" >"$STAGED_APPCAST"
 
     merged_items="$(count_items "$STAGED_APPCAST")"
     [[ "$merged_items" == "$((existing_items + 1))" ]] ||

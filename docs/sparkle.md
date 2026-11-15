@@ -179,6 +179,12 @@ Lower the interval while debugging: Sparkle enforces a minimum of 3600 s (1 hour
 
 You could also trigger manually an update using "Check for Updates..." in the application menu
 
+To check current key&values:
+```bash
+defaults read com.woa.application | grep "^    SU"
+
+```
+
 
 ## Tools
 

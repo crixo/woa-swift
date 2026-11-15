@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# ./scripts/release/build-in-release.sh --scheme WOA --project src/WOA.xcodeproj
 
 set -Eeuo pipefail
 IFS=$'\n\t'
@@ -10,6 +11,7 @@ CONFIGURATION="Release"
 ARCHIVE_PATH=""
 VERSION=""
 CODE_SIGNING_ALLOWED=""
+ENABLE_HARDENED_RUNTIME="NO"
 
 log() {
     printf '\033[1;34m[INFO]\033[0m %s\n' "$*"
@@ -42,7 +44,7 @@ show_help() {
     cat <<'HELP'
 Usage:
 
-  ./scripts/build-in-release.sh --scheme <scheme> (--project <path> | --workspace <path>) [options]
+  ./scripts/release/build-in-release.sh --scheme <scheme> (--project <path> | --workspace <path>) [options]
 
 Required parameters:
 
@@ -69,6 +71,10 @@ Build parameters:
 
   --code-signing-allowed <YES|NO>
       Set the CODE_SIGNING_ALLOWED Xcode build setting.
+
+  --enable-hardened-runtime <YES|NO>
+      Set the ENABLE_HARDENED_RUNTIME Xcode build setting.
+      Default: NO.
 
   -h, --help
       Display this help.
@@ -120,6 +126,11 @@ while [[ $# -gt 0 ]]; do
             CODE_SIGNING_ALLOWED="$2"
             shift 2
             ;;
+        --enable-hardened-runtime)
+            require_parameter_value "$1" "$#"
+            ENABLE_HARDENED_RUNTIME="$2"
+            shift 2
+            ;;
         -h|--help)
             show_help
             exit 0
@@ -141,6 +152,12 @@ if [[ -n "$CODE_SIGNING_ALLOWED" &&
     "$CODE_SIGNING_ALLOWED" != "NO" ]]
 then
     die "--code-signing-allowed must be YES or NO."
+fi
+
+if [[ "$ENABLE_HARDENED_RUNTIME" != "YES" &&
+      "$ENABLE_HARDENED_RUNTIME" != "NO" ]]
+then
+    die "--enable-hardened-runtime must be YES or NO."
 fi
 
 if [[ -n "$WORKSPACE_PATH" && -n "$PROJECT_PATH" ]]; then
@@ -188,6 +205,10 @@ fi
 
 if [[ -n "$CODE_SIGNING_ALLOWED" ]]; then
     XCODE_BUILD_ARGUMENTS+=("CODE_SIGNING_ALLOWED=${CODE_SIGNING_ALLOWED}")
+fi
+
+if [[ -n "$ENABLE_HARDENED_RUNTIME" ]]; then
+    XCODE_BUILD_ARGUMENTS+=("ENABLE_HARDENED_RUNTIME=${ENABLE_HARDENED_RUNTIME}")
 fi
 
 xcodebuild -quiet "${XCODE_BUILD_ARGUMENTS[@]}" clean archive
