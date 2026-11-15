@@ -14,7 +14,8 @@ struct MigrationHistoryView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
+        VStack(alignment: .leading, spacing: LayoutMetrics2.contentSpacing) {
+            
             HStack {
                 Text("Cronologia migrazioni")
                     .font(.title2.weight(.semibold))
@@ -27,32 +28,34 @@ struct MigrationHistoryView: View {
                 .appSecondaryButton()
                 .disabled(viewModel.isLoading)
             }
-
-            if viewModel.isLoading {
-                ProgressView("Caricamento cronologia migrazioni...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let errorMessage = viewModel.errorMessage {
-                ContentUnavailableView(
-                    "Impossibile caricare la cronologia migrazioni",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(errorMessage)
-                )
-            } else if viewModel.migrations.isEmpty {
-                ContentUnavailableView(
-                    "Nessuna migrazione applicata",
-                    systemImage: "externaldrive",
-                    description: Text("Le migrazioni del database applicate appariranno qui.")
-                )
-            } else {
-                List(viewModel.migrations) { migration in
-                    migrationRow(migration)
+            VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                if viewModel.isLoading {
+                    ProgressView("Caricamento cronologia migrazioni...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let errorMessage = viewModel.errorMessage {
+                    ContentUnavailableView(
+                        "Impossibile caricare la cronologia migrazioni",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(errorMessage)
+                    )
+                } else if viewModel.migrations.isEmpty {
+                    ContentUnavailableView(
+                        "Nessuna migrazione applicata",
+                        systemImage: "externaldrive",
+                        description: Text("Le migrazioni del database applicate appariranno qui.")
+                    )
+                } else {
+                    List(viewModel.migrations) { migration in
+                        migrationRow(migration)
+                    }
+                    .listStyle(.inset)
                 }
-                .listStyle(.inset)
             }
+            .appPanel(padding: AppDesignSystem.spacingLG)
         }
-
-        .padding(AppDesignSystem.spacingLG)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        //.padding()
+        .frame(maxWidth: LayoutMetrics2.contentMaxWidth, alignment: .leading)
+        //.frame(minWidth: 520, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
         .task { await viewModel.load() }
         .navigationTitle("Cronologia migrazioni")
     }

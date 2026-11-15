@@ -33,8 +33,9 @@ struct LaunchScreenView: View {
         VStack(spacing: LayoutMetrics.panelSpacing) {
             HStack(alignment: .top, spacing: LayoutMetrics.panelSpacing) {
                 VStack(alignment: .leading, spacing: LayoutMetrics.panelSpacing) {
-                    tablePanel
+                    dbConnectionPanel
                     migrationsPanel
+                    tablePanel
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
 
@@ -49,25 +50,32 @@ struct LaunchScreenView: View {
 
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: LayoutMetrics.panelSpacing) {
-            tablePanel
+            dbConnectionPanel
             migrationsPanel
+            tablePanel
             settingsPanel
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(LayoutMetrics.panelPadding)
     }
-
-    private var tablePanel: some View {
+    
+    private var dbConnectionPanel: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             Label("Connessione database", systemImage: "network")
-                .font(.headline)
-
+                .homeWidgetTitle()
+            
             if let lastValidated = settings.databaseConnection.lastValidated {
                 Text("Ultima validazione: \(lastValidated.formatted())")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appCard(padding: AppDesignSystem.spacingLG)
+    }
 
+    private var tablePanel: some View {
+        VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             TableStatusView(
                 tables: tables,
                 onReselectDatabase: onReselectDatabase
@@ -89,48 +97,45 @@ struct LaunchScreenView: View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             HStack {
                 Label("Migrazioni applicate in questa sessione", systemImage: "clock.arrow.circlepath")
-                    .font(.headline)
+                    .homeWidgetTitle()
                 Spacer()
                 Button("Cronologia migrazioni", systemImage: "list.bullet") {
                     onMigrationHistory()
                 }
                 .appSecondaryButton()
             }
-
-            Group {
-                if let migrationHistoryError {
-                    Text("Impossibile caricare la cronologia migrazioni: \(migrationHistoryError)")
-                        .appErrorText()
-                        .textSelection(.enabled)
-                } else if sessionMigrations.isEmpty {
-                    Text("Nessuna migrazione applicata")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
-                            ForEach(sessionMigrations) { migration in
-                                HStack(alignment: .firstTextBaseline) {
-                                    Text(migration.name)
-                                        .font(.callout.weight(.medium))
-                                        .textSelection(.enabled)
-                                    Spacer(minLength: AppDesignSystem.spacingSM)
-                                    Text(migration.timestamp, format: .dateTime.year().month().day().hour().minute().second())
-                                        .font(.callout)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if let migrationHistoryError {
+                Text("Impossibile caricare la cronologia migrazioni: \(migrationHistoryError)")
+                    .appErrorText()
+                    .textSelection(.enabled)
+            } else if sessionMigrations.isEmpty {
+                Text("Nessuna migrazione applicata")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
+                        ForEach(sessionMigrations) { migration in
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(migration.name)
+                                    .font(.callout.weight(.medium))
+                                    .textSelection(.enabled)
+                                Spacer(minLength: AppDesignSystem.spacingSM)
+                                Text(migration.timestamp, format: .dateTime.year().month().day().hour().minute().second())
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-                    .frame(height: min(CGFloat(sessionMigrations.count) * 32, 96))
-                    .accessibilityLabel("Migrazioni applicate in questa sessione")
                 }
+                .frame(height: min(CGFloat(sessionMigrations.count) * 32, 96))
+                .accessibilityLabel("Migrazioni applicate in questa sessione")
             }
-
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .appCard(padding: AppDesignSystem.spacingLG)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .appCard(padding: AppDesignSystem.spacingLG)
     }
 }
 

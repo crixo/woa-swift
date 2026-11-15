@@ -43,14 +43,43 @@ struct WOA: App {
 // MARK: - Sparkle logging
 
 final class SparkleUpdaterDelegate: NSObject, SPUUpdaterDelegate {
-    func updater(_ updater: SPUUpdater,
-                 didFinishUpdateCycleFor updateCheck: SPUUpdateCheck,
-                 error: Error?) {
-        guard let error else { return }
 
+    private static let noUpdateAvailableCode = 1001
+
+    func updater(
+        _ updater: SPUUpdater,
+        didFinishUpdateCycleFor updateCheck: SPUUpdateCheck,
+        error: Error?
+    ) {
+        guard let error else {
+            AppLogger.info("Sparkle update cycle completed successfully")
+            return
+        }
+        
+        print(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion")!)
+        print(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")!)
+        print(Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "")
+
+
+        let nsError = error as NSError
+
+//        AppLogger.debug("""
+//            Sparkle:
+//            domain=\(nsError.domain)
+//            code=\(nsError.code)
+//            description=\(nsError.localizedDescription)
+//            """)
+
+        if nsError.domain == SUSparkleErrorDomain,
+           nsError.code == Self.noUpdateAvailableCode {
+            AppLogger.info("Sparkle update check completed: app is already up to date")
+            return
+        }
+        
         AppLogger.error("Sparkle update cycle failed: \(error.localizedDescription)")
-        // then the nested causes (skip the top-level error, it's already logged above)
-        var current = (error as NSError).userInfo[NSUnderlyingErrorKey] as? NSError
+
+        // Log nested causes
+        var current = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
         while let e = current {
             AppLogger.error("  caused by \(e.domain) code=\(e.code): \(e.localizedDescription)")
             current = e.userInfo[NSUnderlyingErrorKey] as? NSError

@@ -31,7 +31,7 @@ struct TableStatusView: View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             HStack(alignment: .center) {
                 Label(title, systemImage: "checkmark.shield.fill")
-                    .font(.title2.weight(.semibold))
+                    .homeWidgetTitle()
                 Spacer()
                 if let onContinue {
                     Button("Continua") {

@@ -19,6 +19,15 @@ enum LayoutMetrics {
     static let dateColumnMinWidth: CGFloat = 100
 }
 
+/// Layout constants specific to the patients search screen.
+enum LayoutMetrics2 {
+    static let contentSpacing: CGFloat = AppDesignSystem.spacingLG
+    static let searchFieldMinWidth: CGFloat = 200
+    static let headerSpacing: CGFloat = AppDesignSystem.spacingSM
+    static let rowSpacing: CGFloat = AppDesignSystem.spacingXS
+    static let contentMaxWidth: CGFloat = AppDesignSystem.panelMaxWidth
+}
+
 private struct AppCardModifier: ViewModifier {
     let padding: CGFloat
 
@@ -175,5 +184,9 @@ extension View {
             .fixedSize(horizontal: false, vertical: true)
     }
     
+    func homeWidgetTitle() -> some View {
+        self
+            .font(.title3.weight(.semibold))
+    }
         
 }

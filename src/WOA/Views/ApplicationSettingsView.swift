@@ -9,7 +9,7 @@ struct ApplicationSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
             Label("Impostazioni applicazione", systemImage: "gearshape.fill")
-                .font(.headline)
+                .homeWidgetTitle()
 
             VStack(alignment: .leading, spacing: AppDesignSystem.spacingSM) {
                 VStack(alignment: .leading, spacing: AppDesignSystem.spacingXS) {

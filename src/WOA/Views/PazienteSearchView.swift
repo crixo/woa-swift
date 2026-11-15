@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// Layout constants specific to the patients search screen.
-private enum LayoutMetrics2 {
-    static let contentSpacing: CGFloat = AppDesignSystem.spacingLG
-    static let searchFieldMinWidth: CGFloat = 200
-    static let headerSpacing: CGFloat = AppDesignSystem.spacingSM
-    static let rowSpacing: CGFloat = AppDesignSystem.spacingXS
-    static let contentMaxWidth: CGFloat = AppDesignSystem.panelMaxWidth
-}
-
 
 /// Search and browse patients by name; details and add patient are rendered inline by the root navigation stack.
 struct PazienteSearchView: View {
