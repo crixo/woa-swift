@@ -1,7 +1,13 @@
 # Xcode / Swift / macOS
 
-# custom
+## custom
+
 tmp.txt
+# Generated AI quality reports
+#quality-reports/latest/
+.man/
+
+## custom
 
 ## Build products
 build/
@@ -14,6 +20,9 @@ dist/
 src/WOA.xcodeproj/xcuserdata/
 src/WOA.xcodeproj/project.xcworkspace/xcuserdata/
 src/WOA.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+
+# Secrets
+src/Config/Secrets.xcconfig
 
 # Xcode UI state
 *.xcuserstate
@@ -46,5 +55,4 @@ Package.resolved
 ## Local logs / runtime artifacts
 *.log
 
-# Generated AI quality reports
-#quality-reports/latest/
+
