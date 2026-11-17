@@ -10,6 +10,7 @@
 #   - the GitHub CLI is authenticated and can publish releases
 #   - the Xcode scheme exists and is shared
 #   - warns if Sparkle's generate_appcast cannot be found yet
+#   - the code-signing certificate exists in the Keychain (unless --sign no)
 # ==============================================================================
 
 set -Eeuo pipefail
@@ -26,6 +27,8 @@ WORKSPACE_PATH=""
 MAIN_BRANCH="main"
 REMOTE="origin"
 SPARKLE_BIN="${SPARKLE_BIN:-}"
+SIGN="yes"
+SIGN_IDENTITY="$DEFAULT_SIGN_IDENTITY"
 
 show_help() {
     cat <<'HELP'
@@ -37,6 +40,8 @@ Usage: ./preflight-check.sh --scheme <name> (--project <path> | --workspace <pat
   --main-branch <name>   Release branch (default: main).
   --remote <name>        Git remote (default: origin).
   --sparkle-bin <dir>    Folder containing generate_appcast (only used for a warning).
+  --sign <yes|no>        Check the code-signing certificate (default: yes).
+  --sign-identity <name> Certificate name in the Keychain (default: CrixoDev).
   -h, --help             Show this help.
 HELP
 }
@@ -50,6 +55,8 @@ parse_args() {
             --main-branch)  need_value "$1" "$#"; MAIN_BRANCH="$2";    shift 2 ;;
             --remote)       need_value "$1" "$#"; REMOTE="$2";         shift 2 ;;
             --sparkle-bin)  need_value "$1" "$#"; SPARKLE_BIN="$2";    shift 2 ;;
+            --sign)         need_value "$1" "$#"; parse_yes_no SIGN "$1" "$2"; shift 2 ;;
+            --sign-identity) need_value "$1" "$#"; SIGN_IDENTITY="$2"; shift 2 ;;
             -h|--help)      show_help; exit 0 ;;
             *) die "Unknown option: $1 (use --help)" ;;
         esac
@@ -126,14 +133,29 @@ check_sparkle_tools() {
     fi
 }
 
+# Fails now, not at step 3, if the signing certificate is missing.
+check_signing_identity() {
+    if [[ "$SIGN" != "yes" ]]; then
+        warning "Code signing is disabled (--sign no): the app will not be signed with '${SIGN_IDENTITY}'."
+        return 0
+    fi
+
+    log "Checking the code-signing certificate: ${SIGN_IDENTITY}"
+
+    signing_identity_available "$SIGN_IDENTITY" ||
+        die "Code-signing identity '${SIGN_IDENTITY}' not found in the Keychain (see: security find-identity -p codesigning). Use --sign-identity or --sign no."
+}
+
 main() {
     parse_args "$@"
     require_tools git gh xcodebuild hdiutil ditto sed grep find awk
+    if [[ "$SIGN" == "yes" ]]; then require_tools codesign security xattr file; fi
     enter_repo_root
     check_git_state
     check_github_access
     check_xcode_scheme
     check_sparkle_tools
+    check_signing_identity
 
     success "Pre-flight checks passed."
 }
