@@ -4,10 +4,10 @@
 #
 # Runs the whole release by calling the step scripts, in this order:
 #
-#   0. preflight-check.sh          tools, clean git, GitHub access, scheme
+#   0. preflight-check.sh          tools, clean git, GitHub access, scheme, signing certificate
 #   1. version-bump.sh             next version -> project.pbxproj (working tree)
 #   2. build-in-release.sh         xcodebuild archive
-#   3. package-artifacts.sh        .app, .app.zip, .dmg
+#   3. package-artifacts.sh        .app, code signing (sign-app.sh), .app.zip, .dmg
 #   4. sparkle-sign.sh             sign the zip, update appcast.xml (working tree)
 #   5. commit-and-tag.sh           ONE commit: version + appcast.xml, then the tag
 #   6. publish-github-release.sh   push the tag, create the Release with assets
@@ -57,6 +57,9 @@ SPARKLE_BIN="${SPARKLE_BIN:-}"
 ED_KEY_FILE=""
 FEED_URL=""
 REPOSITORY_NAME=""
+SIGN="yes"
+SIGN_IDENTITY="$DEFAULT_SIGN_IDENTITY"
+ENTITLEMENTS=""
 
 # --- State -------------------------------------------------------------------
 VERSION=""
@@ -88,6 +91,11 @@ Version
   --new-major                   Bump the major version (1.4.3 -> 2.0.0).
   --skip-version-bump           Do not write the version into project.pbxproj
                                 (the build still gets it as a build setting).
+
+Code signing
+  --sign <yes|no>               Sign the .app with a Keychain certificate (default: yes).
+  --sign-identity <name>        Certificate name in the Keychain (default: CrixoDev).
+  --entitlements <path>         Entitlements file for the app (default: keep the build's).
 
 Sparkle
   --sparkle-bin <dir>           Folder containing generate_appcast.
@@ -121,6 +129,9 @@ parse_args() {
             --ed-key-file)           need_value "$1" "$#"; ED_KEY_FILE="$2";          shift 2 ;;
             --feed-url)              need_value "$1" "$#"; FEED_URL="$2";             shift 2 ;;
             --repository)            need_value "$1" "$#"; REPOSITORY_NAME="$2";      shift 2 ;;
+            --sign)                  need_value "$1" "$#"; parse_yes_no SIGN "$1" "$2"; shift 2 ;;
+            --sign-identity)         need_value "$1" "$#"; SIGN_IDENTITY="$2";        shift 2 ;;
+            --entitlements)          need_value "$1" "$#"; ENTITLEMENTS="$2";         shift 2 ;;
             --new-major)             NEW_MAJOR=true;         shift ;;
             --skip-version-bump)     SKIP_VERSION_BUMP=true; shift ;;
             --dry-run)               DRY_RUN=true;           shift ;;
@@ -220,7 +231,7 @@ main() {
 
     # ---- 0. Pre-flight ----
     step "0/7 Pre-flight checks"
-    local preflight_args=(--scheme "$SCHEME" --main-branch "$MAIN_BRANCH" --remote "$REMOTE")
+    local preflight_args=(--scheme "$SCHEME" --main-branch "$MAIN_BRANCH" --remote "$REMOTE" --sign "$SIGN" --sign-identity "$SIGN_IDENTITY")
     if [[ -n "$SPARKLE_BIN" ]]; then
         preflight_args+=(--sparkle-bin "$SPARKLE_BIN")
     fi
@@ -250,7 +261,8 @@ main() {
 
     # ---- 3. Package ----
     step "3/7 Package"
-    local package_args=(--archive-path "$ARCHIVE_PATH" --version "$VERSION" --build-dir "$BUILD_DIR" --dist-dir "$DIST_DIR")
+    local package_args=(--archive-path "$ARCHIVE_PATH" --version "$VERSION" --build-dir "$BUILD_DIR" --dist-dir "$DIST_DIR" --sign "$SIGN" --sign-identity "$SIGN_IDENTITY")
+    if [[ -n "$ENTITLEMENTS" ]];         then package_args+=(--entitlements "$ENTITLEMENTS"); fi
     if [[ -n "$APP_NAME" ]];             then package_args+=(--app-name "$APP_NAME"); fi
     if [[ -n "$EXPORT_OPTIONS_PLIST" ]]; then package_args+=(--export-options-plist "$EXPORT_OPTIONS_PLIST"); fi
     "${SCRIPT_DIR}/package-artifacts.sh" "${package_args[@]}"

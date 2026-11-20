@@ -72,6 +72,33 @@ require_branch() {
         die "The current branch is '${current:-detached HEAD}', expected '${expected}'."
 }
 
+# --- Code signing helpers ----------------------------------------------------
+
+# Name of the self-signed code-signing certificate in the login Keychain.
+DEFAULT_SIGN_IDENTITY="CrixoDev"
+
+# Reads a yes/no option value and stores "yes" or "no" in the variable named
+# by the first argument (printf -v, so die exits the real script, not a subshell).
+# Usage: parse_yes_no SIGN --sign "$2"
+parse_yes_no() {
+    local target="$1" option="$2" value
+    value="$(printf '%s' "$3" | tr '[:upper:]' '[:lower:]')"
+
+    case "$value" in
+        yes|y|true|1)  printf -v "$target" '%s' yes ;;
+        no|n|false|0)  printf -v "$target" '%s' no ;;
+        *) die "${option} must be yes or no (got '${3}')." ;;
+    esac
+}
+
+# Succeeds if the Keychain holds a code-signing identity (certificate + private
+# key) with exactly this name. Without -v on purpose: a self-signed certificate
+# is not "valid" for the system trust, but codesign can still use it.
+# Usage: signing_identity_available <name>
+signing_identity_available() {
+    security find-identity -p codesigning 2>/dev/null | grep -Fq "\"$1\""
+}
+
 # --- Version helpers ---------------------------------------------------------
 
 # Prints the latest vX.Y.Z tag (empty if there is none).

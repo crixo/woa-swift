@@ -10,6 +10,11 @@
 #
 # It also verifies that the version baked into Info.plist is the release
 # version. The dist directory is recreated from scratch on every run.
+#
+# Code signing (sign-app.sh, on by default) happens here, on the copy of the
+# .app in dist/, after the version check and BEFORE the zip and the DMG are
+# created, so both contain the signed app. The Sparkle signature (step 4) is
+# computed later on the final zip.
 # ==============================================================================
 
 set -Eeuo pipefail
@@ -26,6 +31,9 @@ APP_NAME=""
 EXPORT_OPTIONS_PLIST=""
 BUILD_DIR="build"
 DIST_DIR="dist"
+SIGN="yes"
+SIGN_IDENTITY="$DEFAULT_SIGN_IDENTITY"
+ENTITLEMENTS=""
 
 APP_PATH=""
 APP_ZIP=""
@@ -42,6 +50,11 @@ Usage: ./package-artifacts.sh --archive-path <path> --version <x.y.z> [options]
                                  (default: copy the .app from the archive).
   --build-dir <path>             Intermediate files (default: build).
   --dist-dir <path>              Final artifacts (default: dist). Recreated.
+  --sign <yes|no>                Code-sign the .app before packaging (default: yes).
+  --sign-identity <name>         Code-signing certificate in the Keychain
+                                 (default: CrixoDev).
+  --entitlements <path>          Entitlements file for the app (default: keep
+                                 the ones already in the app).
   -h, --help                     Show this help.
 HELP
 }
@@ -55,6 +68,9 @@ parse_args() {
             --export-options-plist)  need_value "$1" "$#"; EXPORT_OPTIONS_PLIST="$2"; shift 2 ;;
             --build-dir)             need_value "$1" "$#"; BUILD_DIR="$2";            shift 2 ;;
             --dist-dir)              need_value "$1" "$#"; DIST_DIR="$2";             shift 2 ;;
+            --sign)                  need_value "$1" "$#"; parse_yes_no SIGN "$1" "$2"; shift 2 ;;
+            --sign-identity)         need_value "$1" "$#"; SIGN_IDENTITY="$2";        shift 2 ;;
+            --entitlements)          need_value "$1" "$#"; ENTITLEMENTS="$2";        shift 2 ;;
             -h|--help)               show_help; exit 0 ;;
             *) die "Unknown option: $1 (use --help)" ;;
         esac
@@ -126,6 +142,19 @@ verify_app_version() {
     log "Verified app version: ${short} (build ${bundle})"
 }
 
+# Signs the copy of the app in DIST_DIR (see sign-app.sh).
+sign_app() {
+    if [[ "$SIGN" != "yes" ]]; then
+        warning "Code signing skipped (--sign no): the app keeps the signature from the build."
+        return 0
+    fi
+
+    local sign_args=(--app-path "$APP_PATH" --identity "$SIGN_IDENTITY")
+    if [[ -n "$ENTITLEMENTS" ]]; then sign_args+=(--entitlements "$ENTITLEMENTS"); fi
+
+    "${SCRIPT_DIR}/sign-app.sh" "${sign_args[@]}"
+}
+
 package_zip() {
     log "Creating ${APP_ZIP}..."
     ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$APP_ZIP"
@@ -159,6 +188,7 @@ main() {
 
     collect_app_bundle
     verify_app_version
+    sign_app
     package_zip
     package_dmg
     validate_artifacts
