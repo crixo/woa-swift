@@ -17,3 +17,9 @@ extension Binding where Value == String? {
         )
     }
 }
+
+extension Optional where Wrapped: CustomStringConvertible {
+    func toString() -> String {
+        self?.description ?? ""
+    }
+}

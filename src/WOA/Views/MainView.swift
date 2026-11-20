@@ -2,17 +2,17 @@ import SwiftUI
 
 /// Main entry point view: database configuration required screen, or connected settings screen.
 struct MainView: View {
-
-    @StateObject private var settingsStore: AppSettingsStore
+    @ObservedObject var settingsStore: AppSettingsStore//@StateObject private var settingsStore: AppSettingsStore
     @StateObject private var migrationService: DatabaseMigrationService
     @StateObject private var databaseManagementViewModel: DatabaseManagementViewModel
     @StateObject private var dataChangeCoordinator = DataChangeCoordinator()
     @State private var navigationPath: [NavigationRoute] = []
 
-    init() {
-        let settingsStore = AppSettingsStore()
+    init(settingsStore: AppSettingsStore) {
+        //let settingsStore = AppSettingsStore()
+        //_settingsStore = StateObject(wrappedValue: settingsStore)
+        self.settingsStore = settingsStore
         let migrationService = DatabaseMigrationService()
-        _settingsStore = StateObject(wrappedValue: settingsStore)
         _migrationService = StateObject(wrappedValue: migrationService)
         _databaseManagementViewModel = StateObject(
             wrappedValue: DatabaseManagementViewModel(
@@ -265,5 +265,8 @@ struct MainView: View {
 }
 
 #Preview {
-    MainView()
+    let store = AppSettingsStore()
+    //store.load()
+    MainView(settingsStore: store)
+        //.environmentObject(GoogleAuthService())   // only if MainView contains GoogleLogoutButton or reads the auth service
 }

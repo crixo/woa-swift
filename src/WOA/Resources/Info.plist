@@ -16,25 +16,40 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.woa.application</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.735496277336-d8csilcga97a2289aseh4n22bu4nukqi</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026. All rights reserved.</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
+	<key>GoogleIOSClientID</key>
+	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.medical</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026. All rights reserved.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/crixo/woa-swift/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>6u8PzTo7klksW6z/WjpO81KOYkyOffojopVBRQedh4I=</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
-	<key>SUEnableInstallerLauncherService</key>
-	<true/>
 </dict>
 </plist>

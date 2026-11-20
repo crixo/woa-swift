@@ -22,6 +22,13 @@ struct AppSettings: Codable, Equatable {
     var databaseConnection: DatabaseConnection
     var logLevel: LogLevel
     var theme: Theme
+    /// When `true`, the app requires a Google sign-in (checked via the default browser at every launch).
+    /// Optional on purpose: settings files saved before this property existed have no such key,
+    /// and a missing key decodes as `nil` (treated as `false`) instead of failing the whole decode.
+    var googleAuthEnabled: Bool? = nil
+    /// `true` = authenticate with the Google "iOS" OAuth client (no client secret, custom URL scheme redirect).
+    /// `nil`/`false` = the "Desktop app" client (client secret, loopback redirect). Optional for the same reason as above.
+    var googleAuthUseIOSClient: Bool? = nil
 
     static let `default` = AppSettings(
         databaseConnection: .notConfigured,

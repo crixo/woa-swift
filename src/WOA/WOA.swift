@@ -6,8 +6,16 @@ struct WOA: App {
 
     private let sparkleDelegate: SparkleUpdaterDelegate
     private let updaterController: SPUStandardUpdaterController
+    @StateObject private var settingsStore: AppSettingsStore
+    @StateObject private var auth = GoogleAuthService()
 
     init() {
+        let appSettingsStore = AppSettingsStore()
+        appSettingsStore.load()          // ← this line
+        _settingsStore = StateObject(wrappedValue: appSettingsStore)
+
+        _settingsStore = StateObject(wrappedValue: AppSettingsStore())
+        
         // Ensure storage directories exist and the logger is ready before any view loads.
         _ = try? AppPaths.appSupportDirectory()
         AppLogger.info("Application launched")
@@ -29,7 +37,14 @@ struct WOA: App {
 
     var body: some Scene {
         WindowGroup {
-            MainView()
+            
+            AuthGate(
+                isEnabled: settingsStore.settings.googleAuthEnabled ?? false,
+                clientType: (settingsStore.settings.googleAuthUseIOSClient ?? false) ? .ios : .desktop
+            ) {
+                MainView(settingsStore: settingsStore)
+            }
+            .environmentObject(auth)
         }
         .commands {
             CommandGroup(after: .appInfo) {

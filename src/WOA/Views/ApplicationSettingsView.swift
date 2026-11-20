@@ -29,6 +29,8 @@ struct ApplicationSettingsView: View {
                     settingRow(label: "Ultima validazione", value: lastValidated)
                     settingRow(label: "Livello log", value: settings.logLevel.rawValue)
                     settingRow(label: "Tema", value: settings.theme.rawValue)
+                    settingRow(label: "Autenticazione con Google", value: settings.googleAuthEnabled.toString())
+                    settingRow(label: "Autenticazione con IOS Client", value: settings.googleAuthUseIOSClient.toString())
                 }
             }
 
