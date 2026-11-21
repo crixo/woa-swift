@@ -89,3 +89,16 @@ Build, then right-click the `.app` in Products → Show in Finder → Show Packa
 - Sparkle feed: `SUFeedURL` points to `appcast.xml` at the repo root on `main`, served by `scripts/sparkle-appcast.sh`.
 - `SUEnableInstallerLauncherService` is required because the app is sandboxed; it pairs with the mach-lookup entries in `WOA.entitlements`.
 - `LSApplicationCategoryType` = `public.app-category.medical`.
+
+## Application settings
+
+User-editable preferences are stored through `AppSettingsStore` and
+`ConfigurationService` in the application-owned settings JSON file under
+Application Support. The settings are not stored in `UserDefaults` or in the
+database.
+
+The dedicated Settings destination exposes editable preferences and a separate
+read-only system section. The `lastModifiedPatientsLimit` preference controls
+how many recently modified patients appear in patient search. Its default is
+5, and saved values must be positive integers. Older settings files without
+this key remain valid and resolve to the default.

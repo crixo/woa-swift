@@ -1,10 +1,21 @@
 import SwiftUI
 
 /// Displays the persisted application settings without exposing storage logic to the view.
-struct ApplicationSettingsView: View {
+struct SettingsWidgetView: View {
 
     let settings: AppSettings
     let settingsFilePath: String
+    let onOpenSettings: () -> Void
+
+    init(
+        settings: AppSettings,
+        settingsFilePath: String,
+        onOpenSettings: @escaping () -> Void = {}
+    ) {
+        self.settings = settings
+        self.settingsFilePath = settingsFilePath
+        self.onOpenSettings = onOpenSettings
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingLG) {
@@ -33,6 +44,14 @@ struct ApplicationSettingsView: View {
                     settingRow(label: "Autenticazione con IOS Client", value: settings.googleAuthUseIOSClient.toString())
                 }
             }
+
+            Button {
+                onOpenSettings()
+            } label: {
+                Label("Impostazioni", systemImage: "slider.horizontal.3")
+            }
+            .appSecondaryButton()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,7 +85,7 @@ struct ApplicationSettingsView: View {
 }
 
 #Preview {
-    ApplicationSettingsView(
+    SettingsWidgetView(
         settings: .default,
         settingsFilePath: "Preview configuration"
     )

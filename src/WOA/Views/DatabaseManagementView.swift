@@ -5,6 +5,7 @@ struct DatabaseManagementView: View {
     @ObservedObject var settingsStore: AppSettingsStore
     let onMigrationHistory: () -> Void
     let onResetConfiguration: () -> Void
+    let onOpenSettings: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesignSystem.spacingXL) {
@@ -31,7 +32,8 @@ struct DatabaseManagementView: View {
                     settings: settingsStore.settings,
                     settingsFilePath: settingsStore.settingsFilePath,
                     onMigrationHistory: onMigrationHistory,
-                    onReselectDatabase: onResetConfiguration
+                    onReselectDatabase: onResetConfiguration,
+                    onOpenSettings: onOpenSettings
                 )
             } else {
                 notConfiguredContent
@@ -125,6 +127,7 @@ struct DatabaseManagementView: View {
         viewModel: viewModel,
         settingsStore: settingsStore,
         onMigrationHistory: {},
-        onResetConfiguration: {}
+        onResetConfiguration: {},
+        onOpenSettings: {}
     )
 }

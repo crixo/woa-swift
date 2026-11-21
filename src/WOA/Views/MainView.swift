@@ -40,13 +40,31 @@ struct MainView: View {
                 onResetConfiguration: {
                     navigationPath.removeAll()
                     databaseManagementViewModel.resetConfiguration()
+                },
+                onOpenSettings: {
+                    navigationPath.append(.settings)
                 }
             )
         } destinationContent: { route in
                     switch route {
+                    case .settings:
+                        SettingsView(
+                            viewModel: SettingsViewModel(settingsStore: settingsStore),
+                            onCancel: {
+                                if !navigationPath.isEmpty {
+                                    navigationPath.removeLast()
+                                }
+                            },
+                            onSaved: {
+                                if !navigationPath.isEmpty {
+                                    navigationPath.removeLast()
+                                }
+                            }
+                        )
                     case .patientsSearch:
                         PazienteSearchView(
                             databasePath: settingsStore.settings.databaseConnection.path,
+                            lastModifiedPatientsLimit: settingsStore.settings.effectiveLastModifiedPatientsLimit,
                             onAddPatient: {
                                 let url = URL(fileURLWithPath: settingsStore.settings.databaseConnection.path)
                                 navigationPath.append(.addPatient(databaseURL: url))

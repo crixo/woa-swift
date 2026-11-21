@@ -10,6 +10,7 @@ struct LaunchScreenView: View {
     let settingsFilePath: String
     let onMigrationHistory: () -> Void
     let onReselectDatabase: () -> Void
+    let onOpenSettings: () -> Void
 
     private enum LayoutMetrics {
         static let panelSpacing: CGFloat = 24
@@ -86,9 +87,10 @@ struct LaunchScreenView: View {
 
 
     private var settingsPanel: some View {
-        ApplicationSettingsView(
+        SettingsWidgetView(
             settings: settings,
-            settingsFilePath: settingsFilePath
+            settingsFilePath: settingsFilePath,
+            onOpenSettings: onOpenSettings
         )
         .appCard(padding: AppDesignSystem.spacingLG)
     }
@@ -147,6 +149,7 @@ struct LaunchScreenView: View {
         settings: .default,
         settingsFilePath: "Preview configuration",
         onMigrationHistory: {},
-        onReselectDatabase: {}
+        onReselectDatabase: {},
+        onOpenSettings: {}
     )
 }

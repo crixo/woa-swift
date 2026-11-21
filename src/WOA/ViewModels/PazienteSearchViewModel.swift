@@ -14,9 +14,11 @@ final class PazienteSearchViewModel: ObservableObject {
     @Published var lastModifiedPatientsError: String?
 
     private let databasePath: String
+    private let lastModifiedPatientsLimit: Int
 
-    init(databasePath: String) {
+    init(databasePath: String, lastModifiedPatientsLimit: Int = AppSettings.AppConstants.lastModifiedPatientsLimit) {
         self.databasePath = databasePath
+        self.lastModifiedPatientsLimit = max(1, lastModifiedPatientsLimit)
     }
 
     var resultCount: Int {
@@ -72,7 +74,7 @@ final class PazienteSearchViewModel: ObservableObject {
             do {
                 let url = URL(fileURLWithPath: databasePath)
                 let patients = try AuditRepository.fetchLastModifiedPatients(
-                    limit: AppSettings.AppConstants.lastModifiedPatientsLimit,
+                    limit: lastModifiedPatientsLimit,
                     databaseFileURL: url
                 )
                 lastModifiedPatients = patients

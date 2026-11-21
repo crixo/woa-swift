@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum NavigationRoute: Hashable {
+    case settings
     case patientsSearch
     case addPatient(databaseURL: URL)
     case patientDetails(patientID: Int, databaseURL: URL)

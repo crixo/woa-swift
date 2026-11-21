@@ -5,6 +5,7 @@ import SwiftUI
 struct PazienteSearchView: View {
 
     let databasePath: String
+    let lastModifiedPatientsLimit: Int
     let onAddPatient: () -> Void
     let onOpenDetails: (PatientSearchResult) -> Void
     let onOpenPatientDetails: (Int) -> Void
@@ -14,15 +15,22 @@ struct PazienteSearchView: View {
 
     init(
         databasePath: String,
+        lastModifiedPatientsLimit: Int = AppSettings.AppConstants.lastModifiedPatientsLimit,
         onAddPatient: @escaping () -> Void = {},
         onOpenDetails: @escaping (PatientSearchResult) -> Void = { _ in },
         onOpenPatientDetails: @escaping (Int) -> Void = { _ in }
     ) {
         self.databasePath = databasePath
+        self.lastModifiedPatientsLimit = max(1, lastModifiedPatientsLimit)
         self.onAddPatient = onAddPatient
         self.onOpenDetails = onOpenDetails
         self.onOpenPatientDetails = onOpenPatientDetails
-        _viewModel = StateObject(wrappedValue: PazienteSearchViewModel(databasePath: databasePath))
+        _viewModel = StateObject(
+            wrappedValue: PazienteSearchViewModel(
+                databasePath: databasePath,
+                lastModifiedPatientsLimit: lastModifiedPatientsLimit
+            )
+        )
     }
 
     var body: some View {
@@ -162,7 +170,7 @@ struct PazienteSearchView: View {
                     viewModel.loadLastModifiedPatients()
                 }
             } label: {
-                Label(showLastModifiedPatients ? "Nascondi pazienti recenti" : "Mostra gli ultimi \(AppSettings.AppConstants.lastModifiedPatientsLimit) pazienti modificati", systemImage: "clock.arrow.circlepath")
+                Label(showLastModifiedPatients ? "Nascondi pazienti recenti" : "Mostra gli ultimi \(lastModifiedPatientsLimit) pazienti modificati", systemImage: "clock.arrow.circlepath")
             }
             .appSecondaryButton()
 

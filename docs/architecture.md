@@ -106,7 +106,8 @@ creates an indexed record of the entity table, entity ID,
 timestamp, and change type. Repository mutation transactions write the entity
 change and audit record together. `AuditRepository` also queries the most
 recent patient changes across supported related entities; the display limit
-comes from `AppSettings.AppConstants.lastModifiedPatientsLimit` (currently 5).
+comes from `AppSettings.effectiveLastModifiedPatientsLimit`, with a default
+of 5 when the setting is missing or invalid.
 This is metadata about a change, not a before/after snapshot of field values.
 The migration ledger (`woa_migration`) is separate from this entity audit table.
 
