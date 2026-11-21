@@ -59,8 +59,8 @@ workflows:
             -scheme "$XCODE_SCHEME"
       - name: Build, archive and export via release script
         script: |
-          chmod +x scripts/build-tag-release.sh
-          ./scripts/release/build-tag-release.sh \
+          chmod +x scripts/release/build-in-release.sh
+          ./scripts/release/build-in-release.sh \
             --scheme "$XCODE_SCHEME" \
             --project "$XCODE_PROJECT" \
             --app-name "WOA"
@@ -103,7 +103,7 @@ workflows:
 
       - name: Archive application
         script: |
-          chmod +x scripts/build-in-release.sh
+          chmod +x scripts/release/build-in-release.sh
           ./scripts/release/build-in-release.sh \
             --scheme "$XCODE_SCHEME" \
             --project "$XCODE_PROJECT" \
