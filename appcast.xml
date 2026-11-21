@@ -3,6 +3,14 @@
     <channel>
         <title>WOA</title>
         <item>
+            <title>0.5.0</title>
+            <pubDate>Sat, 21 Nov 2026 15:17:37 +0100</pubDate>
+            <sparkle:version>0.5.0</sparkle:version>
+            <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.6</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/crixo/woa-swift/releases/download/v0.5.0/WOA-0.5.0.app.zip" length="2346898" type="application/octet-stream" sparkle:edSignature="MdMSUmbQx1OLVV1dsOhJjRYvGXBExUOXWw1tDU4amFXmCASP4QfsMTnJYs4KbTjLB7Imi5ztacT0eVlpzyZoBA=="/>
+        </item>
+        <item>
             <title>0.4.0</title>
             <pubDate>Sun, 15 Nov 2026 13:00:47 +0100</pubDate>
             <sparkle:version>0.4.0</sparkle:version>
