@@ -1,104 +1,72 @@
-# WOA: Xcode Project & Target Settings Reference
+# Xcode project and application settings
 
-Notes on how Info.plist, build settings, and other Xcode configuration relate in this project (SwiftUI macOS app, Xcode 26, sandboxed, Sparkle auto-updates).
+This guide describes the checked-in WOA target configuration in
+[`src/WOA.xcodeproj/project.pbxproj`](../src/WOA.xcodeproj/project.pbxproj),
+[`Info.plist`](../src/WOA/Resources/Info.plist), and
+[`WOA.entitlements`](../src/WOA/Resources/WOA.entitlements).
 
-## Info.plist vs. Xcode settings
+## Target configuration
 
-Info.plist and the target's Xcode settings are two views of the same data. At build time Xcode:
+- Shared scheme: `WOA`.
+- macOS deployment target: 14.6.
+- Bundle identifier: `com.woa.application`.
+- Marketing and build versions: `MARKETING_VERSION` and
+  `CURRENT_PROJECT_VERSION` in the project file; the physical plist refers to
+  these settings.
+- Physical `Info.plist`: `src/WOA/Resources/Info.plist`.
+- Entitlements: `src/WOA/Resources/WOA.entitlements`.
+- Swift packages: AppAuth (minimum 3.0.0, up to next major) and Sparkle
+  (minimum 2.10.1, up to next major).
+- Shared scheme is committed at
+  `src/WOA.xcodeproj/xcshareddata/xcschemes/WOA.xcscheme`.
 
-1. Reads the physical `Info.plist`
-2. Substitutes `$(VARIABLES)` from build settings
-3. Adds any generated keys (`INFOPLIST_KEY_*`)
-4. Writes the merged result into the built app: `WOA.app/Contents/Info.plist`
+## Local OAuth configuration
 
-The merged file is what macOS and Sparkle read at runtime.
+The project references `src/Config/Secrets.xcconfig`, but the file is absent
+from the repository and ignored by `.gitignore`. If Xcode reports that this
+project configuration is missing, create the local file; set
+`GOOGLE_IOS_CLIENT_ID` there when configuring the Google iOS client. The
+`Info.plist` URL scheme is currently literal and must match the reversed OAuth
+client ID. Desktop OAuth is not configured in the plist: the
+`GoogleClientID` and `GoogleClientSecret` keys are absent.
 
-### The `GENERATE_INFOPLIST_FILE` switch
+Do not commit OAuth private credentials or local configuration. Any values
+substituted into the built Info.plist are visible in the app bundle.
 
-| Value | Behavior |
-|---|---|
-| `NO` | Only the physical file (located by `INFOPLIST_FILE`) is used. The Info tab edits that file directly. |
-| `YES` | Xcode generates keys from `INFOPLIST_KEY_*` build settings and merges in the physical file. On conflict, the file's values win. |
+## App Sandbox
 
-Check it in Target → Build Settings (search "Info.plist").
+The entitlements file enables App Sandbox, user-selected read/write files,
+network client/server access, and Sparkle installer-launcher Mach lookup names.
+The `CODE_SIGN_ENTITLEMENTS` build setting points to this file.
 
-### Key-to-source mapping (current Info.plist)
+## Application settings and storage
 
-| Key | Source of the real value |
-|---|---|
-| `CFBundleShortVersionString` = `$(MARKETING_VERSION)` | General → Version / Build Settings |
-| `CFBundleVersion` = `$(CURRENT_PROJECT_VERSION)` | General → Build / Build Settings |
-| `LSMinimumSystemVersion` = `$(MACOSX_DEPLOYMENT_TARGET)` | General → Minimum Deployments |
-| `CFBundleExecutable` = `$(EXECUTABLE_NAME)` | Derived from `PRODUCT_NAME` |
-| `CFBundleIdentifier` = `com.woa.application` | **Hardcoded**; not controlled by Xcode |
-| `CFBundleName` = `WOA` | **Hardcoded** |
-| `SU*` keys, copyright, category, principal class | The file itself |
+`ConfigurationService` serializes `AppSettings` as JSON at
+`Application Support/WOA/configuration/app-settings.json`. It includes database
+connection details and bookmark, theme, log level, Google auth options, and
+the recent-patient display limit. The limit defaults to 5 and must be positive
+when saved. Google tokens are stored in Keychain, not in this settings file.
 
-### Rules of thumb
+### Current initialization defect
 
-- Version, build number, bundle ID, deployment target: change in **General** or **Build Settings**, never hardcode in the plist.
-- Permission strings, URL types, `LSApplicationQueriesSchemes`, etc.: Info tab or the plist directly.
-- Sparkle `SU*` keys have no `INFOPLIST_KEY_` equivalent, so a physical Info.plist is required regardless.
+In `WOA.init()`, the app creates a settings store and calls `load()`, then
+assigns a second new store to `_settingsStore`. The root view receives the
+second store, whose state starts at `.default`. As a result, persisted settings
+are not reliably loaded at app launch; database and Google authentication
+preferences may be lost from the active session. This is current source
+behavior, not a documented preference or intended default.
 
-## Project vs. target settings
+## Inspect build settings
 
-- Project-level settings are defaults inherited by every target.
-- Target-level settings override them.
-- Info.plist is per target.
+On macOS, inspect the resolved settings with:
 
-Precedence for a setting defined in multiple places (highest wins):
-
-1. Target build settings
-2. Target `.xcconfig`
-3. Project build settings
-4. Project `.xcconfig`
-5. Xcode platform defaults
-
-To see where a value comes from, open Build Settings and switch from "Combined" to **Levels**. From the terminal:
-
+```bash
+xcodebuild \
+  -project src/WOA.xcodeproj \
+  -scheme WOA \
+  -showBuildSettings
 ```
-xcodebuild -showBuildSettings -target WOA
-```
 
-## Where Xcode stores everything
-
-Almost everything is in **`WOA.xcodeproj/project.pbxproj`**: project and target build settings per configuration, targets, build phases, file references and groups, Swift Package dependencies, signing style and team, deployment targets, localization regions, and the Info tab's `INFOPLIST_KEY_*` values.
-
-| What you see in Xcode | Where it's stored |
-|---|---|
-| Signing & Capabilities (sandbox, mach-lookup, etc.) | `WOA.entitlements`, via `CODE_SIGN_ENTITLEMENTS`; newer Xcode also has settings like `ENABLE_APP_SANDBOX` and `ENABLE_HARDENED_RUNTIME` merged into entitlements at build time |
-| Info tab / Info.plist keys | `Info.plist`, plus `INFOPLIST_KEY_*` in the pbxproj if generation is on |
-| Schemes (run args, env vars, configuration per action) | `WOA.xcodeproj/xcshareddata/xcschemes/*.xcscheme` if shared, else `xcuserdata/<user>.xcuserdatad/xcschemes/` |
-| Resolved package versions | `.../project.xcworkspace/xcshareddata/swiftpm/Package.resolved` |
-| App icon, accent color | `Assets.xcassets`, via `ASSETCATALOG_COMPILER_APPICON_NAME` etc. |
-| Configuration files (Project → Info → Configurations) | `.xcconfig` files, if used |
-| Breakpoints, window layout, scheme order | `xcuserdata/` (personal, normally gitignored) |
-
-## Version control
-
-- **Commit:** `project.pbxproj`, shared schemes, `Package.resolved`, `WOA.entitlements`, `Info.plist`.
-- **Ignore:** `xcuserdata/`.
-- Avoid hand-editing `project.pbxproj`; a stray edit can corrupt the project. It is still useful to read in diffs to see what a settings change did.
-
-## Verifying what ships
-
-Build, then right-click the `.app` in Products → Show in Finder → Show Package Contents → `Contents/Info.plist`. That merged file is the ground truth, regardless of what the Xcode editors show.
-
-## Project-specific notes
-
-- Sparkle feed: `SUFeedURL` points to `appcast.xml` at the repo root on `main`, served by `scripts/sparkle-appcast.sh`.
-- `SUEnableInstallerLauncherService` is required because the app is sandboxed; it pairs with the mach-lookup entries in `WOA.entitlements`.
-- `LSApplicationCategoryType` = `public.app-category.medical`.
-
-## Application settings
-
-User-editable preferences are stored through `AppSettingsStore` and
-`ConfigurationService` in the application-owned settings JSON file under
-Application Support. The settings are not stored in `UserDefaults` or in the
-database.
-
-The dedicated Settings destination exposes editable preferences and a separate
-read-only system section. The `lastModifiedPatientsLimit` preference controls
-how many recently modified patients appear in patient search. Its default is
-5, and saved values must be positive integers. Older settings files without
-this key remain valid and resolve to the default.
+After building, inspect the merged runtime plist inside
+`WOA.app/Contents/Info.plist`. It is the actual source for Sparkle and OAuth
+configuration at runtime.

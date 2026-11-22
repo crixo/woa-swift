@@ -1,72 +1,43 @@
 # WOA
 
-WOA is a macOS SwiftUI application for working with patient records stored in a
-SQLite database. The app runs in the macOS App Sandbox and requires the user to
-select a compatible database before database-backed features are available.
+WOA is a macOS SwiftUI application for browsing and managing patient records
+stored in SQLite. It is intended for desktop users who work with the WOA
+database schema; it is not a cloud service or a clinical decision system.
 
 ## Requirements
 
-- macOS 14.6 or later
-- Xcode with a macOS SDK that supports the project's 14.6 deployment target
+- macOS 14.6 or later.
+- Xcode and macOS SDK support for the project's macOS 14.6 deployment target.
+- For release operations: Git, GitHub CLI (`gh`), Xcode command-line tools,
+  and Sparkle's `generate_appcast` utility.
 
-## Main functionalities
+## Functionality
 
-### Functional features
+### Functional
 
-- **Patient search and directory** — Query and browse patient records
-- **Patient details** — View and edit patient demographics and history
-- **Consultations** — Track consultation records linked to patients
-- **Exams** — Manage examination records and results
-- **Treatments** — Record and track treatment procedures
-- **Evaluations** — Document clinical evaluations
-- **Remote history** — Access and manage remote patient history records
-- **Application settings** — Configure preferences and display options
-- **Google Authentication** — Gmail-integrated login and credentials management
+- Search and browse patient records.
+- View and edit patient details, consultations, remote histories, treatments,
+  evaluations, and exams.
+- Track recent patient changes and database migration history.
+- Configure application preferences and database access.
+- Optional Google sign-in is implemented through AppAuth. Gmail sending exists
+  as a service but is not exposed as an in-app email workflow.
 
-### Non-functional characteristics
+### Non-functional
 
-- **Platform** — macOS 14.6 and later; native SwiftUI app with single-window navigation
-- **Data storage** — SQLite database with schema versioning via bundled migrations
-- **Sandbox** — App Sandbox enabled for security; user-controlled database access via security-scoped bookmarks
-- **Updates** — Sparkle auto-update framework with Ed25519 signature verification
-- **Logging** — Structured logging with OSLog
-- **Code signing** — Self-signed certificate for consistent designated requirements across updates
-- **Testing** — XCTest suite with focused regression tests and database isolation
-
-## Get started
-
-### Quick start
-
-Open [`src/WOA.xcodeproj`](src/WOA.xcodeproj) in Xcode, select the **WOA**
-scheme, set a development team under **Signing & Capabilities**, then build and
-run. On first launch, follow the database setup flow described in
-[Database selection and sandbox access](docs/database-lifecycle.md).
-
-### How-to procedures
-
-- **[Set up the development environment](#set-up-the-development-environment)** — Install dependencies and prepare for local development
-- **[Build the application](#build-the-application)** — Build locally in Xcode or from the command line
-- **[Run the application](#run-the-application)** — Launch WOA locally
-- **[Run tests](#run-tests)** — Execute the test suite
-- **[Create a release](#create-a-release)** — Build, sign, and publish a new version
-- **[Install from GitHub Releases](#install-from-github-releases)** — Install a released build
-- **[Configure Google authentication](#configure-google-authentication)** — Set up Gmail credentials
-- **[Troubleshoot Sparkle updates](#troubleshoot-sparkle-updates)** — Debug auto-update issues
+- Native macOS SwiftUI application with a single-window navigation flow.
+- SQLite persistence, bundled schema migrations, and transaction-based entity
+  audit records.
+- App Sandbox with user-selected access to external databases; app-owned data
+  is stored under Application Support.
+- OSLog-based application logging.
+- Sparkle update checks and signed update archives.
+- Focused XCTest coverage for database validation, SQLite access, and patient
+  repository lifecycle behavior.
 
 ## Set up the development environment
 
-### Prerequisites
-
-- macOS 14.6 or later
-- Xcode 15 or later with macOS SDK support
-- Xcode command-line tools
-- Git
-
-### Install dependencies
-
-No external package manager installation is required. Swift Package Manager is configured in `Package.swift` and resolves dependencies automatically in Xcode.
-
-### Clone and open the project
+Clone the repository and open its shared Xcode project:
 
 ```bash
 git clone https://github.com/crixo/woa-swift.git
@@ -74,129 +45,118 @@ cd woa-swift
 open src/WOA.xcodeproj
 ```
 
-### Configure signing
+The project references the ignored local file `src/Config/Secrets.xcconfig`,
+which is not included in the repository. Create it locally if Xcode reports
+that the project configuration is missing. To use the Google iOS OAuth client,
+set `GOOGLE_IOS_CLIENT_ID` in that file to the client whose reversed scheme
+matches `src/WOA/Resources/Info.plist`. Do not commit the local config. See
+[Google authentication](docs/GOOGLE_AUTH_SETUP.md).
 
-1. In Xcode, select the **WOA** target.
-2. Go to **Signing & Capabilities**.
-3. Under **Signing**, choose your development team from the dropdown.
-4. The provisioning profile is automatically managed by Xcode.
+Select the **WOA** scheme. Set a development team under **Signing &
+Capabilities** if you need a signed local build.
 
-## Build the application
-
-### Build in Xcode
-
-1. Open `src/WOA.xcodeproj` in Xcode.
-2. Select the **WOA** scheme (top-left dropdown).
-3. Product → Build, or press Command+B.
-
-Build output appears in the Xcode build log.
-
-### Build from the command line
-
-```bash
-xcodebuild -scheme WOA -configuration Release
-```
-
-The built app appears in `build/Release/WOA.app`.
 
 ## Run the application
 
-### From Xcode
-
-1. Select the **WOA** scheme.
-2. Product → Run, or press Command+R.
-
-### From the command line
+In Xcode choose **Product → Run**, or open the built app:
 
 ```bash
-open build/Release/WOA.app
+open build/DerivedData/Build/Products/Debug/WOA.app
 ```
 
-### On first launch
-
-WOA requires a SQLite database before features become available. The database setup flow is described in [Database selection, storage, and App Sandbox access](docs/database-lifecycle.md).
+WOA needs a compatible SQLite database before database-backed screens are
+available. See [Database selection and sandbox access](docs/database-lifecycle.md). A database empty sample that can be used for initial setup is provided in the repository at `./data/woa-empty.db`
 
 ## Run tests
+
+Run the focused XCTest harness from the repository root:
 
 ```bash
 bash scripts/test.sh
 ```
 
-For detailed information, including filtering tests and coverage areas, see [Testing strategy](docs/testing.md).
+The harness uses SwiftPM and temporary databases. Filters and coverage details
+are in the [testing guide](docs/testing.md).
 
-## Create a release
+### Publish a release
 
 ```bash
-bash scripts/release/full-release-orchestration.sh
+bash scripts/release/full-release-orchestration.sh \
+  --scheme WOA \
+  --project src/WOA.xcodeproj \
+  --app-name WOA \
+  --dry-run
 ```
 
-The full workflow:
+After reviewing the rehearsal and validating the artifacts, repeat the
+orchestration command without `--dry-run`.
 
-1. Preflight validation (git status, network connectivity)
-2. Version bump in `project.pbxproj`
-3. Build and sign the app
-4. Create a DMG package
-5. Update the Sparkle appcast
-6. Create a git commit and tag
-7. Create the GitHub Release with artifacts
-8. Publish the appcast feed
-
-For step-by-step details and individual script usage, see [Build, release, and installation](docs/build-and-release.md).
+ It creates a signed `.app`,
+`.app.zip`, and `.dmg`, commits and tags the version/appcast, creates the GitHub
+Release, and pushes the appcast commit to `main`. For the full procedure and
+recovery steps, see [Build, release, and installation](docs/build-and-release.md).
 
 ## Install from GitHub Releases
 
-1. Navigate to [github.com/crixo/woa-swift/releases](https://github.com/crixo/woa-swift/releases).
-2. Download the latest `WOA.dmg` or `.pkg`.
-3. For DMG: mount the image and drag WOA to Applications.
-4. For PKG: double-click to run the installer.
-5. Launch WOA from Applications.
+Download a `.dmg` from
+[GitHub Releases](https://github.com/crixo/woa-swift/releases), open it, and
+drag `WOA.app` to Applications.
 
-WOA checks for updates automatically and notifies you when a new version is available.
+Alternatively, on macOS run the repository installer with a release tag:
 
-## Configure Google authentication
+```bash
+bash scripts/install/install-woa-swift.sh v0.5.0
+```
 
-Google authentication is optional. To enable it:
+The installer selects a ZIP asset, requires `sudo`, requires WOA to be quit,
+validates the staged bundle, and launches the installed app. It removes the
+quarantine attribute using the checked-in helper. Only install a release you
+trust. See [Build, release, and installation](docs/build-and-release.md).
 
-1. Create a Google Cloud Console project.
-2. Configure OAuth consent and credentials.
-3. Add your client ID to the app.
+## Check for updates
 
-For detailed setup, see [Google authentication setup](docs/GOOGLE_AUTH_SETUP.md).
+Sparkle checks the configured appcast on its schedule (24 hours) and provides
+**Check for Updates…** in the application menu. See the [Sparkle guide](docs/sparkle.md).
 
-## Troubleshoot Sparkle updates
+## Troubleshooting
 
-For issues with auto-update checking or installation, see [Sparkle auto-update framework](docs/sparkle.md).
+- **Build fails opening the project configuration:** check for the ignored
+  `src/Config/Secrets.xcconfig` reference and create the local file if absent.
+- **Database-backed screens are unavailable:** select a compatible database;
+  review [database selection and recovery](docs/database-lifecycle.md).
+- **Tests cannot run:** tests require macOS, Xcode command-line tools, and
+  SwiftPM. The repository test wrapper is `bash scripts/test.sh`.
+- **Release preflight fails:** check the clean `main` branch, remote sync, `gh
+  auth status`, the signing identity, and Sparkle tools as described in
+  [Build, release, and installation](docs/build-and-release.md).
+- **An update is not offered:** use **Check for Updates…**, confirm the
+  appcast feed and release ZIP are public, and see the
+  [Sparkle troubleshooting guide](docs/sparkle.md).
+
+## Repository layout
+
+- `src/WOA/` — SwiftUI application, view models, services, repositories,
+  utilities, and resources.
+- `src/WOA.xcodeproj/` — Xcode project and shared scheme.
+- `data/` — reference SQLite schema, empty fixture, and migration SQL.
+- `scripts/` — test, install, signing, and release tools.
+- `docs/` — product and developer guides.
+- `tests/` — focused XCTest suite.
 
 ## Documentation
 
-The README is the project overview and documentation index. Operational and
-implementation details live in the guides below.
-
-### Core documentation
-
-- [Build, release, and installation](docs/build-and-release.md) — Local builds, running tests, releases, Sparkle setup, signing, and installation
-- [CI/CD — Continuous integration and deployment](docs/ci-cd.md) — Codemagic workflows, release triggers, build configuration
-- [Application architecture, navigation, forms, and change notifications](docs/architecture.md) — Layered design, main navigation, shared UI components
-- [Database selection, storage, and App Sandbox permissions](docs/database-lifecycle.md) — First-run setup, direct vs. copy modes, sandbox access, recovery
-- [Database migrations and audit history](docs/migrations.md) — Adding migrations, runtime process, schema versioning
-- [Testing strategy, current coverage, and test guidelines](docs/testing.md) — Running tests, database isolation, test organization
-
-### Additional references
-
-- [Xcode project and target settings](docs/project-settings.md) — Info.plist, build settings, signing, entitlements
-- [Code-signing certificate](docs/SIGNING-CERTIFICATE.md) — Creating and managing self-signed certificates
-- [Sparkle auto-update framework](docs/sparkle.md) — Key generation, signing configuration, update feed
-- [Google authentication setup](docs/GOOGLE_AUTH_SETUP.md) — Gmail credentials and authentication configuration
-- [Working with GitHub Copilot and repository guidance](docs/github-copilot.md) — Guidance files, plans, instructions, compliance review
-- [SQLite schema reference](data/woa-schema.sql)
-
-## Project layout
-
-- [`src/WOA/`](src/WOA/) — SwiftUI app, presentation, application logic, and SQLite access.
-- [`data/`](data/) — reference schema, empty database, and bundled SQL migrations.
-- [`scripts/`](scripts/) — build/release, install, and Gatekeeper helper scripts.
-- [`docs/`](docs/) — detailed product and developer documentation.
-
-WOA uses a layered design: views, view models, services, repositories, and
-storage utilities. See the [architecture guide](docs/architecture.md) before
-changing application flows or shared UI components.
+| Document | Description |
+|---|---|
+| [Architecture](docs/architecture.md) | Layers, navigation, shared forms, change events, and auditing |
+| [Build, release, and installation](docs/build-and-release.md) | Local builds, test commands, release workflow, validation, installation, and troubleshooting |
+| [CI/CD](docs/ci-cd.md) | Codemagic triggers, actual workflow steps, and known workflow gaps |
+| [Database lifecycle](docs/database-lifecycle.md) | Database selection, sandbox permissions, storage, and recovery |
+| [Migrations](docs/migrations.md) | Migration authoring, runtime ledger, and audit history |
+| [Testing](docs/testing.md) | Test harness, isolation, coverage, and test guidance |
+| [Google authentication](docs/GOOGLE_AUTH_SETUP.md) | Current OAuth configuration and implementation limitations |
+| [Code-signing certificate](docs/SIGNING-CERTIFICATE.md) | Creating, using, verifying, and backing up the local signing identity |
+| [Sparkle](docs/sparkle.md) | Update configuration, appcast publishing, and checks |
+| [Xcode project settings](docs/project-settings.md) | Current plist, entitlements, packages, configuration, and settings behavior |
+| [GitHub Copilot guidance](docs/github-copilot.md) | Repository instruction, plan, prompt, and reviewer files |
+| [AI-assisted development notes](docs/ai-assisted-journey.md) | Historical development observations, not current behavior specifications |
+| [SQLite schema](data/woa-schema.sql) | Reference database schema |

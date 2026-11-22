@@ -15,6 +15,7 @@ Alternative prompts:
 - Align docs.
 - Refresh README.
 - Update documentation after recent changes.
+- Audit and align all existing documentation against the current repository state.
 
 ---
 
@@ -66,6 +67,12 @@ When performing a documentation review, inspect all relevant repository artifact
 Document only behavior that can be verified from repository contents.
 
 Never document intended, assumed or future behavior.
+
+## Exclude from review
+
+Do not consider this file or folder in the docs folder while you are reviewing the documntatin:
+- ./docs/ai-assisted-journey.md
+
 
 ---
 
@@ -124,27 +131,16 @@ Maintain practical operational procedures.
 At minimum document:
 
 - Install the application from GitHub Releases
-- Build the application locally
 - Run the application
 - Execute tests
 - Configure the development environment
-- Create a release
-- Validate a release
 - Publish a release
-- Check for updates
 - Common troubleshooting tasks
 
 Add additional procedures whenever they support repository workflows.
 
-Examples:
+Do not repeat information that are already covered in the linked `docs` files. At the most, duplicate key commands with a brief introduction or context.
 
-- Configure OAuth
-- Generate AppCast
-- Sign builds
-- Notarize builds
-- Migrate data
-- Local debugging
-- Dependency management
 
 ---
 
@@ -210,6 +206,31 @@ In case of duplicate documentation:
 4. Remove redundant documents.
 5. Update references to point to the consolidated document.
 
+## Evidence-based documentation audit
+
+For each area in scope:
+
+1. Inventory relevant implementation and documentation, including source
+   code, tests, scripts, dependencies, manifests, configuration, resources,
+   database schemas and migrations, CI/CD, packaging, and release assets.
+2. Read current implementation and follow relevant dependencies and callers.
+   Treat tests as evidence of intended coverage, not proof of behavior.
+3. Compare documentation against implementation, including:
+   - user workflows and platform requirements;
+   - setup, build, test, release, installation, and updates;
+   - options, defaults, prerequisites, outputs, and side effects;
+   - security, permissions, persistence, migrations, and recovery;
+   - failure behavior and troubleshooting.
+4. Update all affected guides and README references. Identify legacy
+   workflows rather than presenting them as current.
+5. Check documented paths, links, and commands against repository contents.
+   Never run destructive or publishing commands merely to validate docs.
+6. Report the scope reviewed, checks performed, and any unverified areas.
+   Do not claim a complete audit when relevant evidence is unavailable.
+
+For recent changes, use the relevant diff when available, but also inspect
+the current implementation and related documentation.
+
 ---
 
 # Validation Checklist
@@ -267,6 +288,7 @@ When updating documentation:
 3. Create missing documentation when required.
 4. Remove obsolete documentation when appropriate.
 5. Keep edits minimal, focused and accurate.
+6. Do not rewrite a file or a section only for literal purpose but only when there's a functional change or discrepancy exists.
 
 At completion provide:
 
