@@ -11,10 +11,8 @@ struct WOA: App {
 
     init() {
         let appSettingsStore = AppSettingsStore()
-        appSettingsStore.load()          // ← this line
+        appSettingsStore.load()
         _settingsStore = StateObject(wrappedValue: appSettingsStore)
-
-        _settingsStore = StateObject(wrappedValue: AppSettingsStore())
         
         // Ensure storage directories exist and the logger is ready before any view loads.
         _ = try? AppPaths.appSupportDirectory()

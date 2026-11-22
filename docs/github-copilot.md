@@ -4,25 +4,23 @@
 
 - [`AGENTS.md`](../AGENTS.md) and
   [`.github/copilot-instructions.md`](../.github/copilot-instructions.md)
-  contain repository-wide guidance.
+  contain repository-wide development constraints.
 - [`.github/instructions/`](../.github/instructions/) contains scoped
-  instructions with `applyTo` patterns. They apply when relevant files are
-  being worked on; they are not a replacement for the root instructions.
-- [`.github/plans/`](../.github/plans/) stores approved feature and architecture
-  plans. Review applicable plans before introducing significant behavior or
-  architecture changes.
-- [`.github/prompts/`](../.github/prompts/) contains feature prompts. A prompt
-  is task-specific and does not replace the repository's always-on constraints.
+  instructions with `applyTo` patterns.
+- [`.github/plans/`](../.github/plans/) stores approved feature and
+  architecture plans. Review applicable plans before introducing significant
+  behavior or architecture.
+- [`.github/prompts/`](../.github/prompts/) contains task-specific prompts;
+  prompts do not replace repository-wide rules.
 
-## WOA compliance reviewer
+## Review agents
 
-The custom agent definition is
-[`.github/agents/woa-compliance-reviewer.agent.md`](../.github/agents/woa-compliance-reviewer.agent.md).
-Use it to review source changes for compliance with `AGENTS.md`,
-`copilot-instructions.md`, and matching scoped instructions, especially after
-SwiftUI feature work or before a release. It is a read-only reviewer; it does
-not implement fixes.
+The
+[WOA compliance reviewer](../.github/agents/woa-compliance-reviewer.agent.md)
+is read-only and reviews changes against repository and scoped instructions.
+Other checked-in agents include general quality review, bug finding, and
+implementation alternatives; see [`.github/agents/`](../.github/agents/).
 
-For application navigation, sandbox/storage conventions, shared forms, and
-change notifications, see the [architecture guide](architecture.md). For
-builds and release operations, see [Build, release, and installation](build-and-release.md).
+For navigation, sandbox/storage conventions, shared forms, and change events,
+see the [architecture guide](architecture.md). For build and release
+operations, see [Build, release, and installation](build-and-release.md).
