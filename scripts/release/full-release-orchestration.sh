@@ -51,6 +51,7 @@ DIST_DIR="dist"
 APPCAST_PATH="appcast.xml"
 VERSION_OVERRIDE=""
 NEW_MAJOR=false
+NEW_PATCH=false
 SKIP_VERSION_BUMP=false
 DRY_RUN=false
 SPARKLE_BIN="${SPARKLE_BIN:-}"
@@ -89,6 +90,7 @@ Git / output
 Version
   --version <x.y.z>             Use this version instead of calculating it.
   --new-major                   Bump the major version (1.4.3 -> 2.0.0).
+  --new-patch                   Bump the patch version (1.4.3 -> 1.4.4).
   --skip-version-bump           Do not write the version into project.pbxproj
                                 (the build still gets it as a build setting).
 
@@ -133,6 +135,7 @@ parse_args() {
             --sign-identity)         need_value "$1" "$#"; SIGN_IDENTITY="$2";        shift 2 ;;
             --entitlements)          need_value "$1" "$#"; ENTITLEMENTS="$2";         shift 2 ;;
             --new-major)             NEW_MAJOR=true;         shift ;;
+            --new-patch)             NEW_PATCH=true;         shift ;;
             --skip-version-bump)     SKIP_VERSION_BUMP=true; shift ;;
             --dry-run)               DRY_RUN=true;           shift ;;
             -h|--help)               show_help; exit 0 ;;
@@ -141,6 +144,10 @@ parse_args() {
     done
 
     [[ -n "$SCHEME" ]] || die "--scheme is required."
+
+    if [[ "$NEW_MAJOR" == true && "$NEW_PATCH" == true ]]; then
+        die "--new-major and --new-patch cannot be used together."
+    fi
 
     if [[ -n "$WORKSPACE_PATH" && -n "$PROJECT_PATH" ]]; then
         die "--workspace and --project cannot be used together."
@@ -245,6 +252,7 @@ main() {
     local bump_args=(--remote "$REMOTE")
     if [[ -n "$VERSION_OVERRIDE" ]]; then bump_args+=(--version "$VERSION_OVERRIDE"); fi
     if [[ "$NEW_MAJOR" == true ]];     then bump_args+=(--new-major); fi
+    if [[ "$NEW_PATCH" == true ]];     then bump_args+=(--new-patch); fi
     if [[ "$SKIP_VERSION_BUMP" == true ]]; then bump_args+=(--no-write); fi
     VERSION="$("${SCRIPT_DIR}/version-bump.sh" "${container_args[@]}" "${bump_args[@]}")"
     TAG="v${VERSION}"

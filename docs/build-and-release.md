@@ -123,7 +123,11 @@ bump; Xcode archive; `.app`, `.app.zip`, and `.dmg` packaging and code signing;
 Sparkle signature and appcast update; local commit and annotated tag; GitHub
 Release creation; then push the tagged commit to `main` so the appcast goes
 live. The `--new-major` option selects a major version bump. Never run a real
-release merely to validate the documentation.
+release merely to validate the documentation. By default, the next minor
+version is calculated from the latest Git tag; use `--new-major` for a major
+bump or `--new-patch` to increment only the patch component. The selected
+version is written to the project settings and then carried through the same
+build, packaging, tagging, and publishing steps.
 
 If publication stops after the tag is pushed, resume only the failed step:
 

@@ -12,6 +12,7 @@
 # The next version comes from the latest vX.Y.Z git tag:
 #     minor bump (default)   v1.4.3 -> 1.5.0
 #     --new-major            v1.4.3 -> 2.0.0
+#     --new-patch            v1.4.3 -> 1.4.4
 #     --version X.Y.Z        use exactly this version
 #
 # STDOUT: the version, and nothing else (logs go to stderr), so it can be
@@ -32,6 +33,7 @@ PBXPROJ_PATH=""
 VERSION=""
 TAG=""
 NEW_MAJOR=false
+NEW_PATCH=false
 NO_WRITE=false
 REMOTE="origin"
 
@@ -45,6 +47,7 @@ Usage: ./version-bump.sh (--project <path> | --workspace <path> | --pbxproj <pat
   --pbxproj <path>     Path to the project.pbxproj to edit.
   --version <x.y.z>    Use this version instead of calculating it.
   --new-major          Bump the major version instead of the minor one.
+  --new-patch          Bump only the patch version instead of the minor one.
   --no-write           Calculate and print the version, do not edit any file.
   --remote <name>      Git remote used to check the tag is free (default: origin).
   -h, --help           Show this help.
@@ -62,6 +65,7 @@ parse_args() {
             --version)    need_value "$1" "$#"; VERSION="${2#v}";    shift 2 ;;
             --remote)     need_value "$1" "$#"; REMOTE="$2";         shift 2 ;;
             --new-major)  NEW_MAJOR=true; shift ;;
+            --new-patch)  NEW_PATCH=true; shift ;;
             --no-write)   NO_WRITE=true;  shift ;;
             -h|--help)    show_help; exit 0 ;;
             *) die "Unknown option: $1 (use --help)" ;;
@@ -71,6 +75,10 @@ parse_args() {
     if [[ "$NO_WRITE" == false &&
           -z "$PROJECT_PATH" && -z "$WORKSPACE_PATH" && -z "$PBXPROJ_PATH" ]]; then
         die "Pass --project, --workspace or --pbxproj (or --no-write)."
+    fi
+
+    if [[ "$NEW_MAJOR" == true && "$NEW_PATCH" == true ]]; then
+        die "--new-major and --new-patch cannot be used together."
     fi
 }
 
@@ -90,6 +98,8 @@ resolve_next_version() {
 
         if [[ "$NEW_MAJOR" == true ]]; then
             VERSION="$((major + 1)).0.0"
+        elif [[ "$NEW_PATCH" == true ]]; then
+            VERSION="${major}.${minor}.$((patch + 1))"
         else
             VERSION="${major}.$((minor + 1)).0"
         fi
