@@ -379,7 +379,7 @@ The agent operates read-only with respect to application source code, scripts, t
 
 The only permitted repository modification is writing its review report to:
 
-quality-reports/latest/bugs.md
+quality-reports/latest/{yyyy-mm-dd}_bugs.md
 
 The agent may create or replace this report file.
 

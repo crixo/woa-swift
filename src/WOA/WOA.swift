@@ -69,9 +69,8 @@ final class SparkleUpdaterDelegate: NSObject, SPUUpdaterDelegate {
             return
         }
         
-        print(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion")!)
-        print(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")!)
-        print(Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "")
+        let info = Bundle.main.infoDictionary
+        AppLogger.info("Build: \(info?["CFBundleVersion"] ?? "?"), Version: \(info?["CFBundleShortVersionString"] ?? "?")")
 
 
         let nsError = error as NSError

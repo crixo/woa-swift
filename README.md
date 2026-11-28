@@ -95,6 +95,8 @@ orchestration command without `--dry-run`.
 `.app.zip`, and `.dmg`, commits and tags the version/appcast, creates the GitHub
 Release, and pushes the appcast commit to `main`. For the full procedure and
 recovery steps, see [Build, release, and installation](docs/build-and-release.md).
+The default is a minor version bump; use `--new-major` or `--new-patch` to
+select a major or patch bump.
 
 ## Install from GitHub Releases
 
