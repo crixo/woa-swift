@@ -23,6 +23,9 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("Impostazioni")
+        .onDisappear {
+            viewModel.discardThemePreview()
+        }
     }
 
     private var actionBar: some View {
@@ -54,6 +57,9 @@ struct SettingsView: View {
                         Text("Sistema").tag(AppSettings.Theme.system)
                         Text("Chiaro").tag(AppSettings.Theme.light)
                         Text("Scuro").tag(AppSettings.Theme.dark)
+                    }
+                    .onChange(of: viewModel.draft.theme) {
+                        viewModel.previewThemeChange()
                     }
 
                     Picker("Livello log", selection: $viewModel.draft.logLevel) {

@@ -5,6 +5,7 @@ struct MainView: View {
     @ObservedObject var settingsStore: AppSettingsStore//@StateObject private var settingsStore: AppSettingsStore
     @StateObject private var migrationService: DatabaseMigrationService
     @StateObject private var databaseManagementViewModel: DatabaseManagementViewModel
+    @StateObject private var settingsViewModel: SettingsViewModel
     @StateObject private var dataChangeCoordinator = DataChangeCoordinator()
     @State private var navigationPath: [NavigationRoute] = []
 
@@ -19,6 +20,9 @@ struct MainView: View {
                 settingsStore: settingsStore,
                 migrationService: migrationService
             )
+        )
+        _settingsViewModel = StateObject(
+            wrappedValue: SettingsViewModel(settingsStore: settingsStore)
         )
     }
 
@@ -42,6 +46,7 @@ struct MainView: View {
                     databaseManagementViewModel.resetConfiguration()
                 },
                 onOpenSettings: {
+                    settingsViewModel.resetDraft()
                     navigationPath.append(.settings)
                 }
             )
@@ -49,8 +54,9 @@ struct MainView: View {
                     switch route {
                     case .settings:
                         SettingsView(
-                            viewModel: SettingsViewModel(settingsStore: settingsStore),
+                            viewModel: settingsViewModel,
                             onCancel: {
+                                settingsViewModel.discardThemePreview()
                                 if !navigationPath.isEmpty {
                                     navigationPath.removeLast()
                                 }

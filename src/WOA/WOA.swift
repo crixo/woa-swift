@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import Sparkle
 
@@ -43,6 +44,9 @@ struct WOA: App {
                 MainView(settingsStore: settingsStore)
             }
             .environmentObject(auth)
+            .onChange(of: settingsStore.appearanceTheme, initial: true) { _, theme in
+                NSApp.appearance = Self.appearance(for: theme)
+            }
         }
         .commands {
             CommandGroup(after: .appInfo) {
@@ -50,6 +54,17 @@ struct WOA: App {
             }
         }
         
+    }
+
+    private static func appearance(for theme: AppSettings.Theme) -> NSAppearance? {
+        switch theme {
+        case .system:
+            return nil
+        case .light:
+            return NSAppearance(named: .aqua)
+        case .dark:
+            return NSAppearance(named: .darkAqua)
+        }
     }
 }
 

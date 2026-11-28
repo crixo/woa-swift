@@ -54,6 +54,11 @@ At app launch, `WOA.init()` creates an `AppSettingsStore` instance and calls
 to the root view through the `@StateObject` property wrapper. If no settings
 file exists, the store uses `AppSettings.default`.
 
+The Theme setting controls the app's macOS appearance: System follows macOS,
+while Light and Dark force the corresponding appearance. Selecting a theme in
+Settings previews it immediately; Save persists the selection, while leaving
+Settings without saving restores the previously saved appearance.
+
 ## Inspect build settings
 
 On macOS, inspect the resolved settings with:

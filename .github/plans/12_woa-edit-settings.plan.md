@@ -48,6 +48,10 @@ sheet, or popover.
 The limit must parse as a positive `Int`. Blank, negative, zero, and
 non-integer input is rejected with inline feedback.
 
+Theme selection previews the corresponding app appearance immediately. The
+preview is committed on Save and discarded when the Settings destination closes
+without saving.
+
 ## System settings
 
 - Settings-file path
@@ -69,6 +73,8 @@ returns the persisted positive value or 5 for missing/invalid values.
 - A Settings button opens the inline settings destination.
 - Home and Back navigation remain available.
 - Save persists valid settings and Cancel discards draft changes.
+- Changing Theme immediately previews System, Light, or Dark appearance;
+  leaving Settings without saving restores the persisted theme.
 - Save and Cancel appear in a dedicated bottom action box, with Cancel on the left and Save on the right.
 - Invalid limits are not persisted.
 - Older settings files resolve to the default limit of 5.

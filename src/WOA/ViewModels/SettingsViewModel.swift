@@ -22,6 +22,23 @@ final class SettingsViewModel: ObservableObject {
         lastModifiedPatientsLimitText = String(settingsStore.settings.effectiveLastModifiedPatientsLimit)
     }
 
+    func previewThemeChange() {
+        settingsStore.previewTheme(draft.theme)
+    }
+
+    func discardThemePreview() {
+        settingsStore.discardThemePreview()
+    }
+
+    func resetDraft() {
+        draft = settingsStore.settings
+        googleAuthEnabled = settingsStore.settings.googleAuthEnabled ?? false
+        googleAuthUseIOSClient = settingsStore.settings.googleAuthUseIOSClient ?? false
+        lastModifiedPatientsLimitText = String(settingsStore.settings.effectiveLastModifiedPatientsLimit)
+        validationMessage = nil
+        saveErrorMessage = nil
+    }
+
     func save() -> Bool {
         validationMessage = nil
         saveErrorMessage = nil
